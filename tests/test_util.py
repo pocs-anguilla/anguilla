@@ -1,5 +1,4 @@
 """Testsuite for the utilitary module."""
-import math
 import unittest
 
 import numpy as np

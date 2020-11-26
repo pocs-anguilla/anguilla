@@ -73,8 +73,7 @@ class StrategyParameters:
             the covariance matrix.
         Can be a callable that takes ``mu_eff`` as argument.
     recombination_type : optional
-        How to initialize ``weights`` if not provided. \
-            Overrides ``mu`` if provided.
+        How to initialize ``weights`` if not provided.
     alpha_cov : optional
         Used to initialize ``c_1`` and ``c_mu`` if not provided.
     negative_weights_scaler : optional
@@ -347,8 +346,7 @@ class StoppingConditions:
         The population size.
         Required if ``stagnation`` is not provided.
     initial_sigma : optional
-        The initial step size. If provided used to initialize ``tol_x`` if \
-        it is not provided.
+        The initial step size. Used to initialize ``tol_x`` if not provided.
     ftarget : optional
         The target value of the objective function.
     max_fevals : optional
@@ -380,7 +378,7 @@ class StoppingConditions:
     population_size: dataclasses.InitVar[typing.Optional[int]] = None
     initial_sigma: dataclasses.InitVar[typing.Optional[float]] = None
 
-    ftarget: float = -np.inf
+    ftarget: float = np.NINF
     max_fevals: typing.Optional[int] = None
     tol_conditioncov: float = 1e14
     tol_facupx: float = 1e3
@@ -403,7 +401,10 @@ class StoppingConditions:
             )
 
         if population_size is None and self.tol_stagnation is None:
-            raise ValueError("n is required if tol_stagnation is not provided")
+            raise ValueError(
+                "population_size is required if tol_stagnation \
+                is not provided"
+            )
 
         if self.max_fevals is None:
             self.max_fevals = 1000 * n * n
@@ -593,7 +594,7 @@ class CMA(AbstractOptimizer):
         Returns
         -------
         np.ndarray
-            An ordering of the solutions according to their ranking (i.e. \
+            The indices of the solutions sorted according to their ranking (i.e. \
             the first element is the index of the best solution).
 
         Notes

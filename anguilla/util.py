@@ -1,17 +1,19 @@
 """This module contains utilitary/auxilliary functions."""
 import math
 import functools
-import matplotlib as plt
+import typing
 
 
-def _exp_norm_chi_implementation(f):
+def _exp_norm_chi_implementation(
+    f: typing.Callable[[float], float]
+) -> typing.Callable[[float], float]:
     """Decorate exp_norm_chi so that it is possible to vary its \
         implementation while keeping a single copy of the docstring."""
     try:
         import scipy.special
 
         @functools.wraps(f)
-        def implementation(k):
+        def implementation(k: float) -> float:
             tmp = k * 0.5
             return math.sqrt(2.) * scipy.special.gamma(tmp + 0.5) \
                 / scipy.special.gamma(tmp)
@@ -19,7 +21,7 @@ def _exp_norm_chi_implementation(f):
     except ImportError:
 
         @functools.wraps(f)
-        def implementation(k):
+        def implementation(k: float) -> float:
             return math.sqrt(2.) * (1. - 1. / (4. * k) + 1. / (21. * k * k))
 
     return implementation

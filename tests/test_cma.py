@@ -39,6 +39,7 @@ class TestCMAStrategyParameters(unittest.TestCase):
         self.assertTrue(math.isclose(expected_value, true_value),
                         msg=f'Expected {expected_value}, got {true_value}')
 
+
 # TODO: WIP
 class TestCMAOptimizer(unittest.TestCase):
     """Test the CMA optimizer."""
@@ -46,18 +47,18 @@ class TestCMAOptimizer(unittest.TestCase):
     def test_init_1(self) -> None:
         """Test initialization."""
         initial_point = np.random.uniform(size=10)
-        opt = CMA(initial_point=initial_point,
-                  initial_sigma=0.5)
+        _ = CMA(initial_point=initial_point,
+                initial_sigma=0.5)
 
     def test_init_2(self) -> None:
         """Test initialization."""
         params = StrategyParameters(n=10)
         initial_point = np.random.uniform(size=10)
         C = np.eye(10)
-        opt = CMA(initial_point=initial_point,
-                  initial_sigma=0.5,
-                  initial_cov=C,
-                  strategy_parameters=params)
+        _ = CMA(initial_point=initial_point,
+                initial_sigma=0.5,
+                initial_cov=C,
+                strategy_parameters=params)
 
     def test_ask(self) -> None:
         """Test the ask method."""

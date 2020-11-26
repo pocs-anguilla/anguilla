@@ -2,11 +2,8 @@
 from __future__ import annotations
 
 import abc
-from abc import abstractproperty
-import typing
 
 import numpy as np
-import numpy.typing as npt
 
 
 class AbstractObjectiveFunction(metaclass=abc.ABCMeta):  # WIP
@@ -66,7 +63,7 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):  # WIP
             Optional only. May not be relevant/possible for all functions.
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def __call__(self, x):
         """Compute the function value at a point(s)."""
@@ -74,10 +71,9 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):  # WIP
             out = np.empty((x.shape[0],), dtype=float)
             self._eval(x, out)
             return out
-        else:
-            out = np.empty((1,), dtype=float)
-            self._eval(x.reshape(1, x.shape[0]), out)
-            return out[0]
+        out = np.empty((1,), dtype=float)
+        self._eval(x.reshape(1, x.shape[0]), out)
+        return out[0]
 
 
 class AbstractObjectiveFunctionWithInputDomain(AbstractObjectiveFunction):

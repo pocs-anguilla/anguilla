@@ -1,0 +1,30 @@
+# This setup is preliminary and needs to be improved. 
+
+build: off
+skip_tags: true
+stack: python %PYTHON%
+
+platform:
+  - x64
+
+environment:
+  matrix:
+    -
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      PYTHON: '3.8'
+    -
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      PYTHON: 'C:\\Python38-x64'
+    -
+      APPVEYOR_BUILD_WORKER_IMAGE: macOS
+      PYTHON: '3.8'
+
+matrix:
+  fast_finish: true
+
+install:
+- cmd: 'set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%'
+- pip install -r requirements/ci-test.txt
+
+test_script:
+- python -m unittest
