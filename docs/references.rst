@@ -1,7 +1,8 @@
 .. _references:
 
-References
-==========
+************
+Bibliography
+************
 
 This page lists all the references cited in this project.
 

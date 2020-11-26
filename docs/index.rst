@@ -1,7 +1,9 @@
 .. Anguilla documentation master file
 
+********************
 Welcome to Anguilla!
-====================
+********************
+
 The main goal of this project is to provide a MO-CMA-ES implementation in 
 Python 3.
 
@@ -16,7 +18,7 @@ It is based on the reference implementations from
           implementation, documentation, tests, and continuous integration setup.
 
 Installing
-----------
+##########
 
 .. code-block:: bash
 
@@ -31,7 +33,7 @@ Installing
    conda install --channel=conda-forge anguilla
 
 A short example
----------------
+###############
 
 .. code-block:: python
 
@@ -69,11 +71,18 @@ More usage information of currently available implementations can be found in :p
 Please check out the :ref:`Quickstart Guide <quickstart>` for more detailed examples.
 
 About the name
----------------
+##############
 Currently, it is just an internal project name. The reference implementation 
 for MO-CMA-ES is `The Shark Machine Learning Library
 <https://www.shark-ml.org/>`_ and this implementation
 is in Python 3, so `Anguilla <https://en.wikipedia.org/wiki/European_eel>`_ sounded like a good fit.
+
+Indices and tables
+##################
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 
 .. toctree::
    :maxdepth: 2
@@ -83,10 +92,3 @@ is in Python 3, so `Anguilla <https://en.wikipedia.org/wiki/European_eel>`_ soun
    quickstart
    development
    references
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
