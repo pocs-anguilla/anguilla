@@ -1,0 +1,31 @@
+"""Testsuite for the utilitary module."""
+import math
+import unittest
+
+import numpy as np
+
+from anguilla.util import exp_norm_chi
+
+
+class TestUtilitaryFunctions(unittest.TestCase):
+    """Test the utilitary functions."""
+
+    def test_exp_norm_chi(self) -> None:
+        """Test the exp_norm_chi function."""
+        rng = np.random.default_rng(seed=0)
+
+        def empirical(k):
+            mean = np.zeros(k)
+            cov = np.eye(k)
+            Zs = rng.multivariate_normal(mean, cov, 1000000)
+            Xs = np.linalg.norm(Zs, axis=1)
+            return np.mean(Xs)
+
+        emp_x = np.zeros(11-2+1)
+        approx_x = np.zeros(11-2+1)
+
+        for i, k in enumerate(range(2, 11)):
+            emp_x[i] = empirical(k)
+            approx_x[i] = exp_norm_chi(k)
+
+        self.assertTrue(np.allclose(emp_x, approx_x, rtol=1e-2))

@@ -1,0 +1,17 @@
+{
+    "dockerFile": "Dockerfile",
+    "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode.cpptools",
+        "jeff-hykin.better-cpp-syntax",
+        "ms-vscode.cmake-tools",
+        "twxs.cmake",
+        "extudio.restructuredtext"
+    ],
+    "postCreateCommand": "pip install -r requirements/devcontainer.txt",
+    "forwardPorts": [
+        8000,
+        8888
+    ] // docs webserver, jupyter
+}

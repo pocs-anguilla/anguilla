@@ -1,0 +1,25 @@
+{
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"
+    },
+    "python.languageServer": "Pylance",
+    "python.linting.enabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.linting.pycodestyleEnabled": true,
+    "python.linting.pydocstyleEnabled": true,
+    "editor.rulers": [
+        75, // docstring
+        79 // code
+    ],
+    "files.insertFinalNewline": true,
+    "python.linting.pylintArgs": [
+        "--load-plugins",
+        "pylint.extensions.docparams",
+        "pylint.extensions.mccabe"
+    ],
+    "python.formatting.provider": "black",
+    "python.pythonPath": "/usr/local/bin/python",
+    "editor.renderWhitespace": "trailing",
+    //"jupyter.jupyterServerType": "remote",
+    "editor.formatOnSave": true,
+}

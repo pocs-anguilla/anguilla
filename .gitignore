@@ -70,6 +70,10 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/anguilla.*
+docs/modules.*
+docs/setup.*
+docs/tests.*
 
 # PyBuilder
 target/
@@ -127,3 +131,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# macOS
+.DS_Store
+
+# output from reference implementation pycmaes
+outcmaes/

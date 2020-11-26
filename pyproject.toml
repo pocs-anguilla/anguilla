@@ -1,0 +1,43 @@
+# PEP-518 (https://www.python.org/dev/peps/pep-0518/)
+# See also: https://snarky.ca/what-the-heck-is-pyproject-toml/
+
+[build-system]
+requires = ["setuptools >= 40.6.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# See: https://nbqa.readthedocs.io/en/latest/configuration.html
+[tool.nbqa.mutate]
+isort = 1
+pylint = 1
+pyupgrade = 1
+
+[tool.nbqa.addopts]
+pyupgrade = ["--py36-plus"]
+
+[tool.nbqa.config]
+mypy = "../mypy.ini"
+
+[tool.black]
+line-length = 79
+target-version = ['py38']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
+

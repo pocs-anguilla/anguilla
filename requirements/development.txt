@@ -1,0 +1,18 @@
+-r base.txt
+-r documentation.txt
+
+# Other
+numba
+scipy
+pydantic
+matplotlib
+
+# Static analysis
+pylint
+mypy         # PEP-484 and PEP-526
+pycodestyle  # PEP-8
+pydocstyle   # PEP-257
+black        # PEP-8
+
+# Misc.
+nbqa
