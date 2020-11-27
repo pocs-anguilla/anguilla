@@ -739,7 +739,7 @@ class CMA(AbstractOptimizer):
         tmp = np.linalg.norm(self._cov_B @ z[:, ranked_indices])
         weights_circ[mu:] /= float(self._n) / (tmp * tmp)
 
-        # Rank-mu update (up to rank-lambda if using negative weights)
+        # Rank-mu update
         # Eq. (47) [2016:cma-es-tutorial] uses range(population_size)
         # Eq. (43) [2011:cma-es-tutorial] uses range(mu)
         # Both versions are the same obviating Eq. (46)
