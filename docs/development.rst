@@ -91,17 +91,19 @@ Static Analysis
 
 |deepsource| |deepcode| |sonarcloud|
 
-The CI pipeline includes 3 static analysis services, namely, `DeepSource <>`_, `DeepCode <>`_ and `SonarCloud <>`_;
+The CI pipeline includes 3 static analysis services, namely, `DeepSource <https://deepsource.io/>`_, `DeepCode <https://www.deepcode.ai/>`_ and `SonarCloud <https://sonarcloud.io/>`_;
 which provide automated code reviews. We thank these bots (and their creators) for pointing out bugs, 
 code smells and other ways to improve the code base.
 
 .. |deepsource| image:: https://deepsource.io/gh/pocs-anguilla/anguilla.svg/?label=active+issues&show_trend=true&token=CZElZ2ZetdLdyxuEWD6Y7NYo
                 :target: https://deepsource.io/gh/pocs-anguilla/anguilla/?ref=repository-badge
                 :alt: Static analysis status (deepsource)
+
 .. |deepcode|   image:: https://www.deepcode.ai/api/gh/badge?key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwbGF0Zm9ybTEiOiJnaCIsIm93bmVyMSI6InBvY3MtYW5ndWlsbGEiLCJyZXBvMSI6ImFuZ3VpbGxhIiwiaW5jbHVkZUxpbnQiOmZhbHNlLCJhdXRob3JJZCI6MjUzNDIsImlhdCI6MTYwNjQwMjExN30.PAYMuKXLpi3tBoJQufB62gBHtODZ7HZrhFpnJ1lcmu8
                 :target: https://www.deepcode.ai/app/gh/pocs-anguilla/anguilla/_/dashboard?utm_content=gh%2Fpocs-anguilla%2Fanguilla
 
 .. |sonarcloud| image:: https://sonarcloud.io/images/project_badges/sonarcloud-black.svg
                 :height: 20
+                :width: 85
                 :target: https://sonarcloud.io/dashboard?id=pocs-anguilla_anguilla
                 :alt: sonarcloud badge
