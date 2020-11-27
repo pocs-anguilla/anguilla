@@ -9,13 +9,23 @@ Python 3.
 
 🚧 work in progress 🚧
 
-It is based on the reference implementations from 
-`The Shark Machine Learning Library <https://www.shark-ml.org/>`_ and
-`PyCMA <https://github.com/CMA-ES/pycma>`_.
+.. Note::
 
-.. Note:: Currently, we've implemented a prototype of CMA-ES while we get acquainted with the concepts required to implement MO-CMA-ES.
-          The current state of the project showcases some minimal working functionality of the different components, such as 
-          implementation, documentation, tests, and continuous integration setup.
+   The project is currently being developed as part of a POCS.
+
+   It is based on the reference implementations from 
+   `The Shark Machine Learning Library <https://www.shark-ml.org/>`_ and
+   `PyCMA <https://github.com/CMA-ES/pycma>`_.
+   This prototype draws inspiration from the reference projects, the cited literature and the discussions being held in those projects.
+
+   So far, we've implemented a prototype of CMA-ES while we get acquainted with the concepts required to implement MO-CMA-ES.
+   The current state of the project showcases some minimal working functionality of the different components, such as 
+   implementation, documentation, tests, and continuous integration setup.
+
+   The name is an internal project name. The reference implementation 
+   for MO-CMA-ES is `The Shark Machine Learning Library
+   <https://www.shark-ml.org/>`_ and this implementation
+   is in Python 3, so with eels being snake-like fish, `Anguilla <https://en.wikipedia.org/wiki/European_eel>`_ sounded like a good fit (as Eel is already used by another project).
 
 Installing
 ##########
@@ -70,13 +80,6 @@ More usage information of currently available implementations can be found in :p
 
 Please check out the :ref:`Quickstart Guide <quickstart>` for more detailed examples.
 
-About the name
-##############
-Currently, it is just an internal project name. The reference implementation 
-for MO-CMA-ES is `The Shark Machine Learning Library
-<https://www.shark-ml.org/>`_ and this implementation
-is in Python 3, so `Anguilla <https://en.wikipedia.org/wiki/European_eel>`_ sounded like a good fit.
-
 Indices and tables
 ##################
 
@@ -85,7 +88,7 @@ Indices and tables
 * :ref:`search`
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
    :hidden:
 

@@ -29,3 +29,5 @@ Python 3.
 It is based on the reference implementations from 
 `The Shark Machine Learning Library <https://www.shark-ml.org/>`_ and
 `PyCMA <https://github.com/CMA-ES/pycma>`_.
+
+Please see the `documentation <https://anguilla.readthedocs.io/en/latest/>`_ for more details about this project.
