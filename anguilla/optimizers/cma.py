@@ -1,5 +1,5 @@
-"""This module contains implementations related to the CMA-ES algorithm
-for single-objective real-valued optimization."""
+"""This module contains implementations related to the CMA-ES algorithm \
+    for single-objective real-valued optimization."""
 from __future__ import annotations
 
 import math
@@ -196,7 +196,10 @@ class StrategyParameters:
         """Initialize and validate parameters."""
         self._post_init_population_size()
 
-        self._post_init_weights(recombination_type)
+        if self.weights is None:
+            self._post_init_default_weights(recombination_type)
+        else:
+            self._post_init_custom_weights()
 
         self._post_init_mu_eff()
 
@@ -222,49 +225,47 @@ class StrategyParameters:
         elif self.population_size < 2:
             raise ValueError("Invalid value for population_size")
 
-    def _post_init_weights(
+    def _post_init_default_weights(
         self, recombination_type: RecombinationType
     ) -> None:
-        """Initialize and/or validate weights."""
-        # No custom weights were provided
-        if self.weights is None:
-            # Implementation allows a custom mu or uses a default
-            # depending on the provided value for recombination_type
-            if self.mu is not None and self.mu > self.population_size:
-                raise ValueError("Invalid value for mu")
-            # The following uses the same values as in [2008:shark]
-            if recombination_type == RecombinationType.SUPERLINEAR:
-                if self.mu is None:
-                    self.mu = self.population_size // 2
-                # Same as in Eq. (49) [2016:cma-es-tutorial]
-                self.weights = math.log(
-                    (self.population_size + 1.0) / 2.0
-                ) - np.log1p(np.arange(self.population_size))
-            elif recombination_type == RecombinationType.LINEAR:
-                if self.mu is None:
-                    self.mu = self.population_size // 2
-                self.weights = np.repeat(self.mu, self.population_size)
-                self.weights[: self.mu] -= np.arange(self.mu)
-                self.weights[self.mu :] -= np.arange(
-                    self.population_size - 1, self.mu, -1.0
-                )
-            elif recombination_type == RecombinationType.EQUAL:
-                if self.mu is None:
-                    self.mu = self.population_size // 4
-                self.weights = np.ones(self.population_size)
-                self.weights[self.mu :] *= -1.0
-        # Custom weights were provided
-        # If population_size and mu are provided they will be overrided
-        else:
-            if self.weights[0] < 0.0 or np.any(
-                self.weights[1:] > self.weights[:-1]
-            ):
-                raise ValueError("Invalid value for weights")
-            self.population_size = self.weights.shape[0]
-            self.mu = np.sum(self.weights > 0.0)
+        """Initialize weights accordding to chosen recombination type."""
+        # Implementation allows a custom mu or uses a default
+        # depending on the provided value for recombination_type
+        if self.mu is not None and self.mu > self.population_size:
+            raise ValueError("Invalid value for mu")
+        # The following uses the same values as in [2008:shark]
+        if recombination_type == RecombinationType.SUPERLINEAR:
+            if self.mu is None:
+                self.mu = self.population_size // 2
+            # Same as in Eq. (49) [2016:cma-es-tutorial]
+            self.weights = math.log(
+                (self.population_size + 1.0) / 2.0
+            ) - np.log1p(np.arange(self.population_size))
+        elif recombination_type == RecombinationType.LINEAR:
+            if self.mu is None:
+                self.mu = self.population_size // 2
+            self.weights = np.repeat(self.mu, self.population_size)
+            self.weights[: self.mu] -= np.arange(self.mu)
+            self.weights[self.mu :] -= np.arange(
+                self.population_size - 1, self.mu, -1.0
+            )
+        elif recombination_type == RecombinationType.EQUAL:
+            if self.mu is None:
+                self.mu = self.population_size // 4
+            self.weights = np.ones(self.population_size)
+            self.weights[self.mu :] *= -1.0
+
+    def _post_init_custom_weights(self):
+        """Validate provided weights and override related parameters."""
+        if self.weights[0] < 0.0 or np.any(
+            self.weights[1:] > self.weights[:-1]
+        ):
+            raise ValueError("Invalid value for weights")
+        self.population_size = self.weights.shape[0]
+        self.mu = np.sum(self.weights > 0.0)
 
     def _post_init_mu_eff(self) -> None:
-        """Initialize mu_eff, mu_eff_neg, c_sigma, d_sigma and c_c."""
+        """Initialize mu_eff and related parameters."""
         # Page 31 [2016:cma-es-tutorial]
         # Page 27 [2011:cma-es-tutorial] (deprecated)
         self.mu_eff = np.sum(self.weights[: self.mu]) ** 2 / np.sum(
