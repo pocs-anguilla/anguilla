@@ -8,9 +8,11 @@ Quickstart Guide
 A brief overview
 ----------------
 
-Variants of CMA-ES differ in the evolution strategy they use, in how they peform adaptation, 
-and in wether they work with single or multi-objective functions.
-They are distinguished by prefixes that denote these differences.
+Variants of CMA-ES differ in aspects of the evolution strategy they use
+(e.g. how they perform selection and recombination),
+in how they peform self-adaptation (e.g. how they control internal parameters like the step size), 
+and in wether they were designed for single or multi-objective optimization.
+They are usually distinguished by prefixes that denote these differences.
 
 In the following, a short introduction to variants of CMA-ES is provided to give some background on 
 what is currently possible with the implementations provided in this project.
@@ -72,7 +74,7 @@ Original vs. Hybrid
 
 When introduced by :cite:`2001:cdsa-es`, only the rank-one update was used in the covariance matrix adaptation. This is known as the *original* CMA-ES.
 Later, the rank-:math:`\mu` update was introduced. This variant is called *hybrid* CMA-ES :cite:`2006:active-cma-es`.
-The parameters :math:`c_1` and :math:`c_\mu` are used as weights (:math:`c_1 + c_\mu = 1`) to define how much each update contributes to the adaptation.
+The parameters :math:`c_1` and :math:`c_\mu` are used as learning rates to define how much each update contributes to the self-adaptation.
 
 **Notation**
 
@@ -109,14 +111,16 @@ Pending.
 
 **Notation**
 
-Variants that work with multi-objective functions are prefixed with *MO*.
+Variants designed for multi-objective real-valued optimization are prefixed with *MO*.
 Furthermore, the current state of the art is a variant with unbounded population, denoted as *U-MO-CMA-ES* :cite:`2016:mo-cma-es`.
 
 **Implementation**
 
-A basic [#f2]_ implementation for single-objective CMA-ES is implemented as presented in :cite:`2016:cma-es-tutorial` and :cite:`2013:oo-optimizers`, following the reference implementations from :cite:`2008:shark` and :cite:`2019:pycma`.
+A basic [#f2]_ implementation of the CMA-ES algorithm for single-objective real-valued optimization is implemented 
+as presented in :cite:`2016:cma-es-tutorial` and :cite:`2013:oo-optimizers`, following the reference implementations from :cite:`2008:shark` and :cite:`2019:pycma`.
 
-An implementation for MO-CMA-ES is the main objective of this project, as presented in  :cite:`2007:mo-cma-es`, :cite:`2010:mo-cma-es` and
+An implementation of the MO-CMA-ES algorithm for multi-objective real-valued optimization is the main objective of this project, 
+as presented in  :cite:`2007:mo-cma-es`, :cite:`2010:mo-cma-es` and
 :cite:`2016:mo-cma-es` following the reference implementation from :cite:`2008:shark`. Currently, a work in progress.
 
 See :py:mod:`anguilla.optimizers.cma.CMA` [#f1]_.
