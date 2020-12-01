@@ -69,7 +69,6 @@ def calculate_3d(ps: np.ndarray, ref_p: np.ndarray) -> float:
        :width: 750
        :alt: Example of the algorithm for minimization problem.
     """
-
     if ps.shape[0] == 0:
         return 0.0
 

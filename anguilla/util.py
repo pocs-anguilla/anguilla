@@ -80,6 +80,8 @@ class RBTree:
     """
 
     class _Node:
+        """Models a RBTree node."""
+
         def __init__(self, key: Any, value: Any) -> None:
             self.key = key
             self.value = value
@@ -102,12 +104,12 @@ class RBTree:
         def _get_nodes(x: Any) -> List[Any]:
             if x is not self._nil:
                 return _get_nodes(x.left) + [x] + _get_nodes(x.right)
-            else:
-                return []
+            return []
 
         return "RBTree{}".format(_get_nodes(self._root))
 
     def _create_node(self, key: Any, value: Any) -> _Node:
+        """Helper method to create a new node."""
         x = RBTree._Node(key, value)
         x.left = self._nil
         x.right = self._nil
@@ -115,6 +117,7 @@ class RBTree:
         return x
 
     def _left_rotate(self, x: _Node) -> None:
+        """Left rotate the given subtree."""
         y = x.right
         x.right = y.left
         if y.left is not self._nil:
@@ -130,6 +133,7 @@ class RBTree:
         x.parent = y
 
     def _right_rotate(self, x: _Node) -> None:
+        """Right rotate the given subtree."""
         y = x.left
         x.left = y.right
         if y.right is not self._nil:
@@ -145,6 +149,7 @@ class RBTree:
         x.parent = y
 
     def _fix_insert(self, z: _Node) -> None:
+        """Perform the insertion fixes."""
         while z.parent.is_red:
             if z.parent is z.parent.parent.left:
                 y = z.parent.parent.right
@@ -177,6 +182,7 @@ class RBTree:
         self._root.is_red = False
 
     def _transplant(self, u: _Node, v: _Node) -> None:
+        """Perform the node transplant (used by remove)."""
         if u.parent is self._nil:
             self._root = v
         elif u is u.parent.left:
@@ -186,6 +192,7 @@ class RBTree:
         v.parent = u.parent
 
     def _fix_remove(self, x: _Node) -> None:
+        """Perform the remove fixes."""
         while x is not self._root and not x.is_red:
             if x is x.parent.left:
                 w = x.parent.right
@@ -232,6 +239,7 @@ class RBTree:
         x.is_red = False
 
     def _find(self, key: Any) -> Optional[_Node]:
+        """Helper method to find a node."""
         x = self._root
         while x is not self._nil:
             if key < x.key:
@@ -276,8 +284,8 @@ class RBTree:
                 x = y
                 y = y.parent
             return y.key, y.value
-        else:
-            raise KeyError(str(key))
+
+        raise KeyError(str(key))
 
     def pred(self, key: Any) -> Tuple[Any, Any]:
         """Return the predecesor for the given key.
@@ -309,8 +317,8 @@ class RBTree:
                 x = y
                 y = y.parent
             return y.key, y.value
-        else:
-            raise KeyError(str(key))
+
+        raise KeyError(str(key))
 
     def lower_bound(self, key: Any) -> Tuple[Any, Any]:
         """Return the lower bound for the given key. \
@@ -339,9 +347,11 @@ class RBTree:
                 x = x.right
             else:
                 return x.key, x.value
+
         if y is self._nil:
             return None, None
-        elif key < y.key:
+
+        if key < y.key:
             # start inlining of pred
             x = y
             if x.left is not self._nil:
@@ -355,8 +365,8 @@ class RBTree:
                 y = y.parent
             return y.key, y.value
             # end inlining of pred
-        else:
-            return y.key, y.value
+
+        return y.key, y.value
 
     def insert(self, key: Any, value: Any) -> None:
         """Insert the given value for the given key.

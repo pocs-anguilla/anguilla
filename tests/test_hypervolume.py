@@ -1,8 +1,8 @@
 """Testsuite for the hypervolume module."""
+import math
 import unittest
 
 import numpy as np
-import math
 
 from anguilla.hypervolume.exact import calculate_2d, calculate_3d
 
