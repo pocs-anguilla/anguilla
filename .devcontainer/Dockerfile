@@ -82,7 +82,7 @@ ENV PATH "$PATH:/opt/cling_2020-11-05_ROOT-ubuntu18.04/bin:/opt/cling_2020-11-05
 # the devcontainer doesn't take too long when updating, e.g.,
 # "requirements/devcontainer.txt" (see "devcontainer.json").
 
-RUN pip3 install jupyterlab
+RUN apt-get install -y nodejs && pip3 install jupyterlab
 
 # Install Cling's kernels for Jupyter
 # See: https://github.com/root-project/cling/tree/master/tools/Jupyter

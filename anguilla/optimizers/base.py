@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import abc
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -26,17 +27,12 @@ class AbstractOptimizer(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def name() -> str:
         """Return the name of the optimizer."""
-        pass
+        raise NotImplementedError()
 
     def __init__(self, initial_point: np.ndarray) -> None:
         """Initialize the optimizer."""
         self._initial_point = initial_point
         self._fevals: int = 0
-
-    @abc.abstractmethod
-    def reset(self) -> None:
-        """Re-initialize the optimizer."""
-        pass
 
     @abc.abstractmethod
     def ask(self) -> np.ndarray:
@@ -47,7 +43,7 @@ class AbstractOptimizer(metaclass=abc.ABCMeta):
         np.ndarray
             The new candidate solution.
         """
-        pass
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def tell(self, solutions: np.ndarray, fvalues: np.ndarray) -> None:
@@ -60,12 +56,23 @@ class AbstractOptimizer(metaclass=abc.ABCMeta):
         fvalues
             The function value of the candidate solutions.
         """
-        pass
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def stop(self) -> bool:
-        """Pending."""
-        pass
+        """Check for stopping conditions."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def ask(self) -> np.ndarray:
+        """Compute a new candidate solution.
+
+        Returns
+        -------
+        np.ndarray
+            The new candidate solution.
+        """
+        raise NotImplementedError()
 
     def optimize(self) -> AbstractOptimizer:
         """Run the optimization.
@@ -75,4 +82,4 @@ class AbstractOptimizer(metaclass=abc.ABCMeta):
         AbstractOptimizer
             The optimizer instance.
         """
-        pass
+        raise NotImplementedError()

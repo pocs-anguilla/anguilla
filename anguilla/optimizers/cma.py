@@ -1,5 +1,5 @@
 """This module contains implementations related to the CMA-ES algorithm \
-    for single-objective real-valued optimization."""
+    for real-valued single-objective optimization."""
 from __future__ import annotations
 
 import math
@@ -43,7 +43,7 @@ class StrategyParameters:
 
     Parameters
     ----------
-    n : optional
+    n
         Dimensionality of the search space \
             (i.e. the number of variables of a solution).
     population_size : optional
@@ -59,29 +59,30 @@ class StrategyParameters:
     c_sigma : optional
         The learning rate used for the step size update.
     d_sigma : optional
-        The step size damping parameter to handle selection noise.
+        The step size damping factor to handle selection noise.
     c_c : optional
         The learning rate for the evolution path update.
     c_1 : optional
-        The learning rate for the rank-one update used for updating \
-            the covariance matrix.
+        The learning rate for the rank-one update used in the \
+            the covariance matrix adaptation.
         Can be a callable that takes ``mu_eff`` as argument.
     c_mu : optional
-        The learning rate for the rank-mu update used for updating \
-            the covariance matrix.
+        The learning rate for the rank-mu update used in the \
+            the covariance matrix adaptation.
         Can be a callable that takes ``mu_eff`` as argument.
     recombination_type : optional
         How to initialize ``weights`` if not provided.
     alpha_cov : optional
         Used to initialize ``c_1`` and ``c_mu`` if not provided.
     active : optional
-        Initialize parameters (that were not provided) to use
-        active CMA.
+        Scale the negative recombination weights to use under active CMA.
 
     Attributes
     ----------
     mu_eff
         The variance effective number of the positive weights.
+    mu_eff_neg
+        The variance effective number of the negative weights.
 
     Raises
     ------
@@ -90,86 +91,18 @@ class StrategyParameters:
 
     Notes
     -----
-    All optional parameters from 1 to 9 are initialized according to the \
-        default values from :cite:`2016:cma-es-tutorial` if not provided. \
-        The equations referenced in the following table can be found there.
+    The objectives of this class are:
 
-    .. list-table:: Parameter summary
-        :widths: 2 6 2 15 16
-        :header-rows: 1
+    * To facilitate the definition of external strategy parameters in a way \
+    that a user can use the default recommended values in the \
+    literature or specify custom values (for some or all parameters) for \
+    further experimentation.
+    * To validate any custom parameter values according to the theory \
+    in the literature.
 
-        * -
-          - Parameter
-          - Symbol
-          - Validation
-          - Default
-        * - 1
-          - n
-          - :math:`n`
-          - :math:`n \\geq 1`
-          -
-        * - 2
-          - population_size
-          - :math:`\\lambda`
-          - :math:`\\lambda \\geq 2`
-          - :math:`\\begin{cases} |w| & \\text{weights provided} \\\\ \
-                                  4 + \\lfloor 3 \\log n \\rfloor \
-                                  & \\text{otherwise} \
-                   \\end{cases}`
-        * - 3
-          - mu
-          - :math:`\\mu`
-          - :math:`\\mu \\leq \\lambda`
-          - :math:`\\begin{cases} |\\{ w_i : w_i > 0 \\}| \
-                                  & \\text{weights provided} \\\\ \
-                                  \\lfloor \\lambda / 4 \\rfloor & \
-                                  \\text{equal recombination type} \\\\ \
-                                  \\lfloor \\lambda / 2 \\rfloor & \
-                                  \\text{otherwise} \
-                    \\end{cases}`
-        * - 4
-          - weights
-          - :math:`w_{1,2 \\cdots, \\lambda}`
-          - :math:`w_1 \\geq \\cdots \\geq w_\\lambda > 0`, :math:`w_1 > 0`
-          - Eq. (53)
-        * - 5
-          - c_m
-          - :math:`c_m`
-          - :math:`c_m \\leq 1`
-          - Eq. (54)
-        * - 6
-          - c_sigma
-          - :math:`c_\\sigma`
-          - :math:`c_\\sigma \\leq 1`
-          - Eq. (55)
-        * - 7
-          - d_sigma
-          - :math:`d_\\sigma`
-          - :math:`d_\\sigma \\approx 1`
-          - Eq. (55)
-        * - 8
-          - c_c
-          - :math:`c_c`
-          - :math:`c_c \\leq 1`
-          - Eq. (56)
-        * - 9
-          - c_1
-          - :math:`c_1`
-          - :math:`c_1 \\leq 1 - c_\\mu`
-          - Eq. (57)
-        * - 10
-          - c_mu
-          - :math:`c_\\mu`
-          - :math:`c_\\mu \\leq 1 - c_1`
-          - Eq. (58)
-
-    Following the recommendations from p. 32 of \
-    :cite:`2016:cma-es-tutorial`, for most problems prefer the default \
-    values for parameters 4 to 10; and don't set values for parameter \
-    2 smaller than its default would be.
+    Please see the page ":ref:`notes`" for more information.
     """
 
-    n: int
     population_size: typing.Optional[int] = None
     mu: typing.Optional[int] = None
     weights: typing.Optional[np.ndarray] = None
@@ -180,6 +113,8 @@ class StrategyParameters:
     c_mu: typing.Union[float, typing.Callable[[float], float], None] = None
     c_m: float = 1.0
     mu_eff: float = dataclasses.field(init=False)
+    # Meta-parameters are defined as init vars
+    n: dataclasses.InitVar[int] = None
     recombination_type: dataclasses.InitVar[
         RecombinationType
     ] = RecombinationType.SUPERLINEAR
@@ -189,38 +124,39 @@ class StrategyParameters:
 
     def __post_init__(
         self,
+        n: int,
         recombination_type: RecombinationType,
         alpha_cov: float,
         active: bool,
     ) -> None:
         """Initialize and validate parameters."""
-        self._post_init_population_size()
+        if n < 1:
+            raise ValueError("Invalid value for n")
+
+        self._post_init_population_size(n)
 
         if self.weights is None:
             self._post_init_default_weights(recombination_type)
         else:
             self._post_init_custom_weights()
 
-        self._post_init_mu_eff()
+        self._post_init_mu_eff(n)
 
-        self._post_init_c_1_mu(alpha_cov)
+        self._post_init_c_1_mu(alpha_cov, n)
 
-        self._post_init_scale_weights(active)
+        self._post_init_scale_weights(active, n)
 
         if self.c_m > 1.0:
             raise ValueError("Invalid value for c_m")
 
-    def _post_init_population_size(self) -> None:
+    def _post_init_population_size(self, n: int) -> None:
         """Initialize and/or validate population size."""
-        if self.n < 1:
-            raise ValueError("Invalid value for n")
-
         if self.population_size is None:
             # Eq. (48) [2016:cma-es-tutorial]
             # Eq. (44) [2011:cma-es-tutorial] (same)
-            lambda_ = 4 + math.floor(3 * math.log(self.n))
+            lambda_ = 4 + math.floor(3 * math.log(float(n)))
             # Heuristic for small search spaces from [2008:shark]
-            lambda_ = max(5, min(lambda_, self.n))
+            lambda_ = max(5, min(lambda_, n))
             self.population_size = lambda_
         elif self.population_size < 2:
             raise ValueError("Invalid value for population_size")
@@ -264,8 +200,9 @@ class StrategyParameters:
         self.population_size = self.weights.shape[0]
         self.mu = np.sum(self.weights > 0.0)
 
-    def _post_init_mu_eff(self) -> None:
+    def _post_init_mu_eff(self, n: int) -> None:
         """Initialize mu_eff and related parameters."""
+        n_f = float(n)
         # Page 31 [2016:cma-es-tutorial]
         # Page 27 [2011:cma-es-tutorial] (deprecated)
         self.mu_eff = np.sum(self.weights[: self.mu]) ** 2 / np.sum(
@@ -280,14 +217,14 @@ class StrategyParameters:
         if self.c_sigma is None:
             # Eq. (55) [2016:cma-es-tutorial]
             # Eq. (56) [2011:cma-es-tutorial] (same)
-            self.c_sigma = (self.mu_eff + 2.0) / (self.n + self.mu_eff + 5.0)
+            self.c_sigma = (self.mu_eff + 2.0) / (n_f + self.mu_eff + 5.0)
         elif self.c_sigma > 1.0:
             raise ValueError("Invalid value for c_sigma")
 
         if self.d_sigma is None:
             # Eq. (55) [2016:cma-es-tutorial]
             # Eq. (46) [2011:cma-es-tutorial] (same)
-            tmp = (self.mu_eff - 1.0) / (self.n + 1.0)
+            tmp = (self.mu_eff - 1.0) / (n_f + 1.0)
             self.d_sigma = 1.0 + 2.0 * max(0.0, tmp - 1.0) + self.c_sigma
         elif not np.close(1.0, self.d_sigma):
             raise ValueError("Invalid value for d_sigma")
@@ -295,18 +232,19 @@ class StrategyParameters:
         if self.c_c is None:
             # Eq. (56) [2016:cma-es-tutorial]
             # Eq. (47) [2011:cma-es-tutorial] (same)
-            self.c_c = (4.0 + self.mu_eff / self.n) / (
-                self.n + 4.0 + 2.0 * self.mu_eff / self.n
+            self.c_c = (4.0 + self.mu_eff / n_f) / (
+                n_f + 4.0 + 2.0 * self.mu_eff / n_f
             )
         elif self.c_c > 1.0:
             raise ValueError("Invalid value for c_c")
 
-    def _post_init_c_1_mu(self, alpha_cov) -> None:
+    def _post_init_c_1_mu(self, alpha_cov: float, n: int) -> None:
         """Initialize c_1 and c_mu if not provided."""
+        n_f = float(n)
         if self.c_1 is None:
             # Eq. (57) [2016:cma-es-tutorial]
             # Eq. (48) [2011:cma-es-tutorial] (same if alpha_cov = 2)
-            self.c_1 = alpha_cov / ((self.n + 1.3) ** 2 + self.mu_eff)
+            self.c_1 = alpha_cov / ((n_f + 1.3) ** 2 + self.mu_eff)
         elif callable(self.c_1):
             # Allows the user to compute dynamically
             self.c_1 = self.c_1(self.mu_eff)
@@ -314,7 +252,7 @@ class StrategyParameters:
             # Eq. (58) [2016:cma-es-tutorial]
             # Eq. (49) [2011:cma-es-tutorial] (same, alpha_mu is now alpha_cov)
             tmp_num = self.mu_eff - 2.0 + (1.0 / self.mu_eff)
-            tmp_den = (self.n + 2.0) ** 2 + alpha_cov * self.mu_eff / 2.0
+            tmp_den = (n_f + 2.0) ** 2 + alpha_cov * self.mu_eff / 2.0
             self.c_mu = min(1 - self.c_1, alpha_cov * tmp_num / tmp_den)
         elif callable(self.c_mu):
             self.c_mu = self.c_mu(self.mu_eff)
@@ -324,7 +262,7 @@ class StrategyParameters:
         if self.c_mu > 1.0 - self.c_1:
             raise ValueError("Invalid value for c_mu")
 
-    def _post_init_scale_weights(self, active: bool) -> None:
+    def _post_init_scale_weights(self, active: bool, n: int) -> None:
         """Scale the weigths."""
         # Scale positive weights to that they sum to 1
         # Eq. (53) [2016:cma-es-tutorial]
@@ -332,6 +270,7 @@ class StrategyParameters:
         self.weights[: self.mu] /= np.sum(self.weights[: self.mu])
 
         if active:
+            n_f = float(n)
             # Scale negative weights so that they sum to -alpha_mu_eff_neg
             # Eq. (53) [2016:cma-es-tutorial] (new)
             # TODO: Need to clarify what could be a good unit test for this?
@@ -339,7 +278,7 @@ class StrategyParameters:
             alpha_mu_eff_neg = 1.0 + (2.0 * self.mu_eff) / (
                 self.mu_eff_neg + 2.0
             )
-            alpha_pos_def = (1.0 - self.c_1 - self.c_mu) / (self.n * self.c_mu)
+            alpha_pos_def = (1.0 - self.c_1 - self.c_mu) / (n_f * self.c_mu)
             alpha_min = min(alpha_mu, alpha_mu_eff_neg, alpha_pos_def)
 
             self.weights[self.mu :] *= alpha_min / np.sum(
@@ -440,7 +379,7 @@ class StoppingConditions:
 
 
 class CMA(AbstractOptimizer):
-    """The CMA-ES algorithm for single-objective real-valued optimization.
+    """The CMA-ES algorithm for real-valued single-objective optimization.
 
     Parameters
     ----------
@@ -462,6 +401,8 @@ class CMA(AbstractOptimizer):
 
     Notes
     -----
+    Currently designing this class. Please see the ":ref:`notes`" page.
+
     Based on :cite:`2016:cma-es-tutorial` and \
         the reference implementations from :cite:`2019:pycma`  \
             and :cite:`2008:shark`.
@@ -481,7 +422,7 @@ class CMA(AbstractOptimizer):
     _dtype: np.dtype
     _best_solution: typing.Optional[np.ndarray]
     _best_value: typing.Optional[float]
-    _function_values: typing.Optional[np.ndarray]
+    _fitness_values: typing.Optional[np.ndarray]
 
     def name(self) -> str:
         """Return the (prefixed) name of the CMA-ES variant."""
@@ -517,11 +458,6 @@ class CMA(AbstractOptimizer):
         self._best_value = None
 
         if strategy_parameters is not None:
-            if self._n != strategy_parameters.n:
-                raise ValueError(
-                    "Dimensionality disagreement between \
-                    the initial_point and the given strategy_params."
-                )
             self._params = strategy_parameters
         else:
             self._params = StrategyParameters(n=self._n)
@@ -554,26 +490,21 @@ class CMA(AbstractOptimizer):
             self._cov_D = np.diag(np.sqrt(D_sq))
             self._eigeneval += 1
 
-        self._function_values = np.zeros(self._params.population_size)
-
-    def reset(self) -> None:
-        """Re-initialize the optimizer."""
-        raise NotImplementedError()
+        self._fitness_values = np.zeros(self._params.population_size)
 
     def ask(self) -> np.ndarray:
-        """Create new individuals (candidate solutions / search points) \
-            through mutation.
+        """Create new offspring (search points) through mutation.
 
         Notes
         -----
-        The mutation operator samples candidate solutions (individuals) \
-        from the multivariate Gaussian distribution that models the parent \
+        The mutation operator samples individuals (search points) from \
+        the multivariate Gaussian distribution that models the parent \
         population. See p. 8 of :cite:`2016:cma-es-tutorial`.
 
         Returns
         -------
         np.ndarray
-            The new candidate solutions. Currently, an array with shape \
+            The offspring (search points). Currently, an array with shape \
             ``(n, population_size)``.
         """
         # TODO: Could refactor when Numpy adds support for passing
@@ -600,68 +531,58 @@ class CMA(AbstractOptimizer):
         return x
 
     def rank(
-        self, solutions: np.ndarray, function_values: np.ndarray
+        self,
+        search_points: np.ndarray,
+        fitness_values: np.ndarray,
+        fitness_eval_count: int,
     ) -> np.ndarray:
-        """Rank the individuals (candidate solutions) according \
-            to their fitness (ordering of their function values).
+        """Rank the individuals according to the ordering of their \
+            fitness values.
 
         Parameters
         ----------
-        solutions
-            The candidate solutions.
-        function_values
-            The values of the solutions computed by the objective function.
+        search_points
+            The search points.
+        fitness_values
+            The fitness values.
+        fitness_eval_count
+            The number of evaluations of the fitness function.
 
         Returns
         -------
         np.ndarray
-            The indices of the solutions sorted according to their ranking (i.e. \
-            the first element is the index of the best solution).
-
-        Notes
-        -----
-        Implements the idea of decoupled ranking presented in \
-        :cite:`2013:oo-optimizers`. This allows to implement
-        different alternatives of uncertainty handling (i.e. noise) by
-        subclassing and overriding this method. The default \
-        implementation is the one used by :cite:`2008:shark`.
+            The indices of the search points sorted according to the \
+            ordering of their fitness values.
         """
-        self._function_values[:] = function_values
+        self._fitness_values[:] = fitness_values
 
-        # TODO: Add the noise handling implemented by [2008:shark].
-        #       Currently uses the simple ranking without accounting for
-        #       uncertainty.
+        ranked_indices = np.argsort(fitness_values)
 
-        # Sort candidate solutions by their fitness
-        ranked_indices = np.argsort(function_values)
-
-        # TODO: Fix counting of function evaluations
-        #       when uncertainty handling is implemented.
-        #       See p. 34 [2013:oo-optimizers] and [2008:shark].
-        self._fevals += self._params.population_size
+        self._fevals = fitness_eval_count
 
         best_index = ranked_indices[0]
         if (
             self._best_value is None
-            or self._best_value > function_values[best_index]
+            or self._best_value > fitness_values[best_index]
         ):
-            self._best_value = function_values[best_index]
-            self._best_solution = np.copy(solutions[:, best_index])
+            self._best_value = fitness_values[best_index]
+            self._best_solution = np.copy(search_points[:, best_index])
 
         return ranked_indices
 
-    def tell(self, solutions: np.ndarray, ranked_indices: np.ndarray) -> None:
+    def tell(
+        self, search_points: np.ndarray, ranked_indices: np.ndarray
+    ) -> None:
         """Perform the selection and recombination of the individuals \
-            (candidate solutions) and the self-adaptation of the internal \
-            parameters (step size and covariance matrix).
+            and the self-adaptation of the internal parameters.
 
         Parameters
         ----------
-        solutions
-            The candidate solutions.
+        search_points
+            The search points.
         ranked_indices
-            The indices of the solutions sorted according to their ranking (i.e. \
-            the first element is the index of the best solution).
+            The indices of the search points sorted according to the \
+            ordering of their fitness values.
         """
         population_size = self._params.population_size
         mu = self._params.mu
@@ -685,7 +606,7 @@ class CMA(AbstractOptimizer):
         # Recombination
         # Eq. (39) [2016:cma-es-tutorial]
         # Eq. (36) [2011:cma-es-tutorial] (same)
-        y = (solutions - self._mean) / self._sigma
+        y = (search_points - self._mean) / self._sigma
         # Eq. (41) [2016:cma-es-tutorial]
         # Eq. (38) [2011:cma-es-tutorial] (same)
         yw = y[:, selected_indices] @ weights[:mu]
@@ -694,7 +615,7 @@ class CMA(AbstractOptimizer):
         # Eq. (42) [2016:cma-es-tutorial]
         # Eq. (39) [2011:cma-es-tutorial] (deprecated)
         tmp = (
-            (solutions[:, selected_indices] - self._mean) @ weights[:mu]
+            (search_points[:, selected_indices] - self._mean) @ weights[:mu]
         ).reshape(self._n, 1)
         assert tmp.shape == self._mean.shape
         self._mean += c_m * tmp.reshape(self._n, 1)
@@ -707,7 +628,7 @@ class CMA(AbstractOptimizer):
         #   <=> D^-1 B' ((x-mean) / sigma)   = z
         BD_inv = np.diag(1.0 / np.diag(self._cov_D)) @ self._cov_B.T
         z = BD_inv @ y
-        assert z.shape == solutions.shape
+        assert z.shape == search_points.shape
 
         # Perform self-adaptation of the internal (endogenous) parameters:
         # 1) Step size
@@ -731,9 +652,8 @@ class CMA(AbstractOptimizer):
 
         # Covariance matrix adaptation
 
-        # The following coefficients prevent the covariance matrix
-        # evolution path from getting large quickly when
-        # the step size evolution path increases rapidly
+        # Prevent a fast increase in the axes of C when the step size is
+        # small
         # Page [2015:es-overview]
         # Page 28 [2016:cma-es-tutorial]
         # Page 25 [2011:cma-es-tutorial] (same)

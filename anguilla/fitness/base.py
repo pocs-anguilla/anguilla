@@ -18,8 +18,12 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):  # WIP
 
     Attributes
     ----------
-        name
-            The name of the function.
+    name
+        The name of the function.
+    n_objectives
+        The number of objectives.
+    eval_count
+        Evaluation counter.
 
     Notes
     -----
@@ -36,6 +40,8 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):  # WIP
     def __init__(self, eval, rng=None):
         """Initialize the objective function."""
         self._eval = eval
+        self.n_objectives = 1
+        self.eval_count = 0
 
         if rng is None:
             self._rng = np.random.default_rng()
@@ -67,30 +73,12 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):  # WIP
 
     def __call__(self, x):
         """Compute the function value at a point(s)."""
+        self.eval_count += 1
         if len(x.shape) > 1:
+            self.eval_count += x.shape[0] - 1
             out = np.empty((x.shape[0],), dtype=float)
             self._eval(x, out)
             return out
         out = np.empty((1,), dtype=float)
         self._eval(x.reshape(1, x.shape[0]), out)
         return out[0]
-
-
-class AbstractObjectiveFunctionWithInputDomain(AbstractObjectiveFunction):
-    """An objective function that defines a commonly used \
-       input domain.
-
-    Attributes
-    ----------
-        x_min
-            The lower bound of the input domain.
-        x_max
-            The upper bound of the input domain.
-
-    Notes
-    -----
-        The common input domain can be useful for plotting.
-    """
-
-    x_min: float
-    x_max: float
