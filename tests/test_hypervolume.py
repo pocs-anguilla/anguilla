@@ -12,8 +12,7 @@ class TestExact(unittest.TestCase):
 
     def test_calculate_2d(self) -> None:
         """Test the calculate_2d function."""
-        # Adapted from: https://github.com/Shark-ML/Shark/blob/4.1/Test/Algorithms/Hypervolume.cpp
-
+        # Adapted from: https://git.io/JIUvp
         ref_p = np.array([11.0, 11.0], dtype=float)
         ps = np.array(
             [
@@ -46,7 +45,7 @@ class TestExact(unittest.TestCase):
 
     def test_calculate_3d(self) -> None:
         """Test the calculate_3d function."""
-        # Adapted from: https://github.com/Shark-ML/Shark/blob/4.1/Test/Algorithms/Hypervolume.cpp
+        # Adapted from: https://git.io/JIUvp
         ref_p = np.array([1.1, 1.1, 1.1], dtype=float)
         ps = np.array(
             [
