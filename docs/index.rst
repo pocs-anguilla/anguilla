@@ -47,38 +47,11 @@ A short example
 
 .. code-block:: python
 
-   from anguilla.optimizers.cma import CMA, StrategyParameters, StoppingConditions
-   from anguilla.fitness.benchmark import Sphere
-
-   # TODO: Showcase a MO-CMA-ES example
-
-   # Note: Interfaces subject to changes (WIP).
-
-    parameters = StrategyParameters(n=n)
-    conditions = StoppingConditions(n=n,
-                                    population_size=parameters.population_size,
-                                    ftarget=1e-14,
-                                    )
-    fitness_function = Sphere()
-    initial_point = fitness_function.propose_initial_point(n)
-    optimizer = CMA(initial_point=initial_point,
-                    initial_sigma=0.3,
-                    strategy_parameters=parameters,
-                    stopping_conditions=conditions)
-    while not optimizer.stop():
-        candidate_solutions = optimizer.ask()
-        # TODO: Will fix so that transposition is not required below
-        function_values = fitness_function(candidate_solutions.T)
-        ranked_indices = optimizer.rank(candidate_solutions, function_values)
-        optimizer.tell(candidate_solutions, ranked_indices)
-        if (optimizer._fevals % 20) == 0:
-            display(optimizer._fevals, optimizer._best_value, optimizer._best_solution)
-
-More usage information of currently available implementations can be found in :py:mod:`anguilla.optimizers.cma.CMA`,
-:py:mod:`anguilla.optimizers.cma.StrategyParameters`, :py:mod:`anguilla.optimizers.cma.StoppingConditions` and
-:py:mod:`anguilla.fitness.benchmark`.
+   # TODO: Showcase a MO-CMA-ES example here
 
 Please check out the :ref:`Quickstart Guide <quickstart>` for more detailed examples.
+
+More usage information of currently available implementations can be found in the ":ref:`modindex`" page.
 
 Indices and tables
 ##################
@@ -94,4 +67,5 @@ Indices and tables
 
    quickstart
    development
+   notes
    references

@@ -3,7 +3,7 @@
 import numba
 import numpy as np
 
-from anguilla.fitness.base import AbstractObjectiveFunctionWithInputDomain
+from anguilla.fitness.base import AbstractObjectiveFunction
 
 # We use Numba to implement fitness functions that support
 # Numpy's "Generalized Universal Function API".
@@ -21,7 +21,7 @@ def _sum_squares(x, y):
     y[0] = np.sum((x ** 2) * ii)
 
 
-class Sphere(AbstractObjectiveFunctionWithInputDomain):
+class Sphere(AbstractObjectiveFunction):
     """The Sphere function.
 
     Notes
@@ -29,9 +29,6 @@ class Sphere(AbstractObjectiveFunctionWithInputDomain):
 
     `Learn more <https://www.sfu.ca/~ssurjano/spheref.html>`_ about this function at :cite:`2013:simulationlib`.
     """
-
-    x_min = -5.12
-    x_max = 5.12
 
     def __init__(self, rng=None):
         super().__init__(_sphere, rng=rng)
@@ -41,7 +38,7 @@ class Sphere(AbstractObjectiveFunctionWithInputDomain):
         return self._rng.standard_normal(size)
 
 
-class SumSquares(AbstractObjectiveFunctionWithInputDomain):
+class SumSquares(AbstractObjectiveFunction):
     """The Axis Parallel Hyper-Ellipsoid function.
 
     Notes
@@ -49,9 +46,6 @@ class SumSquares(AbstractObjectiveFunctionWithInputDomain):
 
     `Learn more <https://www.sfu.ca/~ssurjano/sumsqu.html>`_ about this function at :cite:`2013:simulationlib`.
     """
-
-    x_min = -10.0
-    x_max = 10.0
 
     def __init__(self, rng=None):
         super().__init__(_sum_squares, rng=rng)
