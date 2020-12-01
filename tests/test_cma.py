@@ -13,7 +13,7 @@ class TestCMAStrategyParameters(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up for tests."""
-        self.params = StrategyParameters(n=8, negative_weights_scaler=None)
+        self.params = StrategyParameters(n=8, active=True)
 
     def test_positive_weights(self) -> None:
         """Test post-condition for positive weights."""
@@ -29,7 +29,7 @@ class TestCMAStrategyParameters(unittest.TestCase):
         #       to -alpha_mu_eff_neg so maybe remove this unit test?
         mu = self.params.mu
         mu_eff = self.params.mu_eff
-        mu_eff_neg = self.params._mu_eff_neg
+        mu_eff_neg = self.params.mu_eff_neg
         weights = self.params.weights
 
         alpha_mu_eff_neg = 1.0 + (2.0 * mu_eff) / (mu_eff_neg + 2.0)
@@ -65,6 +65,7 @@ class TestCMAOptimizer(unittest.TestCase):
 
     def test_ask(self) -> None:
         """Test the ask method."""
+        # TODO: Fix this test
         n = 3
         sigma = 0.5
         rng = np.random.default_rng(seed=0)
