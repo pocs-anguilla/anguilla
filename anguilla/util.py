@@ -2,7 +2,7 @@
 import math
 import functools
 
-from typing import Any, Optional, Callable, Tuple
+from typing import Any, Optional, Callable, Tuple, List
 
 
 def _exp_norm_chi_implementation(
@@ -97,7 +97,9 @@ class RBTree:
         self._root = self._nil
 
     def __repr__(self) -> str:
-        def _get_nodes(x):
+        """Return a string representation of the tree."""
+
+        def _get_nodes(x: Any) -> List[Any]:
             if x is not self._nil:
                 return _get_nodes(x.left) + [x] + _get_nodes(x.right)
             else:
@@ -183,7 +185,7 @@ class RBTree:
             u.parent.right = v
         v.parent = u.parent
 
-    def _fix_remove(self, x: _Node):
+    def _fix_remove(self, x: _Node) -> None:
         while x is not self._root and not x.is_red:
             if x is x.parent.left:
                 w = x.parent.right
@@ -245,7 +247,23 @@ class RBTree:
         return self._root is self._nil
 
     def succ(self, key: Any) -> Tuple[Any, Any]:
-        """Return the succesor for the given key."""
+        """Return the succesor for the given key.
+
+        Parameters
+        ----------
+        key
+            The key for which to look the successor.
+
+        Raises
+        ------
+        KeyError
+            The provided key is not in the tree.
+
+        Returns
+        -------
+        Any, Any
+            The key and value of the successor.
+        """
         x = self._find(key)
         if x is not None:
             if x.right is not self._nil:
@@ -262,7 +280,23 @@ class RBTree:
             raise KeyError(str(key))
 
     def pred(self, key: Any) -> Tuple[Any, Any]:
-        """Return the predecesor for the given key."""
+        """Return the predecesor for the given key.
+
+        Parameters
+        ----------
+        key
+            The key for which to look the predecessor.
+
+        Raises
+        ------
+        KeyError
+            The provided key is not in the tree.
+
+        Returns
+        -------
+        Any, Any
+            The key and value of the predecessor.
+        """
         x = self._find(key)
         if x is not None:
             if x.left is not self._nil:
@@ -281,19 +315,20 @@ class RBTree:
     def lower_bound(self, key: Any) -> Tuple[Any, Any]:
         """Return the lower bound for the given key. \
         That is, the greatest that is less than or equal to the key.
-        
-        Notes
-        -----
-        The given key may not exist in the tree.
 
-        
+        Parameters
+        ----------
+        key
+            The key for which to look the lower bound. It doesn't need to \
+                exist in the tree.
+
         Returns
         -------
         Any, Any
-            Returns the key and value of the lower bound if it exists.
-            Otherwise returns None and None.
-            
+            The key and value of the lower bound if it exists, \
+                otherwise None and None.
         """
+        # TODO: improve this implementation.
         y = self._nil
         x = self._root
         while x is not self._nil:
@@ -307,7 +342,6 @@ class RBTree:
         if y is self._nil:
             return None, None
         elif key < y.key:
-            return self.pred(y.key)
             # start inlining of pred
             x = y
             if x.left is not self._nil:
@@ -325,7 +359,19 @@ class RBTree:
             return y.key, y.value
 
     def insert(self, key: Any, value: Any) -> None:
-        """Insert the given value for the given key."""
+        """Insert the given value for the given key.
+
+        Parameters
+        ----------
+        key
+            The key of the item to insert.
+        value
+            The value of the item to insert.
+
+        Notes
+        -----
+        Duplicate keys are inserted (no update is performed).
+        """
         z = self._create_node(key, value)
         y = self._nil
         x = self._root
@@ -346,7 +392,18 @@ class RBTree:
         self._fix_insert(z)
 
     def remove(self, key: Any) -> None:
-        """Remove the given key."""
+        """Remove the given key.
+
+        Parameters
+        ----------
+        key
+            The key to remove.
+
+        Raises
+        ------
+        KeyError
+            The provided key doesn't exist in the tree.
+        """
         z = self._find(key)
         if z is not None:
             y = z
