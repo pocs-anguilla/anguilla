@@ -1,7 +1,7 @@
 """Implementations for computing the exact hypervolume indicator."""
 import numpy as np
 
-from anguilla.util import RBTree
+from anguilla.ds.rbtree import RBTree
 
 
 def calculate_2d(ps: np.ndarray, ref_p: np.ndarray) -> float:
@@ -113,7 +113,8 @@ def calculate_3d(ps: np.ndarray, ref_p: np.ndarray) -> float:
     # And then all the other points are processed.
     for p_x, p_y, p_z in sorted_ps[1:, :]:
         # find greatest q_x, such that q_x <= p_x
-        q_x, q_y = front_2d.lower_bound(p_x)
+        node_q = front_2d.lower_bound_by_key(p_x)
+        q_x, q_y = node_q
 
         if p_y < q_y:  # p is non-dominated by q
 
@@ -123,7 +124,8 @@ def calculate_3d(ps: np.ndarray, ref_p: np.ndarray) -> float:
             # remove dominated points and their area contributions
             prev_x = p_x
             prev_y = q_y
-            s_x, s_y = front_2d.succ(q_x)
+            node_s = front_2d.succ(node_q)
+            s_x, s_y = node_s
 
             while True:
                 area -= (s_x - prev_x) * (ref_y - prev_y)
@@ -131,9 +133,10 @@ def calculate_3d(ps: np.ndarray, ref_p: np.ndarray) -> float:
                     break
                 prev_x = s_x
                 prev_y = s_y
-                tmp = s_x
-                s_x, s_y = front_2d.succ(s_x)
-                front_2d.remove(tmp)
+                dominated_node = node_s
+                node_s = front_2d.succ(node_s)
+                s_x, s_y = node_s
+                front_2d.remove(dominated_node)
 
             # add the new point
             area += (s_x - p_x) * (ref_y - p_y)
