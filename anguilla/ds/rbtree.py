@@ -1,12 +1,13 @@
 """Implements a red-black tree."""
 
-from typing import Any, Optional, Callable, Tuple, List
+from typing import Any, Optional, Tuple, List
 
 
 class RBNode:
     """Models the node of a red-black tree."""
 
     def __init__(self, key: Any, value: Any) -> None:
+        """Initialize the node."""
         self.key = key
         self.value = value
         self.is_red = False
@@ -15,15 +16,21 @@ class RBNode:
         self.parent = self
 
     def __repr__(self) -> str:
+        """Create a string representation of the node."""
         return "({}, {})".format(self.key, self.value)
 
-    def __getitem__(self, i) -> Any:
+    def __getitem__(self, i: int) -> Any:
+        """Iterate over the item.
+
+        Notes
+        -----
+        Allows syntantic sugar for unpacking.
+        """
         if i == 0:
             return self.key
-        elif i == 1:
+        if i == 1:
             return self.value
-        else:
-            raise IndexError()
+        raise IndexError()
 
 
 class RBTree:
@@ -51,7 +58,7 @@ class RBTree:
         return "RBTree{}".format(_get_nodes(self._root))
 
     def _create_node(self, key: Any, value: Any) -> RBNode:
-        """Helper method to create a new node."""
+        """Create a new node for the item."""
         x = RBNode(key, value)
         x.left = self._nil
         x.right = self._nil
@@ -181,7 +188,7 @@ class RBTree:
         x.is_red = False
 
     def _find(self, key: Any) -> Optional[RBNode]:
-        """Helper method to find a node."""
+        """Find the first node with the given key."""
         x = self._root
         while x is not self._nil:
             if key < x.key:
@@ -201,7 +208,7 @@ class RBTree:
         """
         return self._root is self._nil
 
-    def is_nil(self, node) -> bool:
+    def is_nil(self, node: RBNode) -> bool:
         """Determine is a node is nil.
 
         Parameters
@@ -256,19 +263,16 @@ class RBTree:
         RBNode
             The successor node.
         """
-        retval = self._nil
         if x.right is not self._nil:
             x = x.right  # find min of the right subtree
             while x.left is not self._nil:
                 x = x.left
-            retval = x
-        else:
-            y = x.parent
-            while y is not self._nil and x is y.right:
-                x = y
-                y = y.parent
-            retval = y
-        return retval
+            return x
+        y = x.parent
+        while y is not self._nil and x is y.right:
+            x = y
+            y = y.parent
+        return y
 
     def pred_by_key(self, key: Any) -> Tuple[Any, Any]:
         """Return the predecessor for the given key.
@@ -311,21 +315,18 @@ class RBTree:
         RBNode
             The predecessor node, if it exists.
         """
-        retval = self._nil
         if x.left is not self._nil:
             x = x.left  # find max of left subtree
             while x.right is not self._nil:
                 x = x.right
-            retval = x
-        else:
-            y = x.parent
-            while y is not self._nil and x is y.left:
-                x = y
-                y = y.parent
-            retval = y
-        return retval
+            return x
+        y = x.parent
+        while y is not self._nil and x is y.left:
+            x = y
+            y = y.parent
+        return y
 
-    def lower_bound_by_key(self, key: Any) -> Optional[RBNode]:
+    def lower_bound_by_key(self, key: Any) -> RBNode:
         """Give a node representing the lower bound for the given key, \
         i.e., the node whose key is the greatest less than or equal to \
         the given key.
@@ -354,13 +355,13 @@ class RBTree:
                 return x
 
         if y is self._nil:
-            return None
+            return y
 
         if key < y.key:
             # start inlining of pred
             x = y
             if x.left is not self._nil:
-                x = x.left  # x = max(x.left)
+                x = x.left  # find max of left subtree
                 while x.right is not self._nil:
                     x = x.right
                 return x
@@ -445,7 +446,7 @@ class RBTree:
             x = z.left
             self._transplant(z, z.left)
         else:
-            y = z.right  # y = min(z.right)
+            y = z.right  # find min of right subtree
             while y.left is not self._nil:
                 y = y.left
 

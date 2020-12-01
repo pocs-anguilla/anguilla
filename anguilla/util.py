@@ -2,7 +2,7 @@
 import math
 import functools
 
-from typing import Any, Optional, Callable, Tuple, List
+from typing import Callable
 
 
 def _exp_norm_chi_implementation(

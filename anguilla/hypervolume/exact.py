@@ -114,7 +114,7 @@ def calculate_3d(ps: np.ndarray, ref_p: np.ndarray) -> float:
     for p_x, p_y, p_z in sorted_ps[1:, :]:
         # find greatest q_x, such that q_x <= p_x
         node_q = front_2d.lower_bound_by_key(p_x)
-        q_x, q_y = node_q
+        _, q_y = node_q
 
         if p_y < q_y:  # p is non-dominated by q
 
