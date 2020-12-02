@@ -36,6 +36,4 @@ class TestUtilitaryFunctions(unittest.TestCase):
         eig, _ = np.linalg.eig(Q)
         angles = np.angle(eig)
         density, _ = np.histogram(angles, bins="auto", density=True)
-        self.assertTrue(
-            np.allclose(density, np.repeat_like(1.0 / (2.0 * np.pi)))
-        )
+        self.assertTrue(np.allclose(density, 1.0 / (2.0 * np.pi)))
