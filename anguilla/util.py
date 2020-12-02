@@ -4,7 +4,6 @@ import functools
 
 from typing import Callable
 
-import numba
 import numpy as np
 
 
@@ -90,54 +89,16 @@ def random_orthogonal_matrix(n: int, rng: np.random.Generator) -> np.ndarray:
 
     Notes
     -----
-    Implements the algorithm used in :cite:`2008:shark`, where it was chosen \
-    because it is faster [#f1]_ than an alternative algorithm that uses the \
-    QR decomposition and corrects the signs. See p. 16 from \
-    :cite:`2007:random-matrices`. We port the implementation here.
+    Implements the sign correction from :cite:`2007:mo-cma-es` of the QR \
+    factorization of a random matrix sampled from the standard normal \
+    distribution, so that the resulting distribution is a Haar measure.
 
-    Some benchmark functions (e.g. CIGTAB1) require an orthogonal rotation \
-    matrix :cite:`2007:mo-cma-es`, so it suffices to use this variant over \
-    others that produce unitary random matrices.
-
-    .. [#f1] In our experiments, approximately twice as fast.
+    Our implementation of the alternative used in :cite:`2008:shark` does
+    not perform better. Future work could be to fix the implementation
+    from the prototype notebook to make it perform faster.
     """
-    v = rng.standard_normal((n * n + n - 2) // 2)
-    return _random_orthogonal_matrix_jit(n, v)
 
-
-@numba.njit
-def _random_orthogonal_matrix_jit(n: int, v: np.ndarray) -> np.ndarray:
-    """The optimized algorithm implementation for \
-    :py:mod:`random_orthogonal_matrix`.
-    
-    Parameters
-    ----------
-    n
-        Size of the matrix.
-    v
-        Vector with (n^2 + n - 2) / 2 realizations of the starndard normal \
-        distribution.
-
-    Returns
-    -------
-    np.ndarray
-        The random orthogonal matrix.
-    """
-    Q = np.eye(n)
-    k = 0
-    # We can safely skip the first iteration
-    for i in range(2, n + 1):
-        # Compute v_hat
-        ki = k + i
-        ni = n - i
-        v[k:ki] /= np.linalg.norm(v[k:ki])
-        # Compute u_hat
-        sgn = v[k] / abs(v[k])
-        v[k] += sgn
-        tmp = v[k:ki]
-        beta = 2.0 / np.sum(tmp * tmp)
-        # Apply the Householder reflection
-        Q[ni:n, ni:n] -= beta * np.outer(tmp, Q[ni:n, ni:n].T @ tmp)
-        Q[ni:n, ni:n] *= -sgn
-        k += i
-    return Q
+    Z = rng.standard_normal(size=(n, n))
+    Q, r = np.linalg.qr(Z)
+    d = np.diag(r)
+    return Q * (d / np.abs(d)) @ Q

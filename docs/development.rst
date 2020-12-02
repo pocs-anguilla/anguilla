@@ -31,7 +31,11 @@ To run the test suite:
 
 .. code-block:: bash
 
+  # Include warnings (by default)
   python -m unittest
+
+  # Ignore warnings (e.g. DeprecationWarning, NumbaPerformanceWarning)
+  python -W ignore -m unittest
 
 Supported Python versions
 #########################
