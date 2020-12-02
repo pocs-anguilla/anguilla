@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from anguilla.util import exp_norm_chi
+from anguilla.util import exp_norm_chi, random_orthogonal_matrix
 
 
 class TestUtilitaryFunctions(unittest.TestCase):
@@ -20,11 +20,22 @@ class TestUtilitaryFunctions(unittest.TestCase):
             Xs = np.linalg.norm(Zs, axis=1)
             return np.mean(Xs)
 
-        emp_x = np.zeros(11-2+1)
-        approx_x = np.zeros(11-2+1)
+        emp_x = np.zeros(11 - 2 + 1)
+        approx_x = np.zeros(11 - 2 + 1)
 
         for i, k in enumerate(range(2, 11)):
             emp_x[i] = empirical(k)
             approx_x[i] = exp_norm_chi(k)
 
         self.assertTrue(np.allclose(emp_x, approx_x, rtol=1e-2))
+
+    def random_orthogonal_matrix(self) -> None:
+        """Test the random_orthogonal_matrix function."""
+        rng = np.random.default_rng()
+        Q = random_orthogonal_matrix(100, rng)
+        eig, _ = np.linalg.eig(Q)
+        angles = np.angle(eig)
+        density, _ = np.histogram(angles, bins="auto", density=True)
+        self.assertTrue(
+            np.allclose(density, np.repeat_like(1.0 / (2.0 * np.pi)))
+        )
