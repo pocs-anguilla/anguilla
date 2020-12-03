@@ -149,13 +149,12 @@ class ZDT4P(AbstractObjectiveFunction):
         # First objective
         value = np.array([x[0], 0.0])
         # Second objective
-        # y = Ox
         y = self._rotation_matrix @ x
-        # g(y) = (...)
+
         value[1] = (10.0 * (self._n_dimensions - 1)) + np.sum(
             y[1:] * y[1:] - 10.0 * np.cos(4.0 * np.pi * y[1:])
         )
-        # f2(x) = (...)
+
         value[1] *= 1.0 - np.sqrt(x[0] / value[1])
         return value
 
@@ -171,15 +170,14 @@ class ZDT4P(AbstractObjectiveFunction):
         values[:, 0] = x[:, 0]
         # Second objective
         n = self._n_dimensions
-        # y = Ox
         y = np.zeros_like(x)
         for i in range(x.shape[0]):
             y[i] = self._rotation_matrix @ x[i]
-        # g(y) = (...)
+
         values[:, 1] = (10.0 * (n - 1)) + np.sum(
             y[:, 1:] * y[:, 1:] - 10.0 * np.cos(4.0 * np.pi * y[:, 1:]),
             axis=1,
         )
-        # f2(x) = (...)
+
         values[:, 1] *= 1.0 - np.sqrt(values[:, 0] / values[:, 1])
         return values if axis != 0 else values[0]

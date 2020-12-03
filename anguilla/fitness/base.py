@@ -10,6 +10,41 @@ Bounds = typing.Union[float, np.ndarray]
 BoundsTuple = typing.Tuple[Bounds, Bounds]
 
 
+class AbstractConstraintsHandler(metaclass=abc.ABCMeta):
+    """An abstract constraints handler.
+
+    Notes
+    -----
+    This class is based on the ``AbstractConstraintsHandler`` class \
+        from :cite:`2008:shark`.
+    """
+
+    @abc.abstractmethod
+    def closest_feasible(self, x: np.ndarray) -> np.ndarray:
+        """Compute the closest feasible point."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def random_points(
+        self,
+        rng: np.random.Generator,
+        m: int = 1,
+        region_bounds: typing.Optional[BoundsTuple] = None,
+    ) -> np.ndarray:
+        """Generate random point(s) compatible with the constraints.
+
+        Parameters
+        ----------
+            rng
+                A random number generator
+            m: optional
+                The number of point(s) to generate.
+            region_bounds: optional
+                The region from which to generate random point(s).
+        """
+        raise NotImplementedError()
+
+
 class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
     """An objective function.
 
@@ -136,7 +171,7 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
             return self._constraints_handler.closest_feasible(x)
         return x
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def evaluate(self, x: np.ndarray) -> typing.Union[float, np.ndarray]:
         """Evaluate the function at the given search point.
 
@@ -182,7 +217,6 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
     def _handle_dimensions_update(self) -> None:
         """Update any internal state dependent on the dimensionality \
         of the search space."""
-        pass
 
     def _validate_point_shape(self, shape: typing.Tuple[int, ...]) -> None:
         """Validate the shape of given search point.
@@ -220,38 +254,3 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
     def __repr__(self) -> str:
         """Return the name of the function."""
         return self.name
-
-
-class AbstractConstraintsHandler(metaclass=abc.ABCMeta):
-    """An abstract constraints handler.
-
-    Notes
-    -----
-    This class is based on the ``AbstractConstraintsHandler`` class \
-        from :cite:`2008:shark`.
-    """
-
-    @abc.abstractmethod
-    def closest_feasible(self, x: np.ndarray) -> np.ndarray:
-        """Compute the closest feasible point."""
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def random_points(
-        self,
-        rng: np.random.Generator,
-        m: int = 1,
-        region_bounds: typing.Optional[BoundsTuple] = None,
-    ) -> np.ndarray:
-        """Generate random point(s) compatible with the constraints.
-
-        Parameters
-        ----------
-            rng
-                A random number generator
-            m: optional
-                The number of point(s) to generate.
-            region_bounds: optional
-                The region from which to generate random point(s).
-        """
-        raise NotImplementedError()
