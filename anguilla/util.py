@@ -89,14 +89,15 @@ def random_orthogonal_matrix(n: int, rng: np.random.Generator) -> np.ndarray:
 
     Notes
     -----
-    Implements the sign correction from :cite:`2007:random-matrices` of \
-    the QR factorization of a random matrix sampled from the standard \
-    normal distribution, so that the resulting distribution is a Haar \
-    measure.
+    Implements the sign correction of the Q matrix (obtained from QR \
+    factorization of a random matrix sampled from the standard \
+    normal distribution), so that the resulting distribution is a Haar \
+    measure. The algorithm is described in :cite:`2007:random-matrices`.
 
     Our implementation of the alternative used in :cite:`2008:shark` does \
-    not perform better. Future work could be to fix the implementation \
-    from the prototype notebook to make it perform faster.
+    not perform better (as measured by process time). Future work could be \
+    to fix the implementation from the `prototype notebook \
+    <https://git.io/JItU4>`_ to make it perform faster.
     """
     Z = rng.standard_normal(size=(n, n))
     Q, r = np.linalg.qr(Z)
