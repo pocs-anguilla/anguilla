@@ -4,17 +4,22 @@ import unittest
 
 import numpy as np
 
-from anguilla.hypervolume.exact import calculate_2d, calculate_3d
+from anguilla.hypervolume.exact import (
+    calculate_2d,
+    calculate_3d,
+    contributions_3d,
+    contributions_3d_naive,
+)
 
 
 class TestExact(unittest.TestCase):
     """Test the exact implementations."""
 
-    def test_calculate_2d(self) -> None:
-        """Test the calculate_2d function."""
-        # Adapted from: https://git.io/JIUvp
-        ref_p = np.array([11.0, 11.0], dtype=float)
-        ps = np.array(
+    # Adapted from Shark: https://git.io/JIUvp
+    def setUp(self) -> None:
+        """Set up for tests."""
+        self.ref_p_2d = np.array([11.0, 11.0], dtype=float)
+        self.ps_2d = np.array(
             [
                 [0.0, 1.0],
                 [0.2787464911, 0.9603647191],
@@ -39,15 +44,10 @@ class TestExact(unittest.TestCase):
             ],
             dtype=float,
         )
-        vol_value = 120.196858
-        vol = calculate_2d(ps, ref_p)
-        self.assertTrue(math.isclose(vol_value, vol, rel_tol=1e-6))
+        self._vol_2d = 120.196858
 
-    def test_calculate_3d(self) -> None:
-        """Test the calculate_3d function."""
-        # Adapted from: https://git.io/JIUvp
-        ref_p = np.array([1.1, 1.1, 1.1], dtype=float)
-        ps = np.array(
+        self.ref_p_3d = np.array([1.1, 1.1, 1.1], dtype=float)
+        self.ps_3d = np.array(
             [
                 [6.56039859404455e-2, 0.4474014917277, 0.891923776019316],
                 [3.74945443950542e-2, 3.1364039802686e-2, 0.998804513479922],
@@ -86,6 +86,20 @@ class TestExact(unittest.TestCase):
                 [0.43864576057661, 3.10389339442242e-2, 0.8981238674636],
             ]
         )
-        vol_value = 0.60496383631719475
-        vol = calculate_3d(ps, ref_p)
-        self.assertTrue(math.isclose(vol_value, vol, rel_tol=1e-15))
+        self.vol_3d = 0.60496383631719475
+
+    def test_calculate_2d(self) -> None:
+        """Test the calculate_2d function."""
+        vol = calculate_2d(self.ps_2d, self.ref_p_2d)
+        self.assertTrue(math.isclose(self._vol_2d, vol, rel_tol=1e-6))
+
+    def test_calculate_3d(self) -> None:
+        """Test the calculate_3d function."""
+        vol = calculate_3d(self.ps_3d, self.ref_p_3d)
+        self.assertTrue(math.isclose(self.vol_3d, vol, rel_tol=1e-15))
+
+    def test_contribution_3d(self) -> None:
+        """Test the contributions_3d function."""
+        contrib_a = contributions_3d_naive(self.ps_3d, self.ref_p_3d)
+        contrib_b = contributions_3d(self.ps_3d, self.ref_p_3d)
+        self.assertTrue(np.allclose(contrib_a, contrib_b))
