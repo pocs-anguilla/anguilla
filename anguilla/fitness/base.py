@@ -255,13 +255,3 @@ class AbstractConstraintsHandler(metaclass=abc.ABCMeta):
                 The region from which to generate random point(s).
         """
         raise NotImplementedError()
-
-
-class AbstractFunctionEvaluator(metaclass=abc.ABCMeta):
-    """An abstract function evaluator.
-
-    Notes
-    -----
-    This class is based on the ``AbstractObjectiveFunction`` class \
-        from :cite:`2008:shark`.
-    """
