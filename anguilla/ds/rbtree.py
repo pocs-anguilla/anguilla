@@ -1,15 +1,15 @@
 """Implements a red-black tree."""
 
-from typing import Any, Optional, Tuple, List
+from typing import Any, Generator, Optional, Tuple, List
 
 
 class RBNode:
     """Models the node of a red-black tree."""
 
-    def __init__(self, key: Any, value: Any) -> None:
+    def __init__(self, key: Any, item: Any) -> None:
         """Initialize the node."""
         self.key = key
-        self.value = value
+        self.item = item
         self.is_red = False
         self.left = self
         self.right = self
@@ -17,7 +17,7 @@ class RBNode:
 
     def __repr__(self) -> str:
         """Create a string representation of the node."""
-        return "({}, {})".format(self.key, self.value)
+        return "({}, {})".format(self.key, self.item)
 
     def __getitem__(self, i: int) -> Any:
         """Iterate over the item.
@@ -29,7 +29,7 @@ class RBNode:
         if i == 0:
             return self.key
         if i == 1:
-            return self.value
+            return self.item
         raise IndexError()
 
 
@@ -47,6 +47,17 @@ class RBTree:
         self._nil = RBNode(None, None)  # sentinel
         self._root = self._nil
 
+    def __iter__(self) -> Generator[Any, Any, None]:
+        """Return an iterator doing an in-order traversal."""
+
+        def _iterator(x: Any) -> Any:
+            if x is not self._nil:
+                yield from _iterator(x.left)
+                yield x.item
+                yield from _iterator(x.right)
+
+        return _iterator(self._root)
+
     def __repr__(self) -> str:
         """Return a string representation of the tree."""
 
@@ -56,6 +67,29 @@ class RBTree:
             return []
 
         return "RBTree{}".format(_get_nodes(self._root))
+
+    def __getitem__(self, key: Any) -> Any:
+        """Get the item corresponding a the given key.
+
+        Parameters
+        ----------
+        key
+            The key of the item.
+
+        Returns
+        -------
+        Any
+            The item corresponding to the given key.
+
+        Raises
+        ------
+        KeyError
+            The given key is not in the tree.
+        """
+        x = self._find(key)
+        if x is not None:
+            return x.item
+        raise KeyError(str(key))
 
     def _create_node(self, key: Any, value: Any) -> RBNode:
         """Create a new node for the item."""
@@ -243,7 +277,7 @@ class RBTree:
         x = self._find(key)
         if x is not None:
             succ = self.succ(x)
-            return succ.key, succ.value
+            return succ.key, succ.item
         raise KeyError(str(key))
 
     def succ(self, x: RBNode) -> RBNode:
@@ -295,7 +329,7 @@ class RBTree:
         x = self._find(key)
         if x is not None:
             pred = self.pred(x)
-            return pred.key, pred.value
+            return pred.key, pred.item
         raise KeyError(str(key))
 
     def pred(self, x: RBNode) -> RBNode:
@@ -328,8 +362,8 @@ class RBTree:
 
     def lower_bound_by_key(self, key: Any) -> RBNode:
         """Give a node representing the lower bound for the given key, \
-        i.e., the node whose key is the greatest less than or equal to \
-        the given key.
+        i.e., the node whose key is the greatest that is less than or \
+        equal to the given key.
 
         Parameters
         ----------
@@ -337,12 +371,40 @@ class RBTree:
             The key for which to find the lower bound. It doesn't need to \
                 exist in the tree.
 
+        Notes
+        -----
+        Implementation adapted from that of https://git.io/JIIzK \
+        (Mozman's bintree).
+
         Returns
         -------
         RBNode
             The node representing the lower bound, if it exists.
         """
-        # TODO: improve this implementation.
+        x = self._root
+        result = self._nil
+        while x is not self._nil:
+            if key < x.key:
+                x = x.left
+            elif key > x.key:
+                if (result is self._nil) or (x.key > result.key):
+                    result = x
+                x = x.right
+            else:
+                result = x
+                break
+        return result
+
+    def __setitem__(self, key: Any, item: Any) -> None:
+        """Insert (or update) the item corresponding to a given key.
+
+        Parameters
+        ----------
+        key
+            The key of the item.
+        item
+            The new item.
+        """
         y = self._nil
         x = self._root
         while x is not self._nil:
@@ -352,51 +414,9 @@ class RBTree:
             elif key > x.key:
                 x = x.right
             else:
-                return x
-
-        if y is self._nil:
-            return y
-
-        if key < y.key:
-            # start inlining of pred
-            x = y
-            if x.left is not self._nil:
-                x = x.left  # find max of left subtree
-                while x.right is not self._nil:
-                    x = x.right
-                return x
-            y = x.parent
-            while y is not self._nil and x is y.left:
-                x = y
-                y = y.parent
-            return y
-            # end inlining of pred
-        return y
-
-    # TODO: decide if should support dictionary interface instead?
-    def insert(self, key: Any, value: Any) -> None:
-        """Insert an item into the tree.
-
-        Parameters
-        ----------
-        key
-            The key of the item to insert.
-        value
-            The value of the item to insert.
-
-        Notes
-        -----
-        Items with duplicate keys are inserted (no update is performed).
-        """
-        z = self._create_node(key, value)
-        y = self._nil
-        x = self._root
-        while x is not self._nil:
-            y = x
-            if z.key < x.key:
-                x = x.left
-            else:
-                x = x.right
+                x.item = item
+                return
+        z = self._create_node(key, item)
         z.parent = y
         if y is self._nil:
             self._root = z
