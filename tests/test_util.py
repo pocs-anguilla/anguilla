@@ -48,8 +48,9 @@ class TestRandomMatrices(unittest.TestCase):
 
     def test_orthogonal(self) -> None:
         """Check that the random matrix is orthogonal."""
-        QQt = self.Q @ self.Q.T
-        QtQ = self.Q.T @ self.Q
+        Qt = self.Q.T
+        QQt = self.Q @ Qt
+        QtQ = Qt @ self.Q
         Identity = np.eye(self.Q.shape[0])
         self.assertTrue(np.allclose(QQt, Identity))
         self.assertTrue(np.allclose(QtQ, Identity))
