@@ -281,6 +281,9 @@ class IHR1(AbstractObjectiveFunction):
         values[1] = g * _h_f(1.0 - math.sqrt(h / g), values[0], ymax)
         return values
 
+    def evaluate_multiple(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
+
 
 class IHR2(AbstractObjectiveFunction):
     """The IHR2 multi-objective box-constrained benchmark function.
@@ -319,6 +322,9 @@ class IHR2(AbstractObjectiveFunction):
         tmp = y[0] / g
         values[1] = g * _h_f(1.0 - tmp * tmp, values[0], ymax)
         return values
+
+    def evaluate_multiple(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
 
 
 class IHR3(AbstractObjectiveFunction):
@@ -360,6 +366,9 @@ class IHR3(AbstractObjectiveFunction):
         tmp2 = tmp1 * math.sin(10.0 * math.pi * y[0])
         values[1] = g * _h_f(1.0 - math.sqrt(tmp1) - tmp2, values[0], ymax)
         return values
+
+    def evaluate_multiple(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
 
 
 class IHR4(AbstractObjectiveFunction):
@@ -404,6 +413,9 @@ class IHR4(AbstractObjectiveFunction):
         values[1] = g * _h_f(1.0 - math.sqrt(h / g), values[0], ymax)
         return values
 
+    def evaluate_multiple(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
+
 
 class IHR6(AbstractObjectiveFunction):
     """The IHR6 multi-objective box-constrained benchmark function.
@@ -444,3 +456,6 @@ class IHR6(AbstractObjectiveFunction):
         g = 1.0 + 9.0 * math.pow(np.sum(_h_g(y[1:])) / (n - 1), 0.25)
         tmp = values[0] / g
         values[1] = g * _h_f(1.0 - (tmp * tmp), abs(y[0]), ymax)
+
+    def evaluate_multiple(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
