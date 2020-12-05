@@ -4,6 +4,51 @@ from collections import deque
 from typing import Deque, List, Optional
 from anguilla.ds.rbtree import RBTree
 
+__all__ = [
+    "calculate_2d",
+    "calculate_3d",
+    "contributions_3d",
+    "contributions_3d_naive",
+]
+
+
+# A costum Numpy datatype for structured access to 3-D coordinate data.
+point3d_dt = np.dtype([("x", float), ("y", float), ("z", float)], align=True)
+
+
+class SweepItem:
+    """Models an item of the sweep structure."""
+
+    def __init__(self, val: np.ndarray, idx: int) -> None:
+        """Initialize the sweep item."""
+        self.val = val
+        self.idx = idx
+
+    def __repr__(self) -> str:
+        """Create a string representation of the sweep item."""
+        return "SweepItem({}, {})".format(self.val, self.idx)
+
+
+class Box3D:
+    """Models and axis-parallel box in 3D."""
+
+    def __init__(self, lower: np.ndarray, upper: np.ndarray):
+        """Initialize the 3D box, defined by two corner points."""
+        self.lower = lower
+        self.upper = upper
+
+    def __repr__(self) -> str:
+        """Create string representation of the box."""
+        return "Box3D[{}, {}]".format(self.lower, self.upper)
+
+    def volume(self) -> float:
+        """Compute the volume of the box."""
+        return (
+            (self.upper["x"] - self.lower["x"])
+            * (self.upper["y"] - self.lower["y"])
+            * (self.upper["z"] - self.lower["z"])
+        )
+
 
 def calculate_2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     """Compute the exact 2D hypervolume indicator.
@@ -12,7 +57,7 @@ def calculate_2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     ----------
     ps
         The point set of mutually non-dominated points.
-    ref_p
+    ref_p: optional
         The reference point. Otherwise assumed to be the origin.
 
     Notes
@@ -53,15 +98,15 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     Parameters
     ----------
         ps
-            The point set.
-        ref_p
+            The point set of mutually non-dominated points.
+        ref_p: optional
             The reference point. Otherwise assumed to be the origin.
 
     Notes
     -----
     Implements Algorithm 1 from :cite:`2009-hypervolume-hv3d`, \
     but with the difference of assuming a minimization problem. \
-    See also algorithm HV3D presented in :cite:`2020:hypervolume` and the \
+    See also Algorithm HV3D presented in :cite:`2020:hypervolume`, and the \
     explanation from sec. 4.1 of p. 6. of :cite:`2009-hypervolume-hv3d`.
 
     The differences in the implementation, w.r.t. the algorithm description \
@@ -69,7 +114,9 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     problem and the implementation the opposite (minimization).
 
     The following figure shows an example of how the algorithm is \
-    transformed for working with a minimization problem:
+    transformed for working with a minimization problem. Note that \
+    in both cases, the x-coordinates are assumed to be sorted in \
+    ascending order.
 
     .. image:: /figures/hv3d_min.png
        :width: 750
@@ -86,8 +133,6 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     # Sort the points by their z-coordinate in ascending order.
     sorted_idx = np.argsort(ps[:, 2])
     sorted_ps = ps[sorted_idx]
-
-    # TODO: replace RBT with an AVL tree?
 
     # The algorithm works by performing sweeping in the z-axis,
     # and it uses a tree with balanced height as its sweeping structure
@@ -116,7 +161,7 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     for p_x, p_y, p_z in sorted_ps[1:, :]:
         # find greatest q_x, such that q_x <= p_x
         node_q = frond_xy.lower_bound_by_key(p_x)
-        _, q_y = node_q
+        q_y = node_q.item
 
         if not (p_y < q_y):  # p is by dominated q
             continue
@@ -128,7 +173,8 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
         prev_x = p_x
         prev_y = q_y
         node_s = frond_xy.succ(node_q)
-        s_x, s_y = node_s
+        s_x = node_s.key
+        s_y = node_s.item
 
         while True:
             area -= (s_x - prev_x) * (ref_y - prev_y)
@@ -138,7 +184,8 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
             prev_y = s_y
             dominated_node = node_s
             node_s = frond_xy.succ(node_s)
-            s_x, s_y = node_s
+            s_x = node_s.key
+            s_y = node_s.item
             frond_xy.remove(dominated_node)
 
         # add the new point (here 's' is 't' in the paper)
@@ -151,46 +198,6 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     return volume
 
 
-# TODO: Move these 3 classes/types to another file
-
-# A custum Numpy datatype for structured access to coordinate data.
-point3d_dt = np.dtype([("x", float), ("y", float), ("z", float)], align=True)
-
-
-class SweepItem:
-    """Models an item of the sweep structure."""
-
-    def __init__(self, val: np.ndarray, idx: int) -> None:
-        """Initialize the sweep item."""
-        self.val = val
-        self.idx = idx
-
-    def __repr__(self) -> str:
-        """Create a string representation of the sweep item."""
-        return "SweepItem({}, {})".format(self.val, self.idx)
-
-
-class Box3D:
-    """Models and axis-parallel box in 3D."""
-
-    def __init__(self, lower: np.ndarray, upper: np.ndarray):
-        """Initialize the 3D box defined by two corner points."""
-        self.lower = lower
-        self.upper = upper
-
-    def __repr__(self) -> str:
-        """Create string representation of the box."""
-        return "Box3D[{}, {}]".format(self.lower, self.upper)
-
-    def volume(self) -> float:
-        """Compute the volume of the box."""
-        return (
-            (self.upper["x"] - self.lower["x"])
-            * (self.upper["y"] - self.lower["y"])
-            * (self.upper["z"] - self.lower["z"])
-        )
-
-
 def contributions_3d(
     ps: np.ndarray, ref_p: Optional[np.ndarray]
 ) -> np.ndarray:
@@ -200,8 +207,8 @@ def contributions_3d(
     ----------
     ps
         The set of mutually non-dominated points.
-    ref_p
-        The reference point.
+    ref_p: optional
+        The reference point. Otherwise assumed to be the origin.
 
     Returns
     -------
@@ -214,7 +221,8 @@ def contributions_3d(
     presented by :cite:`2011-hypervolume-3d` for computing AllContributions. \
     The implementation differs from the presentation of the reference paper \
     in that it assumes a minimization problem (instead of maximization). \
-    We also incorporate some aspects taken from :cite:`2008:shark`.
+    It also incorporates some implementation details taken from \
+    :cite:`2008:shark`.
     """
     n = len(ps)
 
@@ -383,8 +391,8 @@ def contributions_3d_naive(
     ----------
     ps
         The set of mutually non-dominated points.
-    ref_p
-        The reference point.
+    ref_p: optional
+        The reference point. Otherwise assumed to be the origin.
 
     Returns
     -------
@@ -393,8 +401,15 @@ def contributions_3d_naive(
 
     Notes
     -----
-    Implements the brute-force approach to computing the hypervolume \
-    contributions. Only for testing the other implementation, as done in \
+    The brute-force approach to computing the hypervolume contributions.
+    Uses the available hypervolume calculation function to compute the \
+    contribution of each point using its definition \
+    (p. 4 of :cite:`2020:hypervolume`):
+
+    .. math::
+        H(p, S) = H(S \\cup {p}) - H(S \\ {p})
+
+    Provided only for testing the other implementation, as done in \
     :cite:`2008:shark`.
     """
     if len(ps) == 0:

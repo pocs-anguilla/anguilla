@@ -181,3 +181,281 @@ class ZDT4P(AbstractObjectiveFunction):
 
         values[:, 1] *= 1.0 - np.sqrt(values[:, 0] / values[:, 1])
         return values if axis != 0 else values[0]
+
+
+def _y_max(rotation_matrix: np.ndarray) -> float:
+    """Compute the value of ymax for some benchmark functions.
+
+    Parameters
+    ----------
+    rotation_matrix
+        The rotation matrix
+    Returns
+    -------
+    float
+        The value for ``ymax``.
+
+    Notes
+    -----
+    Computes value for :math:`y_\\text{max}` as in p.16 of \
+    :cite:`2007:mo-cma-es`.
+    """
+    return 1.0 / np.max(rotation_matrix[0])
+
+
+def _h(x: float, n: float) -> float:
+    """Compute an auxiliary function for some benchmark functions.
+
+    Notes
+    -----
+    Implements the :math:`h` auxiliary function as defined in \
+    p. 16 of :cite:`2007:mo-cma-es`.
+    """
+    return 1.0 / (1.0 + math.exp(-x / math.sqrt(n)))
+
+
+def _h_f(x: float, y1_abs: float, ymax: float) -> float:
+    """Compute an auxiliary function for some benchmark functions.
+
+    Notes
+    -----
+    Implements the :math:`h_f` auxiliary function as defined in \
+    p. 16 of :cite:`2007:mo-cma-es`.
+    """
+    if y1_abs < ymax:
+        return x
+    return 1.0 + y1_abs
+
+
+def _h_g(x: np.ndarray) -> np.ndarray:
+    """Compute an auxiliary function for some benchmark functions.
+
+    Notes
+    -----
+    Implements the :math:`h_g` auxiliary function as defined in \
+    p. 16 of :cite:`2007:mo-cma-es`.
+    """
+    return (x * x) / (np.abs(x) + 0.1)
+
+
+def _ihr_g(y: np.ndarray, n: int) -> float:
+    """Compute g(y) for the IHR1, IHR2 and IHR3 benchmark functions."""
+    return 1.0 + 9.0 * (np.sum(_h_g(y[1:])) / (n - 1))
+
+
+class IHR1(AbstractObjectiveFunction):
+    """The IHR1 multi-objective box-constrained benchmark function.
+
+    Notes
+    -----
+    Implements the function as defined in p. 16 of :cite:`2007:mo-cma-es`.
+    """
+
+    def __init__(
+        self, n_dimensions: int, rng: np.random.Generator = None
+    ) -> None:
+        super().__init__(n_dimensions, rng)
+        self._n_objectives = 2
+
+    @property
+    def name(self) -> str:
+        return "IHR1"
+
+    def _handle_dimensions_update(self) -> None:
+        self._rotation_matrix = random_orthogonal_matrix(
+            self._n_dimensions, self._rng
+        )
+        self._constraints_handler = BoxConstraintsHandler(
+            self._n_dimensions, (-1.0, 1.0)
+        )
+
+    def evaluate(self, x: np.ndarray) -> np.ndarray:
+        self._validate_point_shape(x.shape)
+        self._evaluation_count += 1
+        n = self._n_dimensions
+        y = self._rotation_matrix @ x
+        ymax = _y_max(self._rotation_matrix)
+        values = np.array([abs(y[0]), 0.0])
+        h = _h(y[0], n)
+        g = _ihr_g(y, n)
+        values[1] = g * _h_f(1.0 - math.sqrt(h / g), values[0], ymax)
+        return values
+
+    def evaluate_multiple(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
+
+
+class IHR2(AbstractObjectiveFunction):
+    """The IHR2 multi-objective box-constrained benchmark function.
+
+    Notes
+    -----
+    Implements the function as defined in p. 16 of :cite:`2007:mo-cma-es`.
+    """
+
+    def __init__(
+        self, n_dimensions: int, rng: np.random.Generator = None
+    ) -> None:
+        super().__init__(n_dimensions, rng)
+        self._n_objectives = 2
+
+    @property
+    def name(self) -> str:
+        return "IHR2"
+
+    def _handle_dimensions_update(self) -> None:
+        self._rotation_matrix = random_orthogonal_matrix(
+            self._n_dimensions, self._rng
+        )
+        self._constraints_handler = BoxConstraintsHandler(
+            self._n_dimensions, (-1.0, 1.0)
+        )
+
+    def evaluate(self, x: np.ndarray) -> np.ndarray:
+        self._validate_point_shape(x.shape)
+        self._evaluation_count += 1
+        n = self._n_dimensions
+        y = self._rotation_matrix @ x
+        ymax = _y_max(self._rotation_matrix)
+        values = np.array([abs(y[0]), 0.0])
+        g = _ihr_g(y, n)
+        tmp = y[0] / g
+        values[1] = g * _h_f(1.0 - tmp * tmp, values[0], ymax)
+        return values
+
+    def evaluate_multiple(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
+
+
+class IHR3(AbstractObjectiveFunction):
+    """The IHR3 multi-objective box-constrained benchmark function.
+
+    Notes
+    -----
+    Implements the function as defined in p. 16 of :cite:`2007:mo-cma-es`.
+    """
+
+    def __init__(
+        self, n_dimensions: int, rng: np.random.Generator = None
+    ) -> None:
+        super().__init__(n_dimensions, rng)
+        self._n_objectives = 2
+
+    @property
+    def name(self) -> str:
+        return "IHR3"
+
+    def _handle_dimensions_update(self) -> None:
+        self._rotation_matrix = random_orthogonal_matrix(
+            self._n_dimensions, self._rng
+        )
+        self._constraints_handler = BoxConstraintsHandler(
+            self._n_dimensions, (-1.0, 1.0)
+        )
+
+    def evaluate(self, x: np.ndarray) -> np.ndarray:
+        self._validate_point_shape(x.shape)
+        self._evaluation_count += 1
+        n = self._n_dimensions
+        y = self._rotation_matrix @ x
+        ymax = _y_max(self._rotation_matrix)
+        values = np.array([abs(y[0]), 0.0])
+        h = _h(y[0], n)
+        g = _ihr_g(y, n)
+        tmp1 = h / g
+        tmp2 = tmp1 * math.sin(10.0 * math.pi * y[0])
+        values[1] = g * _h_f(1.0 - math.sqrt(tmp1) - tmp2, values[0], ymax)
+        return values
+
+    def evaluate_multiple(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
+
+
+class IHR4(AbstractObjectiveFunction):
+    """The IHR4 multi-objective box-constrained benchmark function.
+
+    Notes
+    -----
+    Implements the function as defined in p. 16 of :cite:`2007:mo-cma-es`.
+    """
+
+    def __init__(
+        self, n_dimensions: int, rng: np.random.Generator = None
+    ) -> None:
+        super().__init__(n_dimensions, rng)
+        self._n_objectives = 2
+
+    @property
+    def name(self) -> str:
+        return "IHR4"
+
+    def _handle_dimensions_update(self) -> None:
+        self._rotation_matrix = random_orthogonal_matrix(
+            self._n_dimensions, self._rng
+        )
+        self._constraints_handler = BoxConstraintsHandler(
+            self._n_dimensions, (-5.0, 5.0)
+        )
+
+    def evaluate(self, x: np.ndarray) -> np.ndarray:
+        self._validate_point_shape(x.shape)
+        self._evaluation_count += 1
+        n = self._n_dimensions
+        y = self._rotation_matrix @ x
+        ymax = _y_max(self._rotation_matrix)
+        values = np.array([abs(y[0]), 0.0])
+        h = _h(y[0], n)
+        g = (
+            1.0
+            + 10.0 * (n - 1)
+            + np.sum(y[1:] * y[1:] - 10.0 * np.cos(4.0 * np.pi * y[1:]))
+        )
+        values[1] = g * _h_f(1.0 - math.sqrt(h / g), values[0], ymax)
+        return values
+
+    def evaluate_multiple(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
+
+
+class IHR6(AbstractObjectiveFunction):
+    """The IHR6 multi-objective box-constrained benchmark function.
+
+    Notes
+    -----
+    Implements the function as defined in p. 16 of :cite:`2007:mo-cma-es`.
+    """
+
+    def __init__(
+        self, n_dimensions: int, rng: np.random.Generator = None
+    ) -> None:
+        super().__init__(n_dimensions, rng)
+        self._n_objectives = 2
+
+    @property
+    def name(self) -> str:
+        return "IHR6"
+
+    def _handle_dimensions_update(self) -> None:
+        self._rotation_matrix = random_orthogonal_matrix(
+            self._n_dimensions, self._rng
+        )
+        self._constraints_handler = BoxConstraintsHandler(
+            self._n_dimensions, (-5.0, 5.0)
+        )
+
+    def evaluate(self, x: np.ndarray) -> np.ndarray:
+        self._validate_point_shape(x.shape)
+        self._evaluation_count += 1
+        n = self._n_dimensions
+        y = self._rotation_matrix @ x
+        ymax = _y_max(self._rotation_matrix)
+        values = np.zeros(2)
+        values[0] = 1.0 - math.exp(-4.0 * abs(y[0])) * math.pow(
+            math.sin(6.0 * math.pi * y[0]), 6
+        )
+        g = 1.0 + 9.0 * math.pow(np.sum(_h_g(y[1:])) / (n - 1), 0.25)
+        tmp = values[0] / g
+        values[1] = g * _h_f(1.0 - (tmp * tmp), abs(y[0]), ymax)
+
+    def evaluate_multiple(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
