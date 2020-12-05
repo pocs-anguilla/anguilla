@@ -19,19 +19,6 @@ class RBNode:
         """Create a string representation of the node."""
         return "({}, {})".format(self.key, self.item)
 
-    def __getitem__(self, i: int) -> Any:
-        """Iterate over the item.
-
-        Notes
-        -----
-        Allows syntantic sugar for unpacking.
-        """
-        if i == 0:
-            return self.key
-        if i == 1:
-            return self.item
-        raise IndexError()
-
 
 class RBTree:
     """Models a red-black tree.

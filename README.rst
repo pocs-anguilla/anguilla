@@ -21,7 +21,8 @@ Anguilla
                 :target: https://sonarcloud.io/dashboard?id=pocs-anguilla_anguilla
                 :alt: sonarcloud badge
 
-🚧 work in progress 🚧
+.. warning::
+   🚧 Work in progress: this repository is a draft under development. 🚧
 
 The main goal of this project is to provide a MO-CMA-ES implementation in 
 Python 3.
