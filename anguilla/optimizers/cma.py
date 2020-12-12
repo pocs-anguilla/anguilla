@@ -424,9 +424,8 @@ class CMA(AbstractOptimizer):
     _best_value: typing.Optional[float]
     _fitness_values: typing.Optional[np.ndarray]
 
+    @property
     def name(self) -> str:
-        """Return the (prefixed) name of the CMA-ES variant."""
-        # TODO: Annotate with relevant prefixes
         return "CMA-ES"
 
     def __init__(

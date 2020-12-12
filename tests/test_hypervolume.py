@@ -6,6 +6,8 @@ import numpy as np
 
 from anguilla.hypervolume.exact import (
     calculate_2d,
+    contributions_2d,
+    contributions_2d_naive,
     calculate_3d,
     contributions_3d,
     contributions_3d_naive,
@@ -103,3 +105,12 @@ class TestExact(unittest.TestCase):
         contrib_a = contributions_3d_naive(self.ps_3d, self.ref_p_3d)
         contrib_b = contributions_3d(self.ps_3d, self.ref_p_3d)
         self.assertTrue(np.allclose(contrib_a, contrib_b))
+
+    # TODO: enable when contributions_2d is implemented
+    # def test_contribution_2d(self) -> None:
+    #    """Test the contributions_2d function."""
+    #    contrib_a = contributions_2d_naive(self.ps_2d, self.ref_p_2d)
+    #    contrib_b = contributions_2d(self.ps_2d, self.ref_p_2d)
+    #    print(contrib_a)
+    #    print(contrib_b)
+    #    self.assertTrue(np.allclose(contrib_a, contrib_b))

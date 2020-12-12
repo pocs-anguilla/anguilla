@@ -1,0 +1,32 @@
+name: development
+channels:
+- conda-forge
+dependencies:
+- python=3.8
+- "libblas=*=*openblas"
+- numpy
+- numba
+- scipy
+- conda-build
+- black
+- mypy
+- cmake
+- ninja
+- patch
+- clang
+- clangxx
+- gxx_linux-64
+- boost
+- libjpeg-turbo
+- libpng
+- libzip
+- openblas
+- libblas
+- libcblas
+- liblapack
+- xeus-cling
+- jupyterlab
+- sphinx
+- sphinx-autoapi
+- sphinxcontrib-napoleon
+- sphinxcontrib-bibtex

@@ -1,0 +1,57 @@
+{% set name = "Shark" %}
+{% set version = "4.1" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  - folder: shark
+    url: https://github.com/Shark-ML/Shark/archive/{{ version }}.tar.gz
+    sha256: 7e2650a6cead64908de207c7384e9c2936d763cc213ee63703bb3cdfeef68776
+    #patches:
+    #- patches/0-find-linagl-libs.patch
+  - folder: polly
+    url: https://github.com/ruslo/polly/archive/v0.10.4.tar.gz
+    sha256: 0804b1c53dc8a71911ffa4cf0a1a78a61e40a15ca217f4782356cfc672042eaf
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - cmake
+    - make # [unix]
+    - m2-make # [win]
+    - patch # [unix]
+    - m2-patch # [win]
+    - gxx_linux-64 # [linux]
+    - clangxx # [linux]
+    - clang # [linux]
+    - {{ compiler('cxx') }} # [osx]
+    - {{ compiler('m2w64_cxx') }} # [win]
+
+  host:
+    - libblas
+    - libcblas
+    - liblapack
+    - boost
+    - libjpeg-turbo
+    - libpng
+    - libzip
+  
+  run:
+    - {{ pin_compatible('openblas', max_pin='x.x') }}
+    - {{ pin_compatible('boost', max_pin='x.x') }}
+    - {{ pin_compatible('libjpeg-turbo', max_pin='x.x') }}
+    - {{ pin_compatible('libpng', max_pin='x.x') }}
+    - {{ pin_compatible('libzip', max_pin='x.x') }}
+
+about:
+  home: https://www.shark-ml.org
+  license: LGPL-3.0
+  license_family: LGPL
+  license_file: COPYING
+  summary: Shark is a fast, modular, general open-source C++ machine learning library.
+  doc_url: https://www.shark-ml.org/sphinx_pages/build/html/rest_sources/tutorials/tutorials.html
+  dev_url: https://github.com/Shark-ML/Shark

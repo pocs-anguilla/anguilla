@@ -36,6 +36,10 @@ extensions = [
     "autoapi.extension",
 ]
 
+# sphinxcontrib-bibtex options
+# bibtex_bibfiles = ["references.bib"]
+bibtex_default_style = "unsrt"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -61,3 +65,9 @@ html_extra_path = ["robots.txt"]
 # -- Options for sphinx autoapi ----------------------------------------------
 autoapi_type = "python"
 autoapi_dirs = ["../anguilla"]
+
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "private-members": False,
+}

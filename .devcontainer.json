@@ -1,5 +1,5 @@
 {
-    "dockerFile": "Dockerfile",
+    "image": "condaforge/miniforge3",
     "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance",
@@ -8,11 +8,11 @@
         "jeff-hykin.better-cpp-syntax",
         "ms-vscode.cmake-tools",
         "twxs.cmake",
-        "extudio.restructuredtext"
+        "lextudio.restructuredtext"
     ],
-    "postCreateCommand": "pip install -r requirements/devcontainer.txt",
+    "postCreateCommand": "conda update -y --all && conda env create -f environment.yml",
     "forwardPorts": [
         8000,
         8888
-    ] // docs webserver, jupyter
+    ]
 }
