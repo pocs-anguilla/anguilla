@@ -570,12 +570,13 @@ class MOCMA:
         if (
             self._notion_of_success == NotionOfSuccess.PopulationBased
             and archive.selected[offspring_idx]
-        ):
-            return 1.0
-        elif (archive.fronts[offspring_idx] < archive.fronts[parent_idx]) or (
-            archive.fronts[offspring_idx] == archive.fronts[parent_idx]
-            and archive.contributions[offspring_idx]
-            >= archive.contributions[parent_idx]
+        ) or (
+            (archive.fronts[offspring_idx] < archive.fronts[parent_idx])
+            or (
+                archive.fronts[offspring_idx] == archive.fronts[parent_idx]
+                and archive.contributions[offspring_idx]
+                >= archive.contributions[parent_idx]
+            )
         ):
             return 1.0
         return 0.0

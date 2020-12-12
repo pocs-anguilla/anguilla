@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 
 from anguilla.fitness.base import AbstractObjectiveFunction
-from anguilla.fitness.benchmark import DTLZ1, DTLZ2, IHR1
+from anguilla.fitness.benchmark import DTLZ1, DTLZ2
 
 
 class BaseTestFunction:

@@ -11,7 +11,7 @@ from anguilla.hypervolume.exact import (
     contributions_3d,
 )
 
-__all__ = ["calculate", "contributions", "least_contributors"]
+__all__ = ["calculate", "contributions"]
 
 
 def calculate(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
