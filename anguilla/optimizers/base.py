@@ -23,9 +23,9 @@ class AbstractOptimizer(metaclass=abc.ABCMeta):
 
     _initial_point: np.ndarray
 
-    @staticmethod
+    @property
     @abc.abstractmethod
-    def name() -> str:
+    def name(self) -> str:
         """Return the name of the optimizer."""
         raise NotImplementedError()
 

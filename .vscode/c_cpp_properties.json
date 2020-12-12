@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/conda/envs/development/**",
+                "/usr/local/include/**"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "/opt/conda/envs/development/include",
+                    "/usr/local/include"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "defines": [],
+            "compilerPath": "/opt/conda/envs/development/bin/clang++",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}

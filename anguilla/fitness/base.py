@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import abc
-import typing
+from typing import Optional, Union, Tuple
 
 import numpy as np
 
-Bounds = typing.Union[float, np.ndarray]
-BoundsTuple = typing.Tuple[Bounds, Bounds]
+Bounds = Union[float, np.ndarray]
+BoundsTuple = Tuple[Bounds, Bounds]
 
 
 class AbstractConstraintsHandler(metaclass=abc.ABCMeta):
@@ -29,18 +29,23 @@ class AbstractConstraintsHandler(metaclass=abc.ABCMeta):
         self,
         rng: np.random.Generator,
         m: int = 1,
-        region_bounds: typing.Optional[BoundsTuple] = None,
+        region_bounds: Optional[BoundsTuple] = None,
     ) -> np.ndarray:
         """Generate random point(s) compatible with the constraints.
 
         Parameters
         ----------
-            rng
-                A random number generator
-            m: optional
-                The number of point(s) to generate.
-            region_bounds: optional
-                The region from which to generate random point(s).
+        rng
+            A random number generator
+        m: optional
+            The number of point(s) to generate.
+        region_bounds: optional
+            The region from which to generate random point(s).
+
+        Returns
+        -------
+        np.ndarray
+            The random points.
         """
         raise NotImplementedError()
 
@@ -79,11 +84,16 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
     _n_objectives: int
     _n_dimensions: int
     _evaluation_count: int
-    _constraints_handler: typing.Optional[AbstractConstraintsHandler]
+    _constraints_handler: Optional[AbstractConstraintsHandler]
 
-    def __init__(self, n_dimensions: int, rng: np.random.Generator = None):
+    def __init__(
+        self,
+        n_dimensions: int,
+        n_objectives: int = 1,
+        rng: np.random.Generator = None,
+    ):
         """Initialize the internal state of the objective function."""
-        self._n_objectives = 1
+        self._n_objectives = n_objectives
         self._constraints_handler = None
         self._evaluation_count = 0
         self._n_dimensions = n_dimensions
@@ -93,43 +103,70 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
         else:
             self._rng = rng
 
-        self._handle_dimensions_update()
+        self._post_update_n_dimensions()
 
     @property
     @abc.abstractmethod
     def name(self) -> str:
+        """Return the name of the objective function."""
         raise NotImplementedError()
 
     @property
     def n_dimensions(self) -> int:
+        """Return th number of dimensions."""
         return self._n_dimensions
 
     @n_dimensions.setter
     def n_dimensions(self, n_dimensions: int) -> None:
+        """Return the update number of dimensions.
+
+        Raises
+        ------
+        ValueError
+            The provided value is not valid.
+        """
+        self._pre_update_n_dimensions(n_dimensions)
         self._n_dimensions = n_dimensions
-        self._handle_dimensions_update()
+        self._post_update_n_dimensions()
 
     @property
     def n_objectives(self) -> int:
+        """Return the number of objectives."""
         return self._n_objectives
+
+    @n_objectives.setter
+    def n_objectives(self, n_objectives: int) -> None:
+        """Update the number of objectives.
+
+        Raises
+        ------
+        ValueError
+            The provided value is not valid.
+        AttributeError
+            The value cannot be changed.
+        """
+        self._pre_update_n_objectives(n_objectives)
+        self._n_objectives = n_objectives
+        self._post_update_n_objectives()
 
     @property
     def evaluation_count(self) -> int:
+        """Return the evaluation count."""
         return self._evaluation_count
 
     def random_points(
         self,
         m: int = 1,
-        region_bounds: typing.Optional[BoundsTuple] = None,
+        region_bounds: Optional[BoundsTuple] = None,
     ) -> np.ndarray:
         """Compute random point(s) from the search space.
 
         Parameters
         ----------
-            m
-                The number of points.
-            region_bounds: optional
-                Initial region bounds.
+        m
+            The number of points.
+        region_bounds: optional
+            Initial region bounds.
 
         Returns
         -------
@@ -172,7 +209,7 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
         return x
 
     @abc.abstractmethod
-    def evaluate(self, x: np.ndarray) -> typing.Union[float, np.ndarray]:
+    def evaluate_single(self, x: np.ndarray) -> Union[float, np.ndarray]:
         """Evaluate the function at the given search point.
 
         Parameters
@@ -182,74 +219,185 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        typing.Union[float, np.ndarray]
+        Union[float, np.ndarray]
             The value of the function at the search point.
 
         Raises
         ------
         ValueError
             Point has invalid shape.
+
+        Notes
+        -----
+        The implementation should be specialized to evaluate a single point
+        efficiently.
         """
         raise NotImplementedError()
 
-    def evaluate_multiple(
-        self, x: np.ndarray
-    ) -> typing.Union[float, np.ndarray]:
-        """Evaluate the function at the given search points.
+    def evaluate_multiple(self, xs: np.ndarray) -> Union[float, np.ndarray]:
+        """Evaluate the function at the given search point(s).
 
         Parameters
         ----------
-        x
-            The search points.
+        xs
+            The search point(s).
 
         Returns
         -------
-        typing.Union[float, np.ndarray]
+        Union[float, np.ndarray]
             The value of the function at the search points.
 
         Raises
         ------
         ValueError
             Points have invalid shape.
+
+        Notes
+        -----
+        The implementation should be specialized to evaluate multiple points
+        efficiently. A default non-specialized implementation is provided \
+        as default. Implementations should override this method.
         """
-        raise NotImplementedError()
+        xs = self._pre_multiple_evaluation(xs)
+        values = np.array([self.evaluate_single(x) for x in xs])
+        return values if len(values) > 1 else values[0]
 
-    def _handle_dimensions_update(self) -> None:
-        """Update any internal state dependent on the dimensionality \
-        of the search space."""
+    def evaluate_with_constraints(
+        self, xs: np.ndarray
+    ) -> Union[float, np.ndarray]:
+        """Compute the fitness projecting points to their closest feasible.
 
-    def _validate_point_shape(self, shape: typing.Tuple[int, ...]) -> None:
-        """Validate the shape of given search point.
+        Parameters
+        ----------
+        xs
+            The search point(s).
+
+        Return
+        ------
+        Union[float, np.ndarray]
+            The fitness value(s).
+        """
+        return self.__call__(self.closest_feasible(xs))
+
+    def evaluate_with_penalty(
+        self, xs: np.ndarray, penalty: float = 10e-6
+    ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
+        """Compute the fitness projecting points to their closest feasible \
+        and apply a penalty.
+
+        Parameters
+        ----------
+        xs
+            The search point(s).
+
+        Return
+        ------
+        Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]
+            The unpenalized and penalized fitness value(s), respectively.
+
+        Notes
+        -----
+        Implements penalized evaluation as described in \
+        p. 12 of :cite:`2007:mo-cma-es`.
+        """
+        feasible_xs = self.closest_feasible(xs)
+        tmp = xs - feasible_xs
+        ys = self.__call__(feasible_xs)
+        return ys, ys + penalty * np.sum(tmp * tmp)
+
+    def _post_update_n_dimensions(self) -> None:
+        """Apply any required logic after updating the dimensions \
+        (e.g., recompute some internal state)."""
+
+    def _pre_update_n_dimensions(self, n_dimensions: int) -> None:
+        """Apply any required logic before updating the dimensions \
+        (e.g. validation).
+
+        Raises
+        ------
+        ValueError
+            The provided value is not valid.
+        """
+        if n_dimensions < 1:
+            raise ValueError("Invalid dimensions")
+
+    def _post_update_n_objectives(self) -> None:
+        """Apply any required logic after updating the number of objectives \
+        (e.g., recompute some internal state)."""
+
+    def _pre_update_n_objectives(self, n_objectives: int) -> None:
+        """Apply any required logic before updating the number of objectives \
+        (e.g. validation).
+
+        Raises
+        ------
+        ValueError
+            The provided value is not valid.
+        AttributeError
+            The value cannot be changed.
+        """
+        raise AttributeError("Number of objectives cannot be changed.")
+
+    def _pre_single_evaluation(self, x: np.ndarray) -> None:
+        """Validate the shape of given search point and update evaluation \
+        counter.
+
+        Parameter
+        ---------
+        x
+            The search point.
 
         Raises
         ------
         ValueError
             Point has invalid shape
         """
-        if len(shape) > 1 or shape[0] > self._n_dimensions:
+        if len(x.shape) > 1 or len(x) > self._n_dimensions:
             raise ValueError("Point has invalid shape")
+        self._evaluation_count += 1
 
-    def _validate_points_shape(self, shape: typing.Tuple[int, ...]) -> int:
-        """Validate the shape of given search points.
+    def _pre_multiple_evaluation(self, xs: np.ndarray) -> np.ndarray:
+        """Validate the shape of given search point(s) and update evaluation \
+            counter.
+
+        Parameters
+        ----------
+        xs
+            The search point(s).
 
         Returns
         -------
-        int
-            Index of the shape corresponding to the point(s) dimension.
+        xs
+            A new view object if possible or a copy (``np.reshape`` behavior).
 
         Raises
         ------
         ValueError
             Point(s) have invalid shape
-        """
-        axis = 1 if len(shape) > 1 else 0
-        if shape[axis] > self._n_dimensions:
-            raise ValueError("Point(s) have invalid shape")
-        return axis
 
-    def __call__(self, x: np.ndarray) -> typing.Union[float, np.ndarray]:
-        """Syntactic sugar for :meth:`evaluate`."""
-        return self.evaluate(x)
+        """
+        if len(xs.shape) < 2:
+            xs = np.reshape(xs, (1, len(xs)))
+
+        if xs.shape[1] > self._n_dimensions:
+            raise ValueError("Point(s) have invalid shape")
+
+        self._evaluation_count += len(xs)
+
+        return xs
+
+    def __call__(self, x: np.ndarray) -> Union[float, np.ndarray]:
+        """Syntactic sugar to call either :meth:`evaluate` \
+        or :meth:`evaluate_multiple` depending on the shape of the array.
+
+        Parameters
+        ----------
+        x
+            The search point(s).
+        """
+        if len(x.shape) > 1:
+            return self.evaluate_multiple(x)
+        return self.evaluate_single(x)
 
     def __repr__(self) -> str:
         """Return the name of the function."""

@@ -7,6 +7,8 @@ from anguilla.ds.rbtree import RBTree
 __all__ = [
     "calculate_2d",
     "calculate_3d",
+    "contributions_2d",
+    "contributions_2d_naive",
     "contributions_3d",
     "contributions_3d_naive",
 ]
@@ -30,7 +32,7 @@ class SweepItem:
 
 
 class Box3D:
-    """Models and axis-parallel box in 3D."""
+    """Models an axis-parallel box in 3D."""
 
     def __init__(self, lower: np.ndarray, upper: np.ndarray):
         """Initialize the 3D box, defined by two corner points."""
@@ -51,7 +53,7 @@ class Box3D:
 
 
 def calculate_2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
-    """Compute the exact 2D hypervolume indicator.
+    """Compute the exact hypervolume indicator for a set of 2-D points.
 
     Parameters
     ----------
@@ -93,7 +95,7 @@ def calculate_2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
 
 
 def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
-    """Calculate the exact 3D hypervolume indicator.
+    """Calculate the exact hypervolume indicator for a set of 3-D points.
 
     Parameters
     ----------
@@ -141,17 +143,17 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     # Currently we use a red-black tree (as Shark uses std::map).
     # As in p. 6 of [2009:hypervolume-hv3d], the structure mantains the
     # x-coordinates in ascending order.
-    frond_xy = RBTree()
+    front_xy = RBTree()
 
     # As explained in [2009:hypervolume-hv3d], we use two sentinel points
     # to ease the handling of boundary cases by ensuring that succ(p_x)
     # and pred(p_x) are defined for any other p_x in the tree.
-    frond_xy[ref_x] = float("-inf")
-    frond_xy[float("-inf")] = ref_y
+    front_xy[ref_x] = float("-inf")
+    front_xy[float("-inf")] = ref_y
 
     # The first point from the set is added.
     p_x, p_y, p_z = sorted_ps[0]
-    frond_xy[p_x] = p_y
+    front_xy[p_x] = p_y
     last_z = p_z  # the highest minimial point seen so far
 
     area = (ref_x - p_x) * (ref_y - p_y)
@@ -160,7 +162,7 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     # And then all the other points are processed.
     for p_x, p_y, p_z in sorted_ps[1:, :]:
         # find greatest q_x, such that q_x <= p_x
-        node_q = frond_xy.lower_bound_by_key(p_x)
+        node_q = front_xy.lower_bound_by_key(p_x)
         q_y = node_q.item
 
         if not (p_y < q_y):  # p is by dominated q
@@ -172,7 +174,7 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
         # remove dominated points and their area contributions
         prev_x = p_x
         prev_y = q_y
-        node_s = frond_xy.succ(node_q)
+        node_s = front_xy.succ(node_q)
         s_x = node_s.key
         s_y = node_s.item
 
@@ -183,14 +185,14 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
             prev_x = s_x
             prev_y = s_y
             dominated_node = node_s
-            node_s = frond_xy.succ(node_s)
+            node_s = front_xy.succ(node_s)
             s_x = node_s.key
             s_y = node_s.item
-            frond_xy.remove(dominated_node)
+            front_xy.remove(dominated_node)
 
         # add the new point (here 's' is 't' in the paper)
         area += (s_x - p_x) * (ref_y - p_y)
-        frond_xy[p_x] = p_y
+        front_xy[p_x] = p_y
 
     # Add last point's contribution to the volume
     volume += area * (ref_z - last_z)
@@ -198,10 +200,84 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     return volume
 
 
-def contributions_3d(
+def contributions_2d(
+    ps: np.ndarray, ref_p: Optional[np.ndarray] = None
+) -> np.ndarray:
+    """Compute the hypervolume contribution for a set of 2-D points.
+
+    Parameters
+    ----------
+    ps
+        The set of mutually non-dominated points.
+    ref_p: optional
+        The reference point. Otherwise assumed to be the origin.
+
+    Returns
+    -------
+    np.ndarray
+        The hypervolume contribution of each point, respectively.
+
+    Notes
+    -----
+    Implements the EF algorithm (see p. 22 of :cite:`2020:hypervolume`) \
+    presented by :cite:`2011-hypervolume-3d` for computing AllContributions. \
+    The implementation differs from the presentation of the reference paper \
+    in that it assumes a minimization problem (instead of maximization). \
+    It also incorporates some implementation details taken from \
+    :cite:`2008:shark`.
+    """
+    raise NotImplementedError()
+
+
+def contributions_2d_naive(
     ps: np.ndarray, ref_p: Optional[np.ndarray]
 ) -> np.ndarray:
-    """Compute the hypervolume contribution for a set of points.
+    """Compute the hypervolume contribution for a set of 2-D points.
+
+    Parameters
+    ----------
+    ps
+        The set of mutually non-dominated points.
+    ref_p: optional
+        The reference point. Otherwise assumed to be the origin.
+
+    Returns
+    -------
+    np.ndarray
+        The hypervolume contribution of each point, respectively.
+
+    Notes
+    -----
+    The brute-force approach to computing the hypervolume contributions.
+    Uses the available hypervolume calculation function to compute the \
+    contribution of each point using its definition \
+    (p. 4 of :cite:`2020:hypervolume`):
+
+    .. math::
+        H(p, S) = H(S \\cup {p}) - H(S \\ {p})
+
+    Provided only for testing the other implementation, as done in \
+    :cite:`2008:shark`.
+    """
+    if len(ps) == 0:
+        return np.empty()
+
+    if ref_p is None:
+        ref_p = np.zeros_like(ps[0])
+
+    contribution = np.zeros(len(ps))
+
+    vol = calculate_2d(ps, ref_p)
+    for i in range(len(ps)):
+        qs = np.delete(ps, i, 0)
+        contribution[i] = vol - calculate_2d(qs, ref_p)
+    return contribution
+
+
+def contributions_3d(
+    ps: np.ndarray, ref_p: Optional[np.ndarray] = None
+) -> np.ndarray:
+    """Compute the hypervolume contribution for a set of 3-D points.
 
     Parameters
     ----------
