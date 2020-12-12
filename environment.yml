@@ -26,3 +26,7 @@ dependencies:
 - liblapack
 - xeus-cling
 - jupyterlab
+- sphinx
+- sphinx-autoapi
+- sphinxcontrib-napoleon
+- sphinxcontrib-bibtex

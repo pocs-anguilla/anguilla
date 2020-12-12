@@ -8,20 +8,20 @@
 
 import os
 import sys
-
-sys.path.append(os.path.abspath("../../"))
-sys.path.append(os.path.abspath("build/"))
-
 import math
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+
+sys.path.append(os.path.abspath("../../"))
 import anguilla.hypervolume as hv
+
+sys.path.append(os.path.abspath("build/"))
 import hv_comparison as hvc
 
 
 def cliff_3d(n, rng=np.random.default_rng()):
-    """Generat n Cliff3D points."""
+    """Generate n Cliff3D points."""
     vs = rng.standard_normal(size=(n, 2))
     ys = np.zeros((n, 3))
     for i in range(n):
