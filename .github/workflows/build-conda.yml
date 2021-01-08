@@ -16,7 +16,7 @@ jobs:
         # TODO: add windows-latest
         platform: [ubuntu-latest, macos-latest]
         python-version: ["3.6", "3.8"]
-      runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform }}
 
     defaults:
       run:
