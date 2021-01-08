@@ -1,11 +1,3 @@
-mkdir build
-cd build
-
-# Configure.
-cmake -DCMAKE_TOOLCHAIN_FILE=${SRC_DIR}/cmake/toolchains/clang-cxx20-libcxx.cmake \
-      -DCMAKE_BUILD_TYPE=Release \
-      -GNinja \
-      ${SRC_DIR};
-
-# Build.
-cmake --build .
+export CMAKE_TOOLCHAIN_FILE=${SRC_DIR}/cmake/toolchains/clang-cxx20-libcxx.cmake
+export CMAKE_GENERATOR=Ninja
+python -m pip install . -vvv
