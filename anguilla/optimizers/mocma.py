@@ -1,7 +1,5 @@
 """This module contains implementations related to the MO-CMA-ES \
     algorithm for real-valued multi-objective optimization (MOO)."""
-from __future__ import annotations
-
 import enum
 import dataclasses
 import math

@@ -1,6 +1,4 @@
 """This module contains abstract classes modeling optimizers."""
-from __future__ import annotations
-
 import abc
 import dataclasses
 from typing import Any, Callable, Iterable, Optional, final

@@ -1,6 +1,4 @@
 """This module contains abstract definitions related to objective functions."""
-from __future__ import annotations
-
 import abc
 from typing import Optional, Union, Tuple
 

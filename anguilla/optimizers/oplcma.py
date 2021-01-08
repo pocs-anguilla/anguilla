@@ -1,7 +1,5 @@
 """This module contains implementations related to the OnePlusLambda-CMA-ES \
     algorithm for real-valued single-objective optimization (MOO)."""
-from __future__ import annotations
-
 import dataclasses
 import math
 from typing import Any, Callable, Iterable, Optional

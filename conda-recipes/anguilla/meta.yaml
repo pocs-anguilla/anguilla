@@ -26,6 +26,7 @@ requirements:
   run:
     - python >=3.6
     - numpy
+    - dataclasses  # [py36]
     - {{ pin_compatible('libcxx', max_pin='x.x') }}
 
   test:

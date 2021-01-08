@@ -32,6 +32,11 @@ def main():
         install_requires=[
             "numpy",
         ],
+        extras_require={
+            ':python_version == "3.6"': [
+                "dataclasses",
+            ],
+        },
     )
 
 
