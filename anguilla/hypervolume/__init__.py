@@ -24,7 +24,6 @@ try:
     SHARK_BINDINGS_AVAILABLE = True
 except ImportError:
     SHARK_BINDINGS_AVAILABLE = False
-    pass
 
 
 def calculate(
@@ -72,6 +71,7 @@ def calculate(
             raise NotImplementedError()
     else:
         raise ValueError("Input dimensionality can't be one.")
+    return 0.0
 
 
 def contributions(
@@ -121,6 +121,7 @@ def contributions(
             raise NotImplementedError()
     else:
         raise ValueError("Input dimensionality can't be one.")
+    return np.empty()
 
 
 def contributions_naive(
@@ -153,7 +154,7 @@ def contributions_naive(
     Provided only for testing the other implementation, as done in \
     :cite:`2008:shark`.
     """
-    if len(ps) == 0:
+    if ps.size == 0:
         return np.empty()
 
     if ref_p is None:

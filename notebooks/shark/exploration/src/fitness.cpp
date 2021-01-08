@@ -9,10 +9,14 @@
 #include <ios>
 #include <iostream>
 #include <random>
+#include <stdexcept>
 
 using namespace shark;
 
 void writeVector(std::ofstream &out, RealVector &value, int maxSize) {
+    if (!out.is_open()) {
+        throw std::runtime_error("Cannot write to stream.");
+    }
     for (auto i = 0; i < value.size(); i++) {
         out << "," << value[i];
     }
@@ -24,6 +28,9 @@ void writeVector(std::ofstream &out, RealVector &value, int maxSize) {
 }
 
 void writeVector(std::ofstream &out, double fitness, int maxSize) {
+    if (!out.is_open()) {
+        throw std::runtime_error("Cannot write to stream.");
+    }
     out << "," << fitness;
     for (auto i = 0; i < maxSize - 1; i++) {
         out << "," << 0.0;
@@ -42,6 +49,9 @@ int main() {
     auto outputFilename = fn.name().append(".csv");
     std::ofstream outputFile;
     outputFile.open(outputFilename);
+    if (!outputFile.is_open()) {
+        throw std::runtime_error("Failed to open file: " + outputFilename);
+    }
     outputFile << std::setprecision(10) << std::scientific;
     int index;
     for (int i = 0; i < 10; i++) {

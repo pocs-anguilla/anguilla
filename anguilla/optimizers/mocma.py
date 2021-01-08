@@ -14,7 +14,6 @@ from anguilla.optimizers.base import (
     OptimizerStoppingConditions,
     OptimizerResult,
 )
-from anguilla.fitness.base import ObjectiveFunction
 
 from anguilla.dominance import fast_non_dominated_sort
 from anguilla.selection import indicator_selection
@@ -448,8 +447,8 @@ class MOCMA(Optimizer):
     def fmin(
         self,
         fn: Callable,
-        fn_args: Optional[Iterable[Any]] = (),
-        fn_kwargs: Optional[dict] = {},
+        fn_args: Optional[Iterable[Any]] = None,
+        fn_kwargs: Optional[dict] = None,
         **kwargs: Any,
     ) -> OptimizerResult:
         raise NotImplementedError()

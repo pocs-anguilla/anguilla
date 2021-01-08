@@ -2,11 +2,10 @@
     algorithm for real-valued single-objective optimization (MOO)."""
 import dataclasses
 import math
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional, Union
 
 import numpy as np
 
-from anguilla.fitness.base import ObjectiveFunction
 from anguilla.optimizers.base import (
     Optimizer,
     OptimizerParameters,
@@ -56,6 +55,22 @@ class OPLParameters(OptimizerParameters):
     p_threshold: float = 0.44
     c_c: Optional[float] = None
     c_cov: Optional[float] = None
+
+    def __post_init__(self) -> None:
+        """Initialize variables with no provided value."""
+        n_f = float(self.n_dimensions)
+        n_offspring_f = float(self.n_offspring)
+        if self.d is None:
+            self.d = 1.0 + n_f / (2.0 * n_offspring_f)
+        if self.p_target_succ is None:
+            self.p_target_succ = 1.0 / (5.0 + math.sqrt(n_offspring_f) / 2.0)
+        if self.c_p is None:
+            tmp = self.p_target_succ * n_offspring_f
+            self.c_p = tmp / (2.0 + tmp)
+        if self.c_c is None:
+            self.c_c = 2.0 / (n_f + 2.0)
+        if self.c_cov is None:
+            self.c_cov = 2.0 / (n_f * n_f + 6.0)
 
 
 @dataclasses.dataclass
@@ -164,8 +179,8 @@ class OnePlusLambdaCMA(Optimizer):
         self.penalized_fitness = parent_fitness
         self.step_size = self._parameters.initial_step_size
         self.p_succ = self._parameters.p_target_succ
-        self.path = np.zeros(n_dimensions)
-        self.cov = np.eye(n_dimensions)
+        self.path = np.zeros(self._n_dimensions)
+        self.cov = np.eye(self._n_dimensions)
 
         self._evaluation_count = 0
         self._generation_count = 0
@@ -179,17 +194,17 @@ class OnePlusLambdaCMA(Optimizer):
         return f"(1+{self._parameters.n_offspring})-CMA-ES"
 
     @property
-    def generation_count() -> int:
+    def generation_count(self) -> int:
         """The number of elapsed generations."""
         return self._generation_count
 
     @property
-    def evaluation_count() -> int:
+    def evaluation_count(self) -> int:
         """The number of function evaluations."""
         return self._evaluation_count
 
     @property
-    def parameters(self) -> MOParameters:
+    def parameters(self) -> OPLParameters:
         """Return a copy of the external parameters."""
         return dataclasses.replace(self._parameters)
 
@@ -203,17 +218,19 @@ class OnePlusLambdaCMA(Optimizer):
 
         if (
             conditions.max_generations is not None
-            and self._generation_count < max_generations
+            and self._generation_count >= conditions.max_generations
         ):
             result.triggered = True
             result.max_generations = self._generation_count
-        if max_evaluations is None or self._evaluation_count < max_evaluations:
+        if (
+            max_evaluations is not None
+            and self._evaluation_count >= conditions.max_evaluations
+        ):
             result.triggered = True
             result.max_evaluations = self._evaluation_count
-        if conditions.target_fitness is None and math.isclose(
-            conditions.target_fitness,
-            self.fitness,
-            rel_tol=conditions.target_fitness_rtol,
+        if (
+            conditions.target_fitness is not None
+            and self.fitness < conditions.target_fitness
         ):
             result.triggered = True
             result.target_fitness = self.fitness
@@ -233,10 +250,24 @@ class OnePlusLambdaCMA(Optimizer):
     def tell(
         self,
         points: np.ndarray,
-        fitness: np.ndarray,
+        fitness: Union[np.ndarray, float],
         penalized_fitness: Optional[np.ndarray] = None,
         evaluation_count: Optional[int] = None,
     ) -> None:
+        points = points.squeeze()
+        if len(points.shape) < 2:
+            points = points.reshape((1, len(points)))
+            fitness = np.array([[fitness]])
+            if penalized_fitness is not None:
+                penalized_fitness = np.array([[fitness]])
+        if penalized_fitness is None:
+            penalized_fitness = fitness
+
+        if evaluation_count is None:
+            self._evaluation_count += len(points)
+        else:
+            self._evaluation_count = evaluation_count
+
         c_p = self._parameters.c_p
         c_c = self._parameters.c_c
         c_c_prod = c_c * (2.0 - c_c)
@@ -245,6 +276,8 @@ class OnePlusLambdaCMA(Optimizer):
         d_inv = 1.0 / self._parameters.d
         p_target_succ = self._parameters.p_target_succ
         p_threshold = self._parameters.p_threshold
+        if penalized_fitness is None:
+            penalized_fitness = fitness
         p_succ = np.mean(
             np.logical_not(penalized_fitness > self.penalized_fitness)
         )
@@ -257,21 +290,8 @@ class OnePlusLambdaCMA(Optimizer):
             d_inv * ((self.p_succ - p_target_succ) / (1.0 - p_target_succ))
         )
 
-        if len(points.shape) < 2:
-            points = points.reshape((1,))
-            fitness = fitness.reshape((1,))
-            if penalized_fitness is not None:
-                penalized_fitness = penalized_fitness.reshape((1,))
-        if penalized_fitness is None:
-            penalized_fitness = fitness
-
-        if evaluation_count is None:
-            self._evaluation_count += len(parent_points)
-        else:
-            self._evaluation_count = evaluation_count
-
         best_idx = np.argsort(penalized_fitness)[0]
-        if not (penalized_fitness[best_idx] > self.penalized_fitness):
+        if not penalized_fitness[best_idx] > self.penalized_fitness:
             self.point[:] = points[best_idx]
             self.penalized_fitness = penalized_fitness[best_idx]
             self.fitness = fitness[best_idx]
@@ -290,8 +310,8 @@ class OnePlusLambdaCMA(Optimizer):
     def fmin(
         self,
         fn: Callable,
-        fn_args: Optional[Iterable[Any]] = (),
-        fn_kwargs: Optional[dict] = {},
+        fn_args: Optional[Iterable[Any]] = None,
+        fn_kwargs: Optional[dict] = None,
         **kwargs: Any,
     ) -> OptimizerResult:
         raise NotImplementedError()

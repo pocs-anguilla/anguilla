@@ -5,7 +5,7 @@ from typing import Callable, Optional, Tuple, List
 import numpy as np
 import matplotlib.pyplot as plt
 
-from anguilla.optimizers.mocma import OnePlusLambdaCMA, MOStoppingConditions
+from anguilla.optimizers.oplcma import OnePlusLambdaCMA, OPLStoppingConditions
 
 
 @dataclasses.dataclass
@@ -17,8 +17,7 @@ class ExperimentConfiguration:
     initial_region: Tuple[float]
     initial_step_size: float = 1e-4
     n_trials: int = 51
-    max_generations: Optional[int] = None
-    max_evaluations: Optional[int] = None
+    max_evaluations: int = 1000
     target_fitness: Optional[float] = None
     seed: Optional[int] = None
 
@@ -45,18 +44,8 @@ class ExperimentResults:
 def run_experiment(get_fn: Callable, config: ExperimentConfiguration):
     """Run an experiment."""
     max_generations = []
-    max_evaluations = []
-    if config.max_generations is None and config.max_evaluations is None:
-        raise ValueError(
-            "A value for max_generations or max_evaluations is required"
-        )
     for n_offspring in config.ns_offspring:
-        if config.max_generations is not None:
-            max_generations.append(config.max_generations)
-            max_evaluations.append(config.max_generations * n_offspring)
-        else:
-            max_evaluations.append(config.max_evaluations)
-            max_generations.append(config.max_evaluations // n_offspring)
+        max_generations.append(math.ceil(config.max_evaluations / n_offspring))
     fn = get_fn(2, None)
     results = ExperimentResults(
         fn.name,
@@ -67,12 +56,11 @@ def run_experiment(get_fn: Callable, config: ExperimentConfiguration):
     for i, n_offspring in enumerate(config.ns_offspring):
         n_trials = config.n_trials
 
-        stopping_conditions = MOStoppingConditions(
-            max_generations[i],
-            max_evaluations[i],
-            config.target_fitness,
+        stopping_conditions = OPLStoppingConditions(
+            max_evaluations=config.max_evaluations,
+            target_fitness=config.target_fitness,
         )
-        history = np.zeros((n_trials, max_generations[i] + 1)) - 1.0
+        history = np.zeros((n_trials, max_generations[i])) - 1.0
         generations = np.zeros(n_trials, dtype=int) - 1
         fitness = np.zeros(n_trials) - 1.0
         seed = config.seed
@@ -83,27 +71,32 @@ def run_experiment(get_fn: Callable, config: ExperimentConfiguration):
             else:
                 rng = np.random.default_rng()
             fn = get_fn(config.n_dimensions, rng)
-            parent_point = fn.random_points(1, config.initial_region)
+            parent_point = fn.random_points(
+                1, region_bounds=config.initial_region
+            )
             parent_fitness = fn(parent_point)
             optimizer = OnePlusLambdaCMA(
-                n_dimensions=config.n_dimensions,
+                parent_point,
+                parent_fitness,
                 n_offspring=n_offspring,
                 initial_step_size=config.initial_step_size,
                 stopping_conditions=stopping_conditions,
-                parent_point=parent_point,
-                parent_fitness=parent_fitness,
                 rng=rng,
             )
-            history[trial, optimizer.g] = optimizer.fitness
-            while not optimizer.stop():
+            while not optimizer.stop.triggered:
+                history[
+                    trial, optimizer.generation_count
+                ] = optimizer.best.fitness
                 points = optimizer.ask()
-                np_fitness, p_fitness = fn.evaluate_with_penalty(points)
-                optimizer.tell(
-                    fn.evaluation_count, points, np_fitness, p_fitness
-                )
-                history[trial, optimizer.g] = optimizer.fitness
-            generations[trial] = optimizer.g
-            fitness[trial] = optimizer.fitness
+                if fn.has_constraints:
+                    optimizer.tell(points, *fn.evaluate_with_penalty(points))
+                else:
+                    optimizer.tell(points, fn(points))
+            history[
+                trial, optimizer.generation_count - 1
+            ] = optimizer.best.fitness
+            generations[trial] = optimizer.generation_count
+            fitness[trial] = optimizer.best.fitness
 
         sorted_idx = np.argsort(generations)
         results_idx = [
@@ -114,8 +107,8 @@ def run_experiment(get_fn: Callable, config: ExperimentConfiguration):
                 math.ceil(0.95 * n_trials),
             )
         ]
-        results.history[i, 0 : generations[results_idx[1]] + 1] = history[
-            results_idx[1], 0 : generations[results_idx[1]] + 1
+        results.history[i, 0 : generations[results_idx[1]]] = history[
+            results_idx[1], 0 : generations[results_idx[1]]
         ]
         results.generations[i] = generations[results_idx]
         results.evaluations[i] = results.generations[i] * n_offspring
@@ -145,8 +138,8 @@ def plot_experiment(
     ax.grid()
 
     for i, n_offspring in enumerate(results.ns_offspring):
-        evaluations = np.arange(0, results.generations[i, 1] + 1) * n_offspring
-        fitness = results.history[i, 0 : results.generations[i, 1] + 1]
+        evaluations = np.arange(0, results.generations[i, 1]) * n_offspring
+        fitness = results.history[i, 0 : results.generations[i, 1]]
         p = ax.plot(
             evaluations,
             fitness,

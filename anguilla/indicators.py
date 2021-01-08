@@ -18,7 +18,7 @@ class Indicator(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     @final
-    def contributions(points: np.ndarray) -> np.ndarray:
+    def contributions(self, points: np.ndarray) -> np.ndarray:
         """Compute the contributions of each point.
 
         Parameters
@@ -35,7 +35,7 @@ class Indicator(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     @final
-    def __call__(points: np.ndarray) -> np.ndarray:
+    def __call__(self, points: np.ndarray) -> np.ndarray:
         """Compute the quality indicator.
 
         Parameters

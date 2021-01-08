@@ -48,8 +48,9 @@ class Rastrigin(ObjectiveFunction):
     def evaluate_multiple(self, xs: np.ndarray) -> Union[float, np.ndarray]:
         xs = self._pre_evaluate_multiple(xs)
         if self._rotate:
+            size = len(xs)
             ys = np.zeros_like(xs)
-            for i in range(len(xs)):
+            for i in range(size):
                 ys[i] = self._rotation_matrix @ xs[i]
         else:
             ys = xs
