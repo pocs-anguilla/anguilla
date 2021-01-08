@@ -25,6 +25,7 @@ requirements:
     - libcxx >=11
   run:
     - python >=3.6
+    - numpy
     - {{ pin_compatible('libcxx', max_pin='x.x') }}
 
   test:

@@ -40,9 +40,7 @@ jobs:
         run: conda build conda-recipes/anguilla
 
       - name: Install
-        run: |
-          conda install numpy scipy
-          conda install -c ${CONDA_PREFIX}/conda-bld/ anguilla
+        run: conda install -c ${CONDA_PREFIX}/conda-bld/ anguilla
 
       - name: Test
         run: python -m unittest
