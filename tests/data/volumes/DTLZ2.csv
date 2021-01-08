@@ -1,0 +1,11 @@
+# Source: https://sop.tik.ee.ethz.ch/download/supplementary/testproblems/dtlz2/index.php#MaximumHypervolume
+# n_parents,target_volume,max_evaluations,n_dimensions,n_objectives,ref_point_start
+2,120.000000,1000,5,2,11.0,11.0
+3,120.085786,1000,5,2,11.0,11.0
+4,120.121585,1000,5,2,11.0,11.0
+5,120.141536,1000,5,2,11.0,11.0
+10,120.178966,1000,5,2,11.0,11.0
+20,120.196858,1000,5,2,11.0,11.0
+50,120.207485,1000,5,2,11.0,11.0
+100,120.210644,1000,5,2,11.0,11.0
+1000,120.214114,1000,5,2,11.0,11.0

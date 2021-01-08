@@ -27,15 +27,17 @@ To build and view the documentation:
 
   make -C docs view
 
+To build a local copy of the C++ extension modules:
+
+.. code-block:: bash
+
+  make cxx_extension
+
 To run the test suite:
 
 .. code-block:: bash
 
-  # Include warnings (by default)
-  python -m unittest
-
-  # Ignore warnings (e.g. DeprecationWarning, NumbaPerformanceWarning)
-  python -W ignore -m unittest
+  make test
 
 Supported Python versions
 #########################

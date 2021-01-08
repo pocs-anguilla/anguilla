@@ -1,0 +1,48 @@
+# Based on: https://github.com/pybind/scikit_build_example/blob/master/.github/workflows/conda.yml
+name: Conda
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        # TODO: add windows-latest
+        platform: [ubuntu-latest, macos-latest]
+        python-version: ["3.6", "3.8"]
+      runs-on: ${{ matrix.platform }}
+
+    defaults:
+      run:
+        shell: "bash -l {0}"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get conda
+        # See: https://github.com/conda-incubator/setup-miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          miniconda-version: "latest"
+          channels: conda-forge
+
+      - name: Prepare
+        run: conda install conda-build conda-verify
+
+      - name: Build
+        run: conda build conda-recipes/anguilla
+
+      - name: Install
+        run: conda install -c ${CONDA_PREFIX}/conda-bld/ anguilla
+
+      - name: Test
+        run: python -m unittest .
+
+

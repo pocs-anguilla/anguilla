@@ -4,10 +4,10 @@ from typing import Union
 
 import numpy as np
 
-from anguilla.fitness.base import AbstractObjectiveFunction
+from anguilla.fitness.base import ObjectiveFunction
 
 
-class SumSquares(AbstractObjectiveFunction):
+class SumSquares(ObjectiveFunction):
     """The Axis Parallel Hyper-Ellipsoid single-objective function.
 
     Notes

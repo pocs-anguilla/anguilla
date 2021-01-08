@@ -4,14 +4,7 @@ import unittest
 
 import numpy as np
 
-from anguilla.hypervolume.exact import (
-    calculate_2d,
-    contributions_2d,
-    contributions_2d_naive,
-    calculate_3d,
-    contributions_3d,
-    contributions_3d_naive,
-)
+from anguilla.hypervolume import calculate, contributions, contributions_naive
 
 
 class TestExact(unittest.TestCase):
@@ -92,25 +85,22 @@ class TestExact(unittest.TestCase):
 
     def test_calculate_2d(self) -> None:
         """Test the calculate_2d function."""
-        vol = calculate_2d(self.ps_2d, self.ref_p_2d)
+        vol = calculate(self.ps_2d, self.ref_p_2d)
         self.assertTrue(math.isclose(self._vol_2d, vol, rel_tol=1e-6))
 
     def test_calculate_3d(self) -> None:
         """Test the calculate_3d function."""
-        vol = calculate_3d(self.ps_3d, self.ref_p_3d)
+        vol = calculate(self.ps_3d, self.ref_p_3d)
         self.assertTrue(math.isclose(self.vol_3d, vol, rel_tol=1e-15))
 
     def test_contribution_3d(self) -> None:
         """Test the contributions_3d function."""
-        contrib_a = contributions_3d_naive(self.ps_3d, self.ref_p_3d)
-        contrib_b = contributions_3d(self.ps_3d, self.ref_p_3d)
+        contrib_a = contributions_naive(self.ps_3d, self.ref_p_3d)
+        contrib_b = contributions(self.ps_3d, self.ref_p_3d)
         self.assertTrue(np.allclose(contrib_a, contrib_b))
 
-    # TODO: enable when contributions_2d is implemented
-    # def test_contribution_2d(self) -> None:
-    #    """Test the contributions_2d function."""
-    #    contrib_a = contributions_2d_naive(self.ps_2d, self.ref_p_2d)
-    #    contrib_b = contributions_2d(self.ps_2d, self.ref_p_2d)
-    #    print(contrib_a)
-    #    print(contrib_b)
-    #    self.assertTrue(np.allclose(contrib_a, contrib_b))
+    def test_contribution_2d(self) -> None:
+        """Test the contributions_2d function."""
+        contrib_a = contributions_naive(self.ps_2d, self.ref_p_2d)
+        contrib_b = contributions(self.ps_2d, self.ref_p_2d)
+        self.assertTrue(np.allclose(contrib_a, contrib_b))

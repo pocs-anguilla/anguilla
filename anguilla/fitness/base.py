@@ -10,7 +10,7 @@ Bounds = Union[float, np.ndarray]
 BoundsTuple = Tuple[Bounds, Bounds]
 
 
-class AbstractConstraintsHandler(metaclass=abc.ABCMeta):
+class ConstraintsHandler(metaclass=abc.ABCMeta):
     """An abstract constraints handler.
 
     Notes
@@ -50,7 +50,7 @@ class AbstractConstraintsHandler(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
 
-class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
+class ObjectiveFunction(metaclass=abc.ABCMeta):
     """An objective function.
 
     Parameters
@@ -84,11 +84,13 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
     _n_objectives: int
     _n_dimensions: int
     _evaluation_count: int
-    _constraints_handler: Optional[AbstractConstraintsHandler]
+    _constraints_handler: Optional[ConstraintsHandler]
+    _scalable_dimensions: bool = True
+    _scalable_objectives: bool = False
 
     def __init__(
         self,
-        n_dimensions: int,
+        n_dimensions: int = 2,
         n_objectives: int = 1,
         rng: np.random.Generator = None,
     ):
@@ -112,6 +114,11 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @property
+    def qualified_name(self) -> str:
+        """Return the qualified name of the objective function."""
+        return self.name
+
+    @property
     def n_dimensions(self) -> int:
         """Return th number of dimensions."""
         return self._n_dimensions
@@ -125,9 +132,15 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
         ValueError
             The provided value is not valid.
         """
-        self._pre_update_n_dimensions(n_dimensions)
-        self._n_dimensions = n_dimensions
-        self._post_update_n_dimensions()
+        if self._scalable_dimensions:
+            self._pre_update_n_dimensions(n_dimensions)
+            self._n_dimensions = n_dimensions
+            self._post_update_n_dimensions()
+
+    @property
+    def scalable_dimensions(self):
+        """Return True if number of dimensions can be scaled."""
+        return self._scalable_dimensions
 
     @property
     def n_objectives(self) -> int:
@@ -145,14 +158,25 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
         AttributeError
             The value cannot be changed.
         """
-        self._pre_update_n_objectives(n_objectives)
-        self._n_objectives = n_objectives
-        self._post_update_n_objectives()
+        if self._scalable_objectives:
+            self._pre_update_n_objectives(n_objectives)
+            self._n_objectives = n_objectives
+            self._post_update_n_objectives()
+
+    @property
+    def scalable_objectives(self):
+        """Return True if number of objectives can be scaled."""
+        return self._scalable_objectives
 
     @property
     def evaluation_count(self) -> int:
         """Return the evaluation count."""
         return self._evaluation_count
+
+    @property
+    def has_constraints(self) -> bool:
+        """Return True if the function has constraints."""
+        return self._constraints_handler is not None
 
     def random_points(
         self,
@@ -258,7 +282,7 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
         efficiently. A default non-specialized implementation is provided \
         as default. Implementations should override this method.
         """
-        xs = self._pre_multiple_evaluation(xs)
+        xs = self._pre_evaluate_multiple(xs, False)
         values = np.array([self.evaluate_single(x) for x in xs])
         return values if len(values) > 1 else values[0]
 
@@ -305,6 +329,30 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
         ys = self.__call__(feasible_xs)
         return ys, ys + penalty * np.sum(tmp * tmp)
 
+    def pareto_front(self, num: int = 50) -> np.ndarray:
+        """Return the true Pareto front.
+
+        Parameters
+        ----------
+        num
+            Number of samples.
+
+        Returns
+        -------
+        np.ndarray
+            The true Pareto front.
+
+        Raises
+        ------
+        NotImplementedError
+            Unsupported or not implemented.
+
+        Notes
+        -----
+        Only applicable to multi-objective functions.
+        """
+        raise NotImplementedError()
+
     def _post_update_n_dimensions(self) -> None:
         """Apply any required logic after updating the dimensions \
         (e.g., recompute some internal state)."""
@@ -338,7 +386,7 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
         """
         raise AttributeError("Number of objectives cannot be changed.")
 
-    def _pre_single_evaluation(self, x: np.ndarray) -> None:
+    def _pre_evaluate_single(self, x: np.ndarray, count: bool = True) -> None:
         """Validate the shape of given search point and update evaluation \
         counter.
 
@@ -352,11 +400,14 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
         ValueError
             Point has invalid shape
         """
-        if len(x.shape) > 1 or len(x) > self._n_dimensions:
+        if len(x.shape) > 1 or len(x) != self._n_dimensions:
             raise ValueError("Point has invalid shape")
-        self._evaluation_count += 1
+        if count:
+            self._evaluation_count += 1
 
-    def _pre_multiple_evaluation(self, xs: np.ndarray) -> np.ndarray:
+    def _pre_evaluate_multiple(
+        self, xs: np.ndarray, count: bool = True
+    ) -> np.ndarray:
         """Validate the shape of given search point(s) and update evaluation \
             counter.
 
@@ -379,10 +430,10 @@ class AbstractObjectiveFunction(metaclass=abc.ABCMeta):
         if len(xs.shape) < 2:
             xs = np.reshape(xs, (1, len(xs)))
 
-        if xs.shape[1] > self._n_dimensions:
+        if xs.shape[1] != self._n_dimensions:
             raise ValueError("Point(s) have invalid shape")
-
-        self._evaluation_count += len(xs)
+        if count:
+            self._evaluation_count += len(xs)
 
         return xs
 

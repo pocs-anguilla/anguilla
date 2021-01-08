@@ -5,7 +5,7 @@ import math
 
 import numpy as np
 
-from anguilla.fitness.base import AbstractObjectiveFunction, BoundsTuple
+from anguilla.fitness.base import ObjectiveFunction, BoundsTuple
 from anguilla.fitness.constraints import BoxConstraintsHandler
 from anguilla.util import random_orthogonal_matrix
 
@@ -50,7 +50,7 @@ def _ihr_g(y: np.ndarray, n: int) -> float:
     return 1.0 + 9.0 * (np.sum(_h_g(y[1:])) / (n - 1))
 
 
-class IHR(AbstractObjectiveFunction):
+class IHR(ObjectiveFunction):
     """Common functionality for the IHR family of functions.
 
     Parameters
@@ -64,15 +64,22 @@ class IHR(AbstractObjectiveFunction):
     _bounds: BoundsTuple
     _rotation_matrix: np.ndarray
     _y_max: float
+    _rotate: bool
 
     def __init__(
-        self, n_dimensions: int, rng: np.random.Generator = None
+        self,
+        n_dimensions: int = 2,
+        rng: np.random.Generator = None,
+        rotate: bool = True,
     ) -> None:
+        self._rotate = rotate
         super().__init__(n_dimensions, 2, rng)
 
     def _post_update_n_dimensions(self) -> None:
-        self._rotation_matrix = random_orthogonal_matrix(
-            self._n_dimensions, self._rng
+        self._rotation_matrix = (
+            random_orthogonal_matrix(self._n_dimensions, self._rng)
+            if self._rotate
+            else np.eye(self._n_dimensions)
         )
         self._y_max = 1.0 / np.linalg.norm(self._rotation_matrix[0], np.inf)
         self._constraints_handler = BoxConstraintsHandler(
@@ -95,7 +102,7 @@ class IHR1(IHR):
         return "IHR1"
 
     def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_single_evaluation(x)
+        self._pre_evaluate_single(x)
         n = self._n_dimensions
         y = self._rotation_matrix @ x
         value = np.array([abs(y[0]), 0.0])
@@ -120,7 +127,7 @@ class IHR2(IHR):
         return "IHR2"
 
     def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_single_evaluation(x)
+        self._pre_evaluate_single(x)
         n = self._n_dimensions
         y = self._rotation_matrix @ x
         value = np.array([abs(y[0]), 0.0])
@@ -145,7 +152,7 @@ class IHR3(IHR):
         return "IHR3"
 
     def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_single_evaluation(x)
+        self._pre_evaluate_single(x)
         n = self._n_dimensions
         y = self._rotation_matrix @ x
         value = np.array([abs(y[0]), 0.0])
@@ -174,7 +181,7 @@ class IHR4(IHR):
         return "IHR4"
 
     def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_single_evaluation(x)
+        self._pre_evaluate_single(x)
         n = self._n_dimensions
         y = self._rotation_matrix @ x
         value = np.array([abs(y[0]), 0.0])
@@ -203,7 +210,7 @@ class IHR6(IHR):
         return "IHR6"
 
     def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_single_evaluation(x)
+        self._pre_evaluate_single(x)
         n = self._n_dimensions
         y = self._rotation_matrix @ x
         value = np.zeros(2)

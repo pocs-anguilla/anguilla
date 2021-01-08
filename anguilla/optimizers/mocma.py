@@ -5,24 +5,58 @@ from __future__ import annotations
 import enum
 import dataclasses
 import math
+from typing import Any, Callable, Iterable, Optional
+
 import numpy as np
 
-from typing import List, Optional, Union, Callable
-
-import anguilla.hypervolume as hv
+from anguilla.optimizers.base import (
+    Optimizer,
+    OptimizerParameters,
+    OptimizerSolution,
+    OptimizerStoppingConditions,
+    OptimizerResult,
+)
+from anguilla.fitness.base import ObjectiveFunction
 
 from anguilla.dominance import fast_non_dominated_sort
-from anguilla.fitness.base import AbstractObjectiveFunction
+from anguilla.selection import indicator_selection
+from anguilla.indicators import Indicator, HypervolumeIndicator
 
 
 @dataclasses.dataclass
-class MOParameters:
-    """Parameters for MO-CMA-ES"""
+class MOParameters(OptimizerParameters):
+    """Parameters for MO-CMA-ES.
+    
+    Parameters
+    ----------
+    n_dimensions
+        Dimensionality of the search space.
+    initial_step_size
+        Initial step size.
+    n_offspring: optional
+        Number of offspring per parent.
+    d: optional
+        Step size damping parameter.
+    p_target_succ: optional
+        Target success probability.
+    c_p: optional
+        Success rate averaging parameter.
+    p_threshold: optional
+        Smoothed success rate threshold.
+    c_c: optional
+        Evolution path learning rate.
+    c_cov: optional
+        Covariance matrix learning rate.
+
+    Notes
+    -----
+    Implements the default values defined in Table 1, p. 5 \
+    :cite:`2007:mo-cma-es` and p. 489 :cite:`2010:mo-cma-es`.
+    """
 
     n_dimensions: int
     initial_step_size: float
-    n_parents: int
-    n_offspring: Optional[int] = None
+    n_offspring: int = 1
     d: Optional[float] = None
     p_target_succ: Optional[float] = None
     c_p: Optional[float] = None
@@ -33,16 +67,13 @@ class MOParameters:
     def __post_init__(self) -> None:
         """Initialize variables with no provided value."""
         n_f = float(self.n_dimensions)
-        if self.n_offspring is None:
-            self.n_offspring = self.n_parents
+        n_offspring_f = float(self.n_offspring)
         if self.d is None:
-            self.d = 1.0 + n_f / (2.0 * self.n_offspring)
+            self.d = 1.0 + n_f / (2.0 * n_offspring_f)
         if self.p_target_succ is None:
-            self.p_target_succ = 1.0 / (
-                5.0 + math.sqrt(self.n_offspring * 2.0)
-            )
+            self.p_target_succ = 1.0 / (5.0 + math.sqrt(n_offspring_f) / 2.0)
         if self.c_p is None:
-            tmp = self.p_target_succ * self.n_offspring
+            tmp = self.p_target_succ * n_offspring_f
             self.c_p = tmp / (2.0 + tmp)
         if self.c_c is None:
             self.c_c = 2.0 / (n_f + 2.0)
@@ -51,548 +82,439 @@ class MOParameters:
 
 
 @dataclasses.dataclass
-class MOStoppingConditions:
+class MOStoppingConditions(OptimizerStoppingConditions):
     """Define stopping criteria for MO-CMA-ES.
 
     Parameters
     ----------
-    max_evaluation_count
+    max_generations: optional
+        Maximum number of generations.
+    max_evaluations: optional
         Maximum number of function evaluations.
+    target_indicator_value: optional
+        Target indicator value.
+    target_indicator_ref_point: optional
+        Reference to compute the target indicator value.
+    target_indicator_value_rtol: optional
+        Relative tolerance for the target indicator value.
+    triggered: optional
+        Indicates if any condition was triggered, when returned as an output.
+
+    Notes
+    -----
+    The class can be used as an input to specify stopping conditions and as an
+    output to define the conditions that triggered the stop.
     """
 
-    max_evaluation_count: float = math.inf
+    max_generations: Optional[int] = None
+    max_evaluations: Optional[int] = None
+    target_indicator_value: Optional[float] = None
+    target_indicator_ref_point: Optional[np.ndarray] = None
+    target_indicator_value_rtol: float = 1e-6
+    triggered: bool = False
 
 
-class MOArchive:
-    """A fixed-size population archive for MOCMA.
+@dataclasses.dataclass
+class MOSolution(OptimizerSolution):
+    """Solution data for MO-CMA-ES.
 
     Parameters
     ----------
-    parameters
-        The external parameters and meta-parameters.
-    n_objectives
-        The number of objectives.
-
-    Attributes
-    ----------
     points
-        The search points of the individuals.
-    offspring_parents
-        The parents of each offspring.
+        The current Pareto set approximation.
     fitness
-        The fitness values of the individuals.
-    penalized_fitness
-        The penalized fitness values of the individuals.
-    fronts
-        The fronts assigned by the non-dominated sorting of the individuals.
-    contributions
-        The contributions assigned by the quality indicator.
-    selected
-        A flag array indicating if an individual is selected.
-    best
-        The index of the individual with best quality indicator.
-    p_succ
-        The smoothed success probability of the individuals.
-    step_size
-        The step sizes of the individuals.
-    cov_C
-        The covariance matrices of the individuals.
-    path_cov
-        The evolution paths of the individuals.
-    offspring_points
-        A view for the search points of the offspring.
-    offspring_fitness
-        A view for the fitness values of the offspring.
-    offspring_penalized_fitness
-        A view for the penalized fitness values of the offspring.
-    parent_points
-        A view for the search points of the parents.
-    parent_fitness
-        A view for the fitness values of the parents.
-    parent_penalized_fitness
-        A view for the penalized fitness values of the parents.
-    parent_fronts
-        A view for the fronts assigned to parents.
-    parent_p_succ
-        A view for the smoothed success probability of the parents.
-    parent_step_size
-        A view for the step sizes of the parents.
-    parent_cov_C
-        A view for the covariance matrices of the parents.
-    parent_path_cov
-        A view for the path of the parents.
+        The current Pareto front approximation.
     """
 
     points: np.ndarray
-    offspring_parents: np.ndarray
     fitness: np.ndarray
-    fronts: np.ndarray
-    contributions: np.ndarray
-    selected: np.ndarray
-    best: Optional[int]
-    p_succ: np.ndarray
-    step_size: np.ndarray
-    cov_C: np.ndarray
-    path_cov: np.ndarray
-    # Convenience views
-    offspring_points: np.ndarray
-    offspring_fitness: np.ndarray
-    offspring_penalized_fitness: np.ndarray
-    parent_points: np.ndarray
-    parent_fitness: np.ndarray
-    parent_penalized_fitness: np.ndarray
-    parent_fronts: np.ndarray
-    parent_p_succ: np.ndarray
-    parent_step_size: np.ndarray
-    parent_cov_C: np.ndarray
-    parent_path_cov: np.ndarray
-
-    def __init__(self, parameters: MOParameters, n_objectives: int) -> None:
-        """Initialize the archive."""
-        n_dimensions = parameters.n_dimensions
-        n_parents = parameters.n_parents
-        n_offspring = parameters.n_offspring
-        p_target_succ = parameters.p_target_succ
-        initial_step_size = parameters.initial_step_size
-        size = n_parents + n_offspring
-
-        self.points = np.zeros((size, n_dimensions))
-        self.offspring_parents = np.zeros(n_offspring, dtype=int)
-        self.fitness = np.zeros((size, n_objectives))
-        self.penalized_fitness = np.zeros((size, n_objectives))
-        self.fronts = np.zeros((size,), dtype=int)
-        self.contributions = np.zeros((size,))
-        self.selected = np.zeros(size, dtype=bool)
-        self.best = None
-        self.p_succ = np.repeat(p_target_succ, size)
-        self.step_size = np.repeat(initial_step_size, size)
-        self.cov_C = np.zeros((size, n_dimensions, n_dimensions))
-        for i in range(n_dimensions):
-            self.cov_C[:, i, i] = 1.0
-        self.path_cov = np.zeros((size, n_dimensions))
-
-        # Convenience views
-        self.offspring_points = self.points[n_parents:, :]
-        self.offspring_fitness = self.fitness[n_parents:, :]
-        self.offspring_penalized_fitness = self.penalized_fitness[
-            n_parents:, :
-        ]
-        self.parent_points = self.points[:n_parents, :]
-        self.parent_fitness = self.fitness[:n_parents, :]
-        self.parent_penalized_fitness = self.penalized_fitness[:n_parents, :]
-        self.parent_fronts = self.fronts[:n_parents]
-        self.parent_p_succ = self.p_succ[:n_parents]
-        self.parent_step_size = self.step_size[:n_parents]
-        self.parent_cov_C = self.cov_C[:n_parents, :, :]
-        self.parent_path_cov = self.path_cov[:n_parents, :]
-
-    def select(self) -> None:
-        """Copy data from selected individuals to parent memory."""
-        self.parent_points[:] = self.points[self.selected]
-        self.parent_fitness[:] = self.fitness[self.selected]
-        self.parent_penalized_fitness[:] = self.penalized_fitness[
-            self.selected
-        ]
-        self.parent_fronts[:] = self.fronts[self.selected]
-        self.parent_p_succ[:] = self.p_succ[self.selected]
-        self.parent_step_size[:] = self.step_size[self.selected]
-        self.parent_cov_C[:, :, :] = self.cov_C[self.selected, :, :]
-        self.parent_path_cov[:] = self.path_cov[self.selected]
 
 
-ObjectiveFunction = Union[
-    AbstractObjectiveFunction, Callable[[np.ndarray], np.ndarray]
-]
-
-
-class NotionOfSuccess(enum.Enum):
+class SuccessNotion(enum.IntEnum):
     """Define the notion of success of an offspring."""
 
     PopulationBased = 0
-    ParentBased = 1
+    IndividualBased = 1
+
+    def __str__(self) -> str:
+        if self.value == SuccessNotion.PopulationBased:
+            return "P"
+        return "I"
 
 
-class MOCMA:
-    """The MO-CMA-ES algorithm for real-valued multi-objective optimization."""
+class FixedSizePopulation:
+    """Models a fixed-size population of CMA-ES individuals.
 
-    _rng: np.random.Generator
-    _ref_point: Optional[np.ndarray]
-    _generations: int
+    Parameters
+    ----------
+    n_dimensions
+        Dimensionality of the search space.
+    n_objectives
+        Dimensionality of the objective space.
+    n_parents
+        Number of parents.
+    n_offspring
+        Number of offspring.
+
+    Attributes
+    ----------
+    n_parents
+        Number of parents.
+    n_offspring
+        Number of offspring.
+    points
+        Search points of the individuals.
+    fitness
+        Objective points of the individuals.
+    penalized_fitness
+        Penalized objective points of the individuals.
+    step_size
+        Step sizes of the individuals.
+    p_succ
+        Smoothed success probabilities of the individuals.
+    path
+        Evolution paths of the individuals.
+    cov
+        Covariance matrices of the individuals.
+    parents
+        Parent indices of the offspring.
+    """
 
     def __init__(
         self,
-        parameters: MOParameters,
-        stopping_conditions: Optional[MOStoppingConditions] = None,
-        rng: np.random.Generator = None,
-        notion_of_success: NotionOfSuccess = NotionOfSuccess.PopulationBased,
-        ref_point: Optional[np.ndarray] = None,
+        n_dimensions: int,
+        n_objectives: int,
+        n_parents: int,
+        n_offspring: int,
     ) -> None:
-        """Initialize the optimizer."""
-        self.parameters = parameters
-        if stopping_conditions is None:
-            self.stopping_conditions = MOStoppingConditions()
+        """Initialize the population."""
+        n_individuals = n_parents + n_offspring
+        self.n_parents = n_parents
+        self.n_offspring = n_offspring
+        self.points = np.zeros((n_individuals, n_dimensions))
+        self.fitness = np.zeros((n_individuals, n_objectives))
+        self.penalized_fitness = np.zeros((n_individuals, n_objectives))
+        self.step_size = np.zeros((n_individuals,))
+        self.p_succ = np.zeros((n_individuals,))
+        self.path = np.zeros((n_individuals, n_dimensions))
+        self.cov = np.zeros((n_individuals, n_dimensions, n_dimensions))
+        for i in range(n_dimensions):
+            self.cov[:, i, i] = 1.0
+        self.parents = np.repeat(-1, n_individuals).astype(int)
+
+
+class MOCMA(Optimizer):
+    """The MO-CMA-ES multi-objective optimizer
+
+    Parameters
+    ----------
+    parent_points
+        The search points of the initial population.
+    parent_fitness
+        The objective points of the initial population.
+    n_offspring: optional
+        The number of offspring. Defaults to the same number of parents.
+    initial_step_size: optional
+        The initial step size. Ignored if `parameters` is provided.
+    success_notion: optional
+        The notion of success.
+    indicator
+        The indicator to use.
+    stopping_conditions: optional
+        The stopping conditions.
+    parameters: optional
+        The external parameters. Allows to provide custom values other than \
+        the recommended in the literature.
+    rng: optional
+        A random number generator.
+
+    Notes
+    -----
+    The implementation supports the algorithms presented in Algorithm 4, \
+    p. 12, :cite:`2007:mo-cma-es` and Algorithm 1, p. 488 \
+    :cite:`2010:mo-cma-es`.
+    """
+
+    def __init__(
+        self,
+        parent_points: np.ndarray,
+        parent_fitness: np.ndarray,
+        n_offspring: Optional[int] = None,
+        initial_step_size: float = 1e-4,
+        success_notion: SuccessNotion = SuccessNotion.PopulationBased,
+        indicator: Optional[Indicator] = None,
+        stopping_conditions: Optional[MOStoppingConditions] = None,
+        parameters: Optional[MOParameters] = None,
+        rng: Optional[np.random.Generator] = None,
+    ) -> None:
+        if len(parent_points.shape) < 2:
+            parent_points = parent_points.reshape((1, len(parent_points)))
+        if len(parent_fitness.shape) < 2:
+            parent_fitness = parent_fitness.reshape((1, len(parent_fitness)))
+        self._n_dimensions = parent_points.shape[1]
+        self._n_objectives = parent_fitness.shape[1]
+        self._success_notion = success_notion
+        self._n_parents = parent_points.shape[0]
+        if n_offspring is None:
+            self._n_offspring = self._n_parents
         else:
-            self.stopping_conditions = stopping_conditions
+            self._n_offspring = n_offspring
+
+        if parameters is None:
+            self._parameters = MOParameters(
+                n_dimensions=self._n_dimensions,
+                initial_step_size=initial_step_size,
+            )
+        else:
+            self._parameters = parameters
+            if self._parameters.n_dimensions != self._n_dimensions:
+                raise ValueError(
+                    "Invalid value for n_dimensions in provided parameters"
+                )
+
+        if stopping_conditions is None:
+            self._stopping_conditions = MOStoppingConditions()
+        else:
+            self._stopping_conditions = stopping_conditions
+
         if rng is None:
             self._rng = np.random.default_rng()
         else:
-            self._rng = rng
-        self._notion_of_success = notion_of_success
-        self._ref_point = ref_point
-        self._evaluation_count = 0.0
-        self._generations = 0
+            self._rng = np.random.default_rng()
+
+        if indicator is None:
+            self._indicator = HypervolumeIndicator()
+        else:
+            self._indicator = indicator
+
+        self._population = FixedSizePopulation(
+            n_dimensions=self._n_dimensions,
+            n_objectives=self._n_objectives,
+            n_parents=self._n_parents,
+            n_offspring=self._n_offspring,
+        )
+        self._population.points[: self._n_parents, :] = parent_points
+        self._population.fitness[: self._n_parents, :] = parent_fitness
+        self._population.penalized_fitness[
+            : self._n_parents, :
+        ] = parent_fitness
+        self._population.p_succ[:] = self._parameters.p_target_succ
+        self._population.step_size[:] = self._parameters.initial_step_size
+
+        self._evaluation_count = 0
+        self._generation_count = 0
 
     @property
     def name(self) -> str:
         return "MO-CMA-ES"
 
-    def create_archive(
+    @property
+    def qualified_name(self) -> str:
+        return "({}+{})-MO-CMA-ES-{}".format(
+            self._n_parents,
+            self._n_offspring,
+            self._success_notion,
+        )
+
+    @property
+    def generation_count(self) -> int:
+        """Return the number of elapsed generations."""
+        return self._generation_count
+
+    @property
+    def evaluation_count(self) -> int:
+        """Return the number of function evaluations."""
+        return self._evaluation_count
+
+    @property
+    def parameters(self) -> MOParameters:
+        """Return a copy of the external parameters."""
+        return dataclasses.replace(self._parameters)
+
+    @property
+    def indicator(self) -> Indicator:
+        """Return a reference of the indicator."""
+        return self._indicator
+
+    @property
+    def best(self) -> MOSolution:
+        return MOSolution(
+            points=np.copy(self._population.points[: self._n_parents]),
+            fitness=np.copy(self._population.fitness[: self._n_parents]),
+        )
+
+    @property
+    def stop(self) -> MOStoppingConditions:
+        conditions = self._stopping_conditions
+        result = MOStoppingConditions()
+        if (
+            conditions.max_generations is not None
+            and self._generation_count >= conditions.max_generations
+        ):
+            result.triggered = True
+            result.max_generations = self._generation_count
+        if (
+            conditions.max_evaluations is not None
+            and self._evaluation_count >= conditions.max_evaluations
+        ):
+            result.triggered = True
+            result.max_evaluations = self._evaluation_count
+        if conditions.target_indicator_value is not None:
+            raise NotImplementedError()
+        return result
+
+    def ask(self) -> np.ndarray:
+        # Compute offspring
+        if self._n_offspring == self._n_parents:
+            # Algorithm 1, line 4a [2010:mo-cma-es]
+            oidx = self._n_parents
+            for pidx in range(self._n_parents):
+                self._mutate(pidx, oidx)
+                oidx += 1
+        else:
+            # Algorithm 1, line 4b [2010:mo-cma-es]
+            ranks, _ = fast_non_dominated_sort(
+                self._population.penalized_fitness[: self._n_parents]
+            )
+            parents = np.argwhere(ranks == 1).flatten()
+            chosen_parents = self._rng.choice(
+                parents, size=self._n_offspring, replace=False
+            )
+            for oidx, pidx in zip(
+                range(self._n_parents, self._n_parents + self._n_offspring),
+                chosen_parents,
+            ):
+                self._mutate(pidx, oidx)
+        return self._population.points[self._n_parents :]
+
+    def tell(
         self,
-        fn: Optional[AbstractObjectiveFunction] = None,
-        parent_points: Optional[np.ndarray] = None,
-        parent_fitness: Optional[np.ndarray] = None,
-    ) -> MOArchive:
-        """Create an archive for a fixed-size population.
+        input_fitness: np.ndarray,
+        input_penalized_fitness: Optional[np.ndarray] = None,
+        evaluation_count: Optional[int] = None,
+    ) -> None:
+        # Convenience local variables
+        n_parents = self._n_parents
+        n_offspring = self._n_offspring
+        points = self._population.points[:]
+        fitness = self._population.fitness[:]
+        penalized_fitness = self._population.penalized_fitness[:]
+        p_succ = self._population.p_succ[:]
+        step_size = self._population.step_size[:]
+        path = self._population.path[:]
+        cov = self._population.cov[:]
+        parents = self._population.parents[:]
 
-        Parameters
-        ----------
-        fn: optional
-            An objective function implementing \
-                :class:`AbstractObjectiveFunction`.
-        parent_points: optional
-            The search points of the parents.
-        parent_fitness: optional
-            The fitness of the parents.
+        # Update using input data
+        fitness[n_parents:] = input_fitness
+        if input_penalized_fitness is None:
+            penalized_fitness[n_parents:] = input_fitness
+        else:
+            penalized_fitness[n_parents:] = input_penalized_fitness
+        if evaluation_count is None:
+            self._evaluation_count += len(input_fitness)
+        else:
+            self._evaluation_count = evaluation_count
 
-        Returns
-        -------
-        MOArchive
-            The archive.
+        selected, ranks = indicator_selection(
+            self._indicator, penalized_fitness, n_parents
+        )
 
-        Raises
-        ------
-        ValueError
-            Invalid value provided for parameter(s).
+        # Perform adaptation
+        # [2007:mo-cma-es] Algorithm 4, lines 7-10
+        old_step_size = step_size.copy()
+        for oidx in range(n_parents, n_parents + n_offspring):
+            pidx = parents[oidx]
+            success_indicator = self._success_indicator(
+                oidx, pidx, selected, ranks
+            )
+            if selected[pidx]:
+                self._update_step_size(pidx, success_indicator)
+            if selected[oidx]:
+                self._update_step_size(oidx, success_indicator)
+                x_step = (points[oidx] - points[pidx]) / old_step_size[pidx]
+                self._update_covariance_matrix(oidx, x_step)
 
-        Notes
-        -----
-        Can be called as:
+        # Complete the selection process
+        # [2007:mo-cma-es] Algorithm 4, lines 11-13
+        points[:n_parents] = points[selected]
+        fitness[:n_parents] = fitness[selected]
+        penalized_fitness[:n_parents] = penalized_fitness[selected]
+        step_size[:n_parents] = step_size[selected]
+        cov[:n_parents] = cov[selected]
+        path[:n_parents] = path[selected]
+        p_succ[:n_parents] = p_succ[selected]
 
-            * ``create_archive(fn)``
-            * ``create_archive(fn, search_points)``
-            * ``create_archive(search_points, fitness_values)``
-        """
-        n_parents = self.parameters.n_parents
-        if fn is not None:
-            archive = MOArchive(self.parameters, fn.n_objectives)
-            if parent_points is None:
-                archive.parent_points[:] = fn.random_points(n_parents)
-            else:
-                archive.parent_points[:] = parent_points
+        self._generation_count += 1
+
+    def fmin(
+        self,
+        fn: Callable,
+        fn_args: Optional[Iterable[Any]] = (),
+        fn_kwargs: Optional[dict] = {},
+        **kwargs: Any,
+    ) -> OptimizerResult:
+        raise NotImplementedError()
+
+    def _mutate(self, pidx: int, oidx: int) -> None:
+        self._population.parents[oidx] = pidx
+        # [2007:mo-cma-es] Algorithm 4, lines 3-6 (except evaluating fitness)
+        # Sample point
+        self._population.points[oidx, :] = self._rng.multivariate_normal(
+            self._population.points[pidx],
             (
-                archive.parent_fitness[:],
-                archive.parent_penalized_fitness[:],
-            ) = fn.evaluate_with_penalty(archive.parent_points)
+                self._population.step_size[pidx]
+                * self._population.step_size[pidx]
+                * self._population.cov[pidx]
+            ),
+        )
+        # Copy parent data
+        self._population.step_size[oidx] = self._population.step_size[pidx]
+        self._population.cov[oidx, :, :] = self._population.cov[pidx, :, :]
+        self._population.path[oidx, :] = self._population.path[pidx, :]
+        self._population.p_succ[oidx] = self._population.p_succ[pidx]
+
+    def _update_step_size(self, idx: int, p_succ: float) -> None:
+        # [2007:mo-cma-es] Procedure in p. 4
+        c_p = self._parameters.c_p
+        d_inv = 1.0 / self._parameters.d
+        p_target_succ = self._parameters.p_target_succ
+        self._population.p_succ[idx] *= 1.0 - c_p
+        self._population.p_succ[idx] += c_p * p_succ
+        num = self._population.p_succ[idx] - p_target_succ
+        den = 1.0 - p_target_succ
+        self._population.step_size[idx] *= math.exp(d_inv * (num / den))
+
+    def _update_covariance_matrix(self, idx: int, x_step: np.ndarray) -> None:
+        # [2007:mo-cma-es] Procedure in p. 5
+        c_c = self._parameters.c_c
+        c_c_prod = c_c * (2.0 - c_c)
+        c_c_sqrt = math.sqrt(c_c_prod)
+        c_cov = self._parameters.c_cov
+        self._population.path[idx] *= 1.0 - c_c
+        if self._population.p_succ[idx] < self._parameters.p_threshold:
+            self._population.path[idx] += c_c_sqrt * x_step
+
+            self._population.cov[idx] *= 1.0 - c_cov
+            self._population.cov[idx] += c_cov * np.outer(
+                self._population.path[idx], self._population.path[idx]
+            )
         else:
-            if parent_fitness is None:
-                raise ValueError("Invalid value for parent_fitness")
-            if parent_points is None:
-                raise ValueError("Invalid value for parent_points")
-            archive = MOArchive(self.parameters, parent_points.shape[1])
-            archive.parent_points[:] = parent_points
-            archive.parent_fitness[:] = parent_fitness
-            archive.parent_penalized_fitness[:] = parent_fitness
-
-        fast_non_dominated_sort(
-            archive.parent_penalized_fitness, out=archive.parent_fronts
-        )
-
-        if self._ref_point is None:
-            self._ref_point = (
-                np.max(archive.parent_penalized_fitness, axis=0) + 1e-4
+            path_prod = np.outer(
+                self._population.path[idx], self._population.path[idx]
             )
-
-        return archive
-
-    def ask(self, archive: MOArchive) -> None:
-        """Produce new offspring by mutating the parents.
-
-        Notes
-        -----
-        Implements lines 3-7 of algorithm 1 from :cite:`2010:mo-cma-es`.
-        The offspring fitness value and the ranking of parents and offspring \
-        must be computed afterwards with a desired strategy \
-        (e.g. penalized / unpenalized evaluation, using hypervolume or other \
-        indicator).
-        """
-        n_dimensions = self.parameters.n_dimensions
-        n_parents = self.parameters.n_parents
-        n_offspring = self.parameters.n_offspring
-
-        shape = (n_offspring, n_dimensions)
-        z = self._rng.standard_normal(size=shape)
-
-        if n_parents == n_offspring:
-            # Each parent produces one offspring
-            for parent_idx in range(n_parents):
-                offspring_idx = n_parents + parent_idx
-                self._mutate(parent_idx, offspring_idx, z, archive)
-        else:
-            # Otherwise, non-dominated parents reproduce uniformly at random
-            parent_candidates = np.argwhere(
-                archive.parent_fronts == 1
-            ).flatten()
-            parent_indices = self._rng.choice(
-                parent_candidates, n_offspring, replace=True
-            )
-            for i, parent_idx in enumerate(parent_indices):
-                offspring_idx = n_parents + i
-                self._mutate(parent_idx, offspring_idx, z, archive)
-
-    def rank2(self, archive: MOArchive, evaluation_count: int) -> None:
-        """Rank the new population (parents and their offspring).
-
-        Parameters
-        ----------
-        archive
-            The working archive.
-        evaluation_count
-            The updated evaluation count.
-
-        Notes
-        -----
-        Performs two-level sorting as defined in :cite:`2007:mo-cma-es`. \
-        First, non-dominated sorting and then sorting according to their \
-        hypervolume contributions at each front level. \
-            Here implemented as in :cite:`2008:shark`.
-        """
-        self._evaluation_count = float(evaluation_count)
-        n_parents = self.parameters.n_parents
-        n_offspring = self.parameters.n_offspring
-        population_size = n_parents + n_offspring
-        # Reset the selected flag array
-        archive.selected[:] = False
-        # Compute the hypervolume contributions
-        archive.contributions[:] = hv.contributions(
-            archive.parent_penalized_fitness, self._ref_point
-        )
-        # Sort by non-dominance relation
-        fast_non_dominated_sort(
-            archive.parent_penalized_fitness, out=archive.fronts
-        )
-        sorted_idx = np.argsort(archive.fronts)
-        # Select individuals
-        last_front_value = 1
-        last_front_individuals = np.zeros_like(archive.selected, dtype=bool)
-        k = 0
-        while k < population_size:
-            individual_idx = sorted_idx[k]
-            if archive.fronts[individual_idx] > last_front_value:
-                if k < n_parents:
-                    last_front_value += 1
-                    archive.selected |= last_front_individuals
-                    last_front_individuals[:] = False
-                else:
-                    break
-            last_front_individuals[individual_idx] = True
-            k += 1
-        # Select remaining from the last seen front using the
-        # hypervolume contributions as second order criterion
-        remaining = n_parents - np.sum(archive.selected)
-        if remaining > 0:
-            idx = np.argwhere(last_front_individuals).flatten()
-            last_front_hvc = archive.contributions[idx]
-            sorted_idx = idx[np.argsort(-last_front_hvc)]
-            archive.selected[sorted_idx[:remaining]] = True
-
-    def rank(self, archive: MOArchive, evaluation_count: int) -> np.ndarray:
-        """Rank the new population (parents and their offspring).
-
-        Parameters
-        ----------
-        archive
-            The working archive.
-        evaluation_count
-            The updated evaluation count.
-
-        Returns
-        -------
-            The index representing the selection.
-
-        Notes
-        -----
-        Performs two-level sorting as defined in :cite:`2007:mo-cma-es`. \
-        First, non-dominated sorting and then sorting according to their \
-        hypervolume contributions at each front level. \
-            Here implemented a bit different to :cite:`2008:shark`.
-        """
-        self._evaluation_count = float(evaluation_count)
-        population_size = len(archive.fitness)
-        n_parents = self.parameters.n_parents
-        archive.contributions[:] = hv.contributions(
-            archive.fitness, self._ref_point
-        )
-        # Here we perform the selection similar to in Shark's
-        # "IndicatorBasedSelection.h":
-        fast_non_dominated_sort(archive.penalized_fitness, out=archive.fronts)
-        ranking_idx = np.argsort(archive.fronts)
-        last_rank = 1
-        selected_individuals_l: List[int] = []
-        last_front_individuals_l: List[int] = []
-        k = 0
-        archive.best = None
-        best_contribution = float("-inf")
-        while k < population_size:
-            individual = ranking_idx[k]
-            if archive.fronts[individual] > last_rank:
-                if k < n_parents:
-                    last_rank += 1
-                    selected_individuals_l += last_front_individuals_l
-                    last_front_individuals_l = [individual]
-                else:
-                    break
-            else:
-                last_front_individuals_l.append(individual)
-
-            if last_rank == 1 and archive.contributions[k] > best_contribution:
-                best_contribution = archive.contributions[k]
-                archive.best = k
-            k += 1
-        selected_individuals = np.array(selected_individuals_l, dtype=int)
-        last_front_individuals = np.array(last_front_individuals_l, dtype=int)
-        # Select best using HV indicator
-        remaining = n_parents - len(selected_individuals)
-        if remaining > 0:
-            last_front_contrib = archive.contributions[last_front_individuals]
-            tmp_idx = np.argsort(-last_front_contrib)
-            tmp_idx = tmp_idx[:remaining]
-            selected_individuals = np.concatenate(
-                [selected_individuals, last_front_individuals[tmp_idx]],
-            )
-        archive.selected[:] = False
-        archive.selected[selected_individuals] = True
-
-    def tell(self, archive: MOArchive) -> None:
-        """Perform adaptation and environmental selection."""
-        n_offspring = self.parameters.n_offspring
-        n_parents = self.parameters.n_parents
-        c_p = self.parameters.c_p
-        d_inv = 1.0 / self.parameters.d
-        p_target_succ = self.parameters.p_target_succ
-        p_target_succ_comp = 1.0 - p_target_succ
-        p_threshold = self.parameters.p_threshold
-        c_c = self.parameters.c_c
-        c_c_scaler = c_c * (2.0 - c_c)
-        c_c_scaler_sqrt = math.sqrt(c_c_scaler)
-        c_cov = self.parameters.c_cov
-
-        # Since we don't copy the parents parameters when creating the \
-        # offspring, we first update all the offspring
-        # and then all the parents (because some offspring may have the same
-        # parent depending on the provided parameters at initialization)
-
-        # Adapt offspring
-        success_indicators = np.zeros(n_offspring)
-        for i in range(n_offspring):
-            oidx = n_parents + i
-            pidx = archive.offspring_parents[i]
-            success_indicator = self._success_indicator(pidx, oidx, archive)
-            success_indicators[i] = success_indicator
-            if archive.selected[oidx]:
-                # Adapt p_succ
-                p_succ = (1.0 - c_p) * archive.p_succ[
-                    pidx
-                ] + c_p * success_indicator
-                archive.p_succ[oidx] = p_succ
-                # Adapt step size
-                archive.step_size[oidx] = archive.step_size[pidx] * math.exp(
-                    d_inv * ((p_succ - p_target_succ) / p_target_succ_comp)
-                )
-                if archive.p_succ[oidx] < p_threshold:
-                    z = (
-                        archive.points[oidx] - archive.points[pidx]
-                    ) / archive.step_size[pidx]
-                    archive.path_cov[oidx] = (1.0 - c_c) * archive.path_cov[
-                        pidx
-                    ] + c_c_scaler_sqrt * z
-                    archive.cov_C[oidx] = (1.0 - c_cov) * archive.cov_C[
-                        pidx
-                    ] + c_cov * np.outer(
-                        archive.path_cov[oidx], archive.path_cov[oidx]
-                    )
-                else:
-                    archive.path_cov[oidx] = (1.0 - c_c) * archive.path_cov[
-                        pidx
-                    ]
-                    archive.cov_C[oidx] = (1.0 - c_cov) * archive.cov_C[
-                        pidx
-                    ] + c_cov * (
-                        np.outer(
-                            archive.path_cov[oidx], archive.path_cov[oidx]
-                        )
-                        + c_c_scaler * archive.cov_C[pidx]
-                    )
-        # Adapt parents
-        for i in range(n_offspring):
-            pidx = archive.offspring_parents[i]
-            if archive.selected[pidx]:
-                # update step size procedure, line 1, [2007:mo-cma-es]
-                archive.p_succ[pidx] = (1.0 - c_p) * archive.p_succ[pidx]
-                archive.p_succ[pidx] += c_p * success_indicators[i]
-                # update step size procedure, line 2, [2007:mo-cma-es]
-                tmp = (
-                    d_inv
-                    * (archive.p_succ[pidx] - p_target_succ)
-                    / p_target_succ_comp
-                )
-                archive.step_size[pidx] *= math.exp(tmp)
-
-        # Environmental selection
-        archive.select()
-        self._generations += 1
-
-    def stop(self) -> bool:
-        """Compute if any of the stopping conditions hold.
-
-        Returns
-        -------
-        bool
-            At least one stopping condition holds.
-        """
-        return (
-            self._evaluation_count
-            > self.stopping_conditions.max_evaluation_count
-        )
+            self._population.cov[idx] = (1.0 - c_cov) * self._population.cov[
+                idx
+            ] + c_cov * (path_prod + c_c_prod * self._population.cov[idx])
 
     def _success_indicator(
-        self, parent_idx: int, offspring_idx: int, archive: MOArchive
+        self, oidx: int, pidx: int, selected: np.ndarray, ranks: np.ndarray
     ) -> float:
-        if (
-            self._notion_of_success == NotionOfSuccess.PopulationBased
-            and archive.selected[offspring_idx]
-        ) or (
-            (archive.fronts[offspring_idx] < archive.fronts[parent_idx])
-            or (
-                archive.fronts[offspring_idx] == archive.fronts[parent_idx]
-                and archive.contributions[offspring_idx]
-                >= archive.contributions[parent_idx]
-            )
-        ):
-            return 1.0
-        return 0.0
-
-    def _mutate(
-        self,
-        parent_idx: int,
-        offspring_idx: int,
-        z: np.ndarray,
-        archive: MOArchive,
-    ) -> None:
-        """Perform mutation of a parent."""
-        B, D = np.linalg.eigh(archive.cov_C[parent_idx])
-        archive.points[offspring_idx] = (
-            archive.points[parent_idx]
-            + archive.step_size[parent_idx] * (B @ D) @ z[parent_idx]
-        )
-        n_parents = self.parameters.n_parents
-        archive.offspring_parents[offspring_idx - n_parents] = parent_idx
+        success = False
+        if self._success_notion == SuccessNotion.IndividualBased:
+            # [2010:mo-cma-es] Section 3.1, p. 489
+            success = ranks[oidx] <= ranks[pidx]
+        else:
+            # [2010:mo-cma-es] Section 3.2, p. 489
+            success = selected[oidx]
+        return 1.0 if success else 0.0

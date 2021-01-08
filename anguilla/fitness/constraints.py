@@ -4,13 +4,13 @@ import typing
 import numpy as np
 
 from anguilla.fitness.base import (
-    AbstractConstraintsHandler,
+    ConstraintsHandler,
     Bounds,
     BoundsTuple,
 )
 
 
-class BoxConstraintsHandler(AbstractConstraintsHandler):
+class BoxConstraintsHandler(ConstraintsHandler):
     """A box constraints handler.
 
     Parameters

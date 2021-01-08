@@ -2,7 +2,15 @@
 # See also: https://snarky.ca/what-the-heck-is-pyproject-toml/
 
 [build-system]
-requires = ["setuptools >= 40.6.0", "wheel"]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "pybind11~=2.6.0",
+    "cmake",
+    "ninja",
+    "scikit-build",
+]
+
 build-backend = "setuptools.build_meta"
 
 # See: https://nbqa.readthedocs.io/en/latest/configuration.html

@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.10)
 
 project(experiments)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -O3")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libstdc++")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libstdc++")
+# Find Python3
+set(Python_FIND_IMPLEMENTATIONS CPython PyPy)
+find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 
 # Find Shark
 find_package(Shark REQUIRED)
@@ -37,6 +37,9 @@ target_link_libraries(experiment1 PRIVATE ${Boost_LIBRARIES})
 add_executable(mocma ${MOCMA_SRC})
 target_link_libraries(mocma PRIVATE ${SHARK_LIBRARIES})
 target_link_libraries(mocma PRIVATE ${Boost_LIBRARIES})
+target_link_libraries(mocma PRIVATE ${Python3_LIBRARIES})
+target_include_directories(mocma PRIVATE ${Python3_INCLUDE_DIRS})
+target_include_directories(mocma PRIVATE ${Python3_NumPy_INCLUDE_DIRS})
 
 add_executable(fitness ${FITNESS_SRC})
 target_link_libraries(fitness PRIVATE ${SHARK_LIBRARIES})

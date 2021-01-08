@@ -1,0 +1,43 @@
+package:
+  name: anguilla
+  version: 0.0.1
+
+source:
+  path: ../..
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - python >=3.6
+    - pip
+    - pybind11 >=2.6.0
+    - scikit-build
+    - numpy
+    - ninja
+    - cmake >=3.18
+    - clang >=11    # [linux]
+    - clangxx >=11  # [linux]
+    - gxx_linux-64  # [linux]
+    - libcxx >=11   # [linux]
+  host:
+    - libcxx >=11
+  run:
+    - python >=3.6
+    - {{ pin_compatible('libcxx', max_pin='x.x') }}
+
+  test:
+    imports:
+      - anguilla
+      - anguilla.hypervolume
+    source_files:
+      - tests
+    commands:
+      - python -m unittest
+
+about:
+  license: LGPL-3.0
+  license_family: LGPL
+  license_file: LICENSE.txt
+  summary: A MOO-CMA-ES implementation
