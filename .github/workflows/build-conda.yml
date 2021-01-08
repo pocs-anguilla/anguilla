@@ -43,6 +43,6 @@ jobs:
         run: conda install -c ${CONDA_PREFIX}/conda-bld/ anguilla
 
       - name: Test
-        run: python -m unittest .
+        run: python -m unittest
 
 
