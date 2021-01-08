@@ -1,8 +1,8 @@
-"""Testsuite for the :py:mod:`fitness.benchmark` module."""
+"""Testsuite for the :py:mod:`fitness.benchmark` package."""
 import dataclasses
 import pathlib
 import unittest
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -70,9 +70,9 @@ class BaseTestFunction:
         fn.n_dimensions = start + 1
         end = fn.n_dimensions
         if fn.scalable_dimensions:
-            self.assertTrue(start != end)
+            self.assertTrue(start != end, "!= operator")
         else:
-            self.assertTrue(start == end)
+            self.assertTrue(start == end, "== operator")
 
     def test_scale_objectives(self):
         fn = self.get_fn()
@@ -80,9 +80,9 @@ class BaseTestFunction:
         fn.n_objectives = start + 1
         end = fn.n_objectives
         if fn.scalable_objectives:
-            self.assertTrue(start != end)
+            self.assertTrue(start != end, "!= operator")
         else:
-            self.assertTrue(start == end)
+            self.assertTrue(start == end, "== operator")
 
     def test_single(self):
         fn = self.get_fn()

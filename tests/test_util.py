@@ -1,4 +1,4 @@
-"""Testsuite for the utilitary module."""
+"""Testsuite for the :py:mod:`util` module."""
 import unittest
 
 import numpy as np

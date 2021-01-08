@@ -134,7 +134,7 @@ class SuccessNotion(enum.IntEnum):
     IndividualBased = 1
 
     def __str__(self) -> str:
-        if self.value == SuccessNotion.PopulationBased:
+        if self.value == SuccessNotion.PopulationBased.value:
             return "P"
         return "I"
 

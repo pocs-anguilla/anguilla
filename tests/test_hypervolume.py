@@ -1,4 +1,4 @@
-"""Testsuite for the hypervolume module."""
+"""Testsuite for the :py:mod:`hypervolume` package."""
 import math
 import unittest
 
