@@ -64,6 +64,8 @@ jobs:
       run: pip install --verbose . --find-links ${{ github.workspace }}/dist
 
     - name: Test
-      run: python -m unittest
+      run: |
+        pip install pytest
+        pytest tests
 
 

@@ -44,5 +44,5 @@ jobs:
 
       - name: Test
         run: |
-          export PYTHONPATH="${CONDA_PREFIX}/lib/python${{ matrix.python-version }}:${CONDA_PREFIX}/lib/python${{ matrix.python-version }}/site-packages"
-          python -m unittest
+          pip install pytest
+          pytest tests
