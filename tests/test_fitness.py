@@ -20,6 +20,26 @@ class Samples:
     n_objectives: int
 
 
+def get_sample(row: np.ndarray) -> Samples:
+    start_point, end_point, start_fitness, end_fitness = row[0:4]
+    point = np.squeeze(row[int(start_point) : int(end_point)])
+    fitness = np.squeeze(row[int(start_fitness) : int(end_fitness)])
+    n_dimensions = int(end_point - start_point)
+    n_objectives = int(end_fitness - start_fitness)
+    return Samples(point, fitness, n_dimensions, n_objectives)
+
+
+def get_samples(rows: np.ndarray) -> Samples:
+    # Assumes all samples in the given rows have the same number of
+    # dimensions and objectives
+    start_point, end_point, start_fitness, end_fitness = rows[0, 0:4]
+    points = np.squeeze(rows[:, int(start_point) : int(end_point)])
+    fitness = np.squeeze(rows[:, int(start_fitness) : int(end_fitness)])
+    n_dimensions = int(end_point - start_point)
+    n_objectives = int(end_fitness - start_fitness)
+    return Samples(points, fitness, n_dimensions, n_objectives)
+
+
 class BaseTestFunction:
     """Base test case for benchmark functions.
 
@@ -46,24 +66,6 @@ class BaseTestFunction:
     def get_fn(self):
         raise NotImplementedError()
 
-    def get_sample(self, row: np.ndarray) -> Samples:
-        start_point, end_point, start_fitness, end_fitness = row[0:4]
-        point = np.squeeze(row[int(start_point) : int(end_point)])
-        fitness = np.squeeze(row[int(start_fitness) : int(end_fitness)])
-        n_dimensions = int(end_point - start_point)
-        n_objectives = int(end_fitness - start_fitness)
-        return Samples(point, fitness, n_dimensions, n_objectives)
-
-    def get_samples(self, rows: np.ndarray) -> Samples:
-        # Assumes all samples in the given rows have the same number of
-        # dimensions and objectives
-        start_point, end_point, start_fitness, end_fitness = rows[0, 0:4]
-        points = np.squeeze(rows[:, int(start_point) : int(end_point)])
-        fitness = np.squeeze(rows[:, int(start_fitness) : int(end_fitness)])
-        n_dimensions = int(end_point - start_point)
-        n_objectives = int(end_fitness - start_fitness)
-        return Samples(points, fitness, n_dimensions, n_objectives)
-
     def test_scale_dimensions(self):
         fn = self.get_fn()
         start = fn.n_dimensions
@@ -87,7 +89,7 @@ class BaseTestFunction:
     def test_single(self):
         fn = self.get_fn()
         for i, row in enumerate(self.data):
-            sample = self.get_sample(row)
+            sample = get_sample(row)
             fn.n_dimensions = sample.n_dimensions
             fn.n_objectives = sample.n_objectives
             self.assertTrue(
@@ -97,7 +99,7 @@ class BaseTestFunction:
 
     def test_multiple(self):
         fn = self.get_fn()
-        samples = self.get_samples(self.data[5:])
+        samples = get_samples(self.data[5:])
         fn.n_dimensions = samples.n_dimensions
         fn.n_objectives = samples.n_objectives
         self.assertTrue(
@@ -107,7 +109,7 @@ class BaseTestFunction:
     def test_single_multiple(self):
         fn = self.get_fn()
         for row in self.data:
-            sample = self.get_sample(row)
+            sample = get_sample(row)
             fn.n_dimensions = sample.n_dimensions
             fn.n_objectives = sample.n_objectives
             v1 = fn.evaluate_single(sample.points)
@@ -117,7 +119,7 @@ class BaseTestFunction:
 
     def test_call(self):
         fn = self.get_fn()
-        samples = self.get_samples(self.data[5:])
+        samples = get_samples(self.data[5:])
         fn.n_dimensions = samples.n_dimensions
         fn.n_objectives = samples.n_objectives
         self.assertTrue(

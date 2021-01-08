@@ -1,6 +1,5 @@
 """This module contains implementations of the IHR family of benchmark \
 functions."""
-
 import math
 
 import numpy as np
@@ -74,6 +73,10 @@ class IHR(ObjectiveFunction):
     ) -> None:
         self._rotate = rotate
         super().__init__(n_dimensions, 2, rng)
+
+    @property
+    def name(self) -> str:
+        return "IHR"
 
     def _post_update_n_dimensions(self) -> None:
         self._rotation_matrix = (

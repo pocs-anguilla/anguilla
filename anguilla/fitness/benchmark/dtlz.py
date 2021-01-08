@@ -20,6 +20,13 @@ class DTLZ(ObjectiveFunction):
         self._scalable_objectives = True
         super().__init__(n_dimensions, n_objectives, rng)
 
+    @property
+    def name(self) -> str:
+        return "DTLZ"
+
+    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
+
     def _pre_update_n_dimensions(self, n_dimensions: int) -> None:
         if n_dimensions < 1 or n_dimensions < self._n_objectives:
             raise ValueError("Invalid dimensions")

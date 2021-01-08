@@ -21,6 +21,10 @@ class ELLI(ObjectiveFunction):
         super().__init__(n_dimensions, 2, rng)
 
     @property
+    def name(self) -> str:
+        return "IHR"
+
+    @property
     def qualified_name(self) -> str:
         return "{}(a={:.2E})".format(self.name, self._a)
 
