@@ -6,40 +6,45 @@ source:
   path: ../..
 
 build:
+  skip: true  # [not x86_64 or py<36]
   number: 0
 
 requirements:
   build:
-    - python >=3.6
-    - pip
-    - pybind11 >=2.6.0
-    - scikit-build
-    - numpy
-    - ninja
-    - cmake >=3.18
-    - clang >=11    # [linux]
-    - clangxx >=11  # [linux]
-    - gxx_linux-64  # [linux]
-    - libcxx >=11   # [linux]
-  host:
-    - libcxx >=11
-  run:
-    - python >=3.6
-    - numpy
-    - dataclasses  # [py==36]
-    - {{ pin_compatible('libcxx', max_pin='x.x') }}
+    - clang >=11             # [linux]
+    - clangxx >=11           # [linux]
+    - gxx_linux-64           # [linux]
+    - libcxx >=11            # [linux]
+    - {{ compiler('cxx') }}  # [not linux]
 
-  test:
-    imports:
-      - anguilla
-      - anguilla.hypervolume
-    source_files:
-      - tests
-    commands:
-      - python -m unittest
+  host:
+    - python
+    - pybind11 >=2.6.0
+    - pip
+    - scikit-build
+    - cmake >=3.18
+    - ninja
+
+  run:
+    - python
+    - numpy
+    - dataclasses                                    # [py==36]
+    - libcxx >=11                                    # [linux]
+    - {{ pin_compatible('libcxx', max_pin='x.x') }}  # [linux]
+
+test:
+  requires:
+    - pytest
+  imports:
+    - anguilla
+    - anguilla.hypervolume
+  source_files:
+    - tests/
+  commands:
+    - pytest tests
 
 about:
   license: LGPL-3.0
   license_family: LGPL
   license_file: LICENSE.txt
-  summary: A MOO-CMA-ES implementation
+  summary: A MO-CMA-ES implementation.
