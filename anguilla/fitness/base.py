@@ -343,12 +343,16 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         Raises
         ------
         NotImplementedError
-            Unsupported or not implemented.
+            The function is not implemented.
+        RuntimeError
+            The function is not supported.
 
         Notes
         -----
         Only applicable to multi-objective functions.
         """
+        if self._n_objectives == 1:
+            raise RuntimeError("Unsupported for single-objective functions")
         raise NotImplementedError()
 
     def _post_update_n_dimensions(self) -> None:

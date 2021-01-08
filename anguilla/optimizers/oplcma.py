@@ -18,7 +18,7 @@ from anguilla.optimizers.base import (
 @dataclasses.dataclass
 class OPLParameters(OptimizerParameters):
     """Parameters for OnePlusLambda-CMA-ES.
-    
+
     Parameters
     ----------
     n_dimensions
@@ -195,12 +195,12 @@ class OnePlusLambdaCMA(Optimizer):
 
     @property
     def generation_count(self) -> int:
-        """The number of elapsed generations."""
+        """Return the number of elapsed generations."""
         return self._generation_count
 
     @property
     def evaluation_count(self) -> int:
-        """The number of function evaluations."""
+        """Return the number of function evaluations."""
         return self._evaluation_count
 
     @property

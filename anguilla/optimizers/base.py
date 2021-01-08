@@ -73,8 +73,8 @@ class Optimizer(metaclass=abc.ABCMeta):
     def fmin(
         self,
         fn: Callable,
-        fn_args: Optional[Iterable[Any]] = (),
-        fn_kwargs: Optional[dict] = {},
+        fn_args: Optional[Iterable[Any]] = None,
+        fn_kwargs: Optional[dict] = None,
         **kwargs: Any,
     ) -> OptimizerResult:
         """Optimize the given function."""

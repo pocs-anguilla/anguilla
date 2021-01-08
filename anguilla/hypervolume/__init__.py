@@ -121,7 +121,7 @@ def contributions(
             raise NotImplementedError()
     else:
         raise ValueError("Input dimensionality can't be one.")
-    return np.empty()
+    return np.empty(0)
 
 
 def contributions_naive(
@@ -155,7 +155,7 @@ def contributions_naive(
     :cite:`2008:shark`.
     """
     if ps.size == 0:
-        return np.empty()
+        return np.empty(0)
 
     if ref_p is None:
         ref_p = np.zeros_like(ps[0])

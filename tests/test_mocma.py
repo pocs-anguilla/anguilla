@@ -18,6 +18,8 @@ VOLUME_TEST_RTOL = 5e-3
 
 
 class VolumeBaseTestFunction:
+    """Test the MOCMA implementation against known volumes."""
+
     filename: str
     fn_cls: ObjectiveFunction
     n_offspring: Optional[int] = None

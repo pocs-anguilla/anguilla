@@ -23,7 +23,7 @@ from anguilla.indicators import Indicator, HypervolumeIndicator
 @dataclasses.dataclass
 class MOParameters(OptimizerParameters):
     """Parameters for MO-CMA-ES.
-    
+
     Parameters
     ----------
     n_dimensions
@@ -201,7 +201,7 @@ class FixedSizePopulation:
 
 
 class MOCMA(Optimizer):
-    """The MO-CMA-ES multi-objective optimizer
+    """The MO-CMA-ES multi-objective optimizer.
 
     Parameters
     ----------

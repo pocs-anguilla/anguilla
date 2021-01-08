@@ -10,7 +10,7 @@ def fast_non_dominated_sort(
     points: np.ndarray,
     target_size: Optional[int] = None,
 ) -> DominationSortResult:
-    """front the points using the Pareto dominance relation.
+    """Rank the points using the Pareto dominance relation.
 
     Parameters
     ----------
