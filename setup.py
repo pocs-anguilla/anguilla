@@ -16,7 +16,7 @@ def main():
         name="anguilla",
         author=author,
         version=version,
-        description="A MO-CMA-ES implementation.",
+        description="An implementation of MO-CMA-ES.",
         long_description=long_description,
         long_description_content_type="text/x-rst",
         packages=[

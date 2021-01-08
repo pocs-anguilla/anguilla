@@ -14,37 +14,40 @@ requirements:
     - clang >=11             # [linux]
     - clangxx >=11           # [linux]
     - gxx_linux-64           # [linux]
-    - libcxx >=11            # [linux]
     - {{ compiler('cxx') }}  # [not linux]
-
-  host:
-    - python
-    - pybind11 >=2.6.0
-    - pip
-    - scikit-build
     - cmake >=3.18
     - ninja
 
+  host:
+    - libcxx >=11  # [linux]
+    - python
+    - pybind11 >=2.6.0
+    - numpy >=1.19.0
+    - pip
+    - setuptools
+    - scikit-build
+
   run:
     - python
-    - numpy
-    - dataclasses                                    # [py==36]
+    - numpy >=1.19.0
+    - {{ pin_compatible('numpy', max_pin='x.x') }}
     - libcxx >=11                                    # [linux]
     - {{ pin_compatible('libcxx', max_pin='x.x') }}  # [linux]
+    - dataclasses                                    # [py==36]
 
-test:
-  requires:
-    - pytest
-  imports:
-    - anguilla
-    - anguilla.hypervolume
-  source_files:
-    - tests/
-  commands:
-    - pytest tests
+#test:
+#  requires:
+#    - pytest
+#  imports:
+#    - anguilla
+#    - anguilla.hypervolume
+#  source_files:
+#    - tests/
+#  commands:
+#    - pytest tests
 
 about:
   license: LGPL-3.0
   license_family: LGPL
   license_file: LICENSE.txt
-  summary: A MO-CMA-ES implementation.
+  summary: An implementation of MO-CMA-ES.
