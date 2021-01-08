@@ -3,21 +3,13 @@
 import numpy as np
 from typing import Optional
 
-from ._hypervolume import (
-    hv2d_f8,
-    hv3d_btree_f8,
-    hv3d_rbtree_f8,
-    hvc2d_f8,
-    hvc3d_btree_f8,
-    hvc3d_rbtree_f8,
-)
+from anguilla.hypervolume import _hypervolume as hvcxx
 
 __all__ = ["calculate", "contributions"]
 
 # Optional
 try:
-    from ._shark_hypervolume import hvkd_f8 as shark_calculate
-    from ._shark_hypervolume import hvckd_f8 as shark_contributions
+    from anguilla.hypervolume import _shark_hypervolume as shark
 
     __all__.append("shark_calculate")
     __all__.append("shark_contributions")
@@ -56,17 +48,17 @@ def calculate(
         ps = np.array([ps])
     d = len(ps[0])
     if d == 2:
-        return hv2d_f8(ps, ref_p)
+        return hvcxx.hv2d_f8(ps, ref_p)
     elif d == 3:
         if ds == "btree":
-            return hv3d_btree_f8(ps, ref_p)
+            return hvcxx.hv3d_btree_f8(ps, ref_p)
         elif ds == "rbtree":
-            return hv3d_rbtree_f8(ps, ref_p)
+            return hvcxx.hv3d_rbtree_f8(ps, ref_p)
         else:
             raise ValueError("ds: {}".format(ds))
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
-            shark_calculate(ps, ref_p)
+            shark.hvkd_f8(ps, ref_p)
         else:
             raise NotImplementedError()
     else:
@@ -106,17 +98,17 @@ def contributions(
     """
     d = len(ps[0])
     if d == 2:
-        return hvc2d_f8(ps, ref_p)
+        return hvcxx.hvc2d_f8(ps, ref_p)
     elif d == 3:
         if ds == "btree":
-            return hvc3d_btree_f8(ps, ref_p)
+            return hvcxx.hvc3d_btree_f8(ps, ref_p)
         elif ds == "rbtree":
-            return hvc3d_rbtree_f8(ps, ref_p)
+            return hvcxx.hvc3d_rbtree_f8(ps, ref_p)
         else:
             raise ValueError("ds: {}".format(ds))
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
-            shark_contributions(ps, ref_p)
+            shark.hvckd_f8(ps, ref_p)
         else:
             raise NotImplementedError()
     else:

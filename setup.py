@@ -22,8 +22,8 @@ def main():
         packages=[
             "anguilla",
             "anguilla.optimizers",
-            "anguilla.hypervolume",
             "anguilla.fitness",
+            "anguilla.hypervolume",
         ],
         package_dir={".": "anguilla"},
         cmake_install_dir="anguilla",

@@ -22,7 +22,6 @@ requirements:
     - gxx_linux-64                # [linux]
     - clangxx >=11                # [linux]
     - clang >=11                  # [linux]
-    - libstdcxx-ng                # [linux]
     - {{ compiler('cxx') }}       # [osx]
     - make                        # [unix]
     - patch                       # [unix]
@@ -30,11 +29,6 @@ requirements:
     - ninja                       # [win]
     - m2-patch                    # [win]
     - cmake >=3.18
-    - openblas
-    - boost
-    - libjpeg-turbo
-    - libpng
-    - libzip
 
   host:
     - libstdcxx-ng  # [linux]
@@ -45,11 +39,17 @@ requirements:
     - libzip
   
   run:
+    - openblas
     - {{ pin_compatible('openblas', max_pin='x.x') }}
+    - boost
     - {{ pin_compatible('boost', max_pin='x.x') }}
+    - libjpeg-turbo
     - {{ pin_compatible('libjpeg-turbo', max_pin='x.x') }}
+    - libpng
     - {{ pin_compatible('libpng', max_pin='x.x') }}
+    - libzip
     - {{ pin_compatible('libzip', max_pin='x.x') }}
+    - libstdcxx-ng                                         # [linux]
     - {{ pin_compatible('libstdcxx-ng', max_pin='x.x') }}  # [linux]
 
 about:
