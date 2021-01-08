@@ -215,7 +215,7 @@ class MOCMA(Optimizer):
         The initial step size. Ignored if `parameters` is provided.
     success_notion: optional
         The notion of success.
-    indicator
+    indicator: optional
         The indicator to use.
     stopping_conditions: optional
         The stopping conditions.
