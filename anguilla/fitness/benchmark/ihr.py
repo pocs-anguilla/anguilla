@@ -78,6 +78,9 @@ class IHR(ObjectiveFunction):
     def name(self) -> str:
         return "IHR"
 
+    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
+
     def _post_update_n_dimensions(self) -> None:
         self._rotation_matrix = (
             random_orthogonal_matrix(self._n_dimensions, self._rng)
