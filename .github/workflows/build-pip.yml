@@ -34,9 +34,9 @@ jobs:
     name: Build with Pip
     needs: [make_dist]
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
-        platform: [windows-latest, macos-latest, ubuntu-latest]
+        platform: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.6", "3.8"]
     runs-on: ${{ matrix.platform }}
 
