@@ -24,7 +24,7 @@ jobs:
     - name: Build files
       run: |
         python -m build
-        CMAKE_TOOLCHAIN_FILE=cmake/toolchains/cxx17.cmake PYBIND11_GLOBAL_SDIST=ON python -m build
+        PYBIND11_GLOBAL_SDIST=ON python -m build
 
     #- uses: actions/upload-artifact@v2
     #  with:
@@ -46,7 +46,7 @@ jobs:
     #- uses: actions/download-artifact@v2
     #  with:
     #    name: artifact
-        path: dist
+    #    path: dist
 
     - uses: actions/setup-python@v2
       with:

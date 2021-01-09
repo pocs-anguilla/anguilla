@@ -20,15 +20,18 @@ else()
 endif()
 
 # Find Python 3
-if(SKBUILD)
-  message(STATUS "Using sk-build")
-  set(Python_EXECUTABLE "${PYTHON_EXECUTABLE}")
-  set(Python_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
-  set(Python_LIBRARY "${PYTHON_LIBRARY}")
-  set(_DUMMY "${PYTHON_VERSION_STRING}")  # silence warning
+if(DEFINED $ENV{CONDA_BUILD})
+  set(Python3_EXECUTABLE $ENV{PYTHON})
+else()
+  if(SKBUILD)
+    set(Python3_EXECUTABLE "${PYTHON_EXECUTABLE}")
+    set(Python3_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
+    set(Python3_LIBRARY "${PYTHON_LIBRARY}")
+    set(_DUMMY "${PYTHON_VERSION_STRING}")  # silence warning
+  endif()
 endif()
 
-set(Python_FIND_IMPLEMENTATIONS CPython PyPy)
+set(Python3_FIND_IMPLEMENTATIONS CPython PyPy)
 find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 
 # Add site-packages to the search path
