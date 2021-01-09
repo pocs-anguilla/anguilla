@@ -3,13 +3,20 @@
 import numpy as np
 from typing import Optional
 
-from . import _hypervolume as hvcxx
+from ._hypervolume import (
+    hv2d_f8,
+    hv3d_btree_f8,
+    hv3d_rbtree_f8,
+    hvc2d_f8,
+    hvc3d_btree_f8,
+    hvc3d_rbtree_f8,
+)
 
 __all__ = ["calculate", "contributions"]
 
 # Optional
 try:
-    from . import _shark_hypervolume as shark
+    from ._shark_hypervolume import hvckd_f8, hvckd_f8
 
     SHARK_BINDINGS_AVAILABLE = True
 except ImportError:
@@ -46,17 +53,17 @@ def calculate(
         ps = np.array([ps])
     d = len(ps[0])
     if d == 2:
-        return hvcxx.hv2d_f8(ps, ref_p)
+        return hv2d_f8(ps, ref_p)
     elif d == 3:
         if ds == "btree":
-            return hvcxx.hv3d_btree_f8(ps, ref_p)
+            return hv3d_btree_f8(ps, ref_p)
         elif ds == "rbtree":
-            return hvcxx.hv3d_rbtree_f8(ps, ref_p)
+            return hv3d_rbtree_f8(ps, ref_p)
         else:
             raise ValueError("ds: {}".format(ds))
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
-            shark.hvkd_f8(ps, ref_p)
+            hvkd_f8(ps, ref_p)
         else:
             raise NotImplementedError()
     else:
@@ -96,17 +103,17 @@ def contributions(
     """
     d = len(ps[0])
     if d == 2:
-        return hvcxx.hvc2d_f8(ps, ref_p)
+        return hvc2d_f8(ps, ref_p)
     elif d == 3:
         if ds == "btree":
-            return hvcxx.hvc3d_btree_f8(ps, ref_p)
+            return hvc3d_btree_f8(ps, ref_p)
         elif ds == "rbtree":
-            return hvcxx.hvc3d_rbtree_f8(ps, ref_p)
+            return hvc3d_rbtree_f8(ps, ref_p)
         else:
             raise ValueError("ds: {}".format(ds))
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
-            shark.hvckd_f8(ps, ref_p)
+            hvckd_f8(ps, ref_p)
         else:
             raise NotImplementedError()
     else:
