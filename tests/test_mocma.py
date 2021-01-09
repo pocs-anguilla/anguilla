@@ -74,11 +74,7 @@ class VolumeBaseTestFunction:
                     while not optimizer.stop.triggered:
                         points = optimizer.ask()
                         if fn.has_constraints:
-                            (
-                                fitness,
-                                penalized_fitness,
-                            ) = fn.evaluate_with_penalty(points)
-                            optimizer.tell(fitness, penalized_fitness)
+                            optimizer.tell(*fn.evaluate_with_penalty(points))
                         else:
                             optimizer.tell(fn(points))
                     volumes[trial] = optimizer.indicator(

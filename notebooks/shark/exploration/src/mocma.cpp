@@ -25,7 +25,7 @@ struct PointExtractor {
 template <typename Optimizer = MOCMA, typename ObjectiveFunction = benchmarks::CIGTAB2>
 class PopulationPlotExperiment {
    public:
-    static void run(int mu, int maxEvaluations, RealVector *reference = nullptr, bool individual = false) {
+    static void run(int mu, int n, int maxEvaluations, RealVector *reference = nullptr, bool individual = false) {
         std::cout.setf(std::ios_base::scientific);
         std::cout.precision(10);
         std::vector<std::string> formats = {"rx", "bx", "gx"};
@@ -37,7 +37,7 @@ class PopulationPlotExperiment {
             if (fn.hasScalableObjectives()) {
                 fn.setNumberOfObjectives(2);
             }
-            fn.setNumberOfVariables(5);
+            fn.setNumberOfVariables(n);
 
             Optimizer optimizer;
             if (individual) {
@@ -73,8 +73,8 @@ class PopulationPlotExperiment {
                 std::cout << "Trial " << i << ": " << volume << std::endl;
             }
             if (i + 1 == formats.size()) {
-                plt::title(boost::str(boost::format("%1%, %2%-%3%\nmu=%4%,evals=%5%") % fn.name() % optimizer.name() % st % mu % fn.evaluationCounter()));
-                plt::save(boost::str(boost::format("./%1%-%2%-%3%-mu%4%-fe%5%.png") % fn.name() % optimizer.name() % st % mu % fn.evaluationCounter()));
+                plt::title(boost::str(boost::format("%1%(n=%2%), %3%-%4%\nmu=%5%,evals=%6%") % fn.name() % n % optimizer.name() % st % mu % fn.evaluationCounter()));
+                plt::save(boost::str(boost::format("./%1%n%2%-%3%-%4%-mu%5%-fe%6%.png") % fn.name() % n % optimizer.name() % st % mu % fn.evaluationCounter()));
             }
         }
     }
@@ -82,18 +82,19 @@ class PopulationPlotExperiment {
 
 int main(int argc, char *argv[]) {
     int mu = argc > 1 ? std::atoi(argv[1]) : 10;
-    int maxEvaluations = argc > 2 ? std::atoi(argv[2]) : 1000;
-    bool useSteadyState = argc > 3 ? std::strcmp("steady", argv[3]) == 0 : false;
-    bool individual = argc > 4 ? std::strcmp("individual", argv[4]) == 0 : false;
+    int n = argc > 2 ? std::atoi(argv[2]) : 5;
+    int maxEvaluations = argc > 3 ? std::atoi(argv[3]) : 1000;
+    bool useSteadyState = argc > 4 ? std::strcmp("steady", argv[4]) == 0 : false;
+    bool individual = argc > 5 ? std::strcmp("individual", argv[5]) == 0 : false;
 
     RealVector reference = {11.0, 11.0};
     RealVector *reference_ptr = nullptr;
 
     if (useSteadyState) {
-        PopulationPlotExperiment<SteadyStateMOCMA, benchmarks::ZDT3> experiment;
-        experiment.run(mu, maxEvaluations, reference_ptr, individual);
+        PopulationPlotExperiment<SteadyStateMOCMA, benchmarks::ZDT1> experiment;
+        experiment.run(mu, n, maxEvaluations, reference_ptr, individual);
     } else {
-        PopulationPlotExperiment<MOCMA, benchmarks::ZDT3> experiment;
-        experiment.run(mu, maxEvaluations, reference_ptr, individual);
+        PopulationPlotExperiment<MOCMA, benchmarks::ZDT1> experiment;
+        experiment.run(mu, n, maxEvaluations, reference_ptr, individual);
     }
 }

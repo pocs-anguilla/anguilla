@@ -375,7 +375,7 @@ class MOCMA(Optimizer):
             )
             parents = np.argwhere(ranks == 1).flatten()
             chosen_parents = self._rng.choice(
-                parents, size=self._n_offspring, replace=False
+                parents, size=self._n_offspring, replace=True
             )
             for oidx, pidx in zip(
                 range(self._n_parents, self._n_parents + self._n_offspring),
@@ -425,12 +425,12 @@ class MOCMA(Optimizer):
             success_indicator = self._success_indicator(
                 oidx, pidx, selected, ranks
             )
-            if selected[pidx]:
-                self._update_step_size(pidx, success_indicator)
             if selected[oidx]:
                 self._update_step_size(oidx, success_indicator)
                 x_step = (points[oidx] - points[pidx]) / old_step_size[pidx]
                 self._update_covariance_matrix(oidx, x_step)
+            if selected[pidx]:
+                self._update_step_size(pidx, success_indicator)
 
         # Complete the selection process
         # [2007:mo-cma-es] Algorithm 4, lines 11-13
@@ -473,6 +473,7 @@ class MOCMA(Optimizer):
 
     def _update_step_size(self, idx: int, p_succ: float) -> None:
         # [2007:mo-cma-es] Procedure in p. 4
+        # [2010:mo-cma-es] Algorithm 1 in p. 2, lines 9-10, 17-18
         c_p = self._parameters.c_p
         d_inv = 1.0 / self._parameters.d
         p_target_succ = self._parameters.p_target_succ
@@ -484,6 +485,7 @@ class MOCMA(Optimizer):
 
     def _update_covariance_matrix(self, idx: int, x_step: np.ndarray) -> None:
         # [2007:mo-cma-es] Procedure in p. 5
+        # [2010:mo-cma-es] Algorithm in p. 2, lines 11-16
         c_c = self._parameters.c_c
         c_c_prod = c_c * (2.0 - c_c)
         c_c_sqrt = math.sqrt(c_c_prod)
@@ -514,4 +516,4 @@ class MOCMA(Optimizer):
         else:
             # [2010:mo-cma-es] Section 3.2, p. 489
             success = selected[oidx]
-        return 1.0 if success else 0.0
+        return float(success)
