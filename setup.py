@@ -23,6 +23,7 @@ def main():
             "anguilla",
             "anguilla.optimizers",
             "anguilla.fitness",
+            "anguilla.fitness.benchmark",
             "anguilla.hypervolume",
         ],
         package_dir={".": "anguilla"},
