@@ -10,7 +10,7 @@ set(HV_MODULE_SRC
     "src/${HV_INTERNAL_MODULE_NAME}.cpp"
 )
 
-if (CMAKE_BUILD_TYPE MATCHES Debug)
+if ((CMAKE_BUILD_TYPE MATCHES Debug) AND (NOT MSVC))
   pybind11_add_module(${HV_INTERNAL_MODULE_NAME} MODULE NO_EXTRAS ${HV_MODULE_SRC})
   set_target_properties(${HV_INTERNAL_MODULE_NAME} PROPERTIES DEBUG_POSTFIX "")
   find_library(Asan_LIBRARY asan REQUIRED)
@@ -22,6 +22,9 @@ endif()
 target_compile_definitions(${HV_INTERNAL_MODULE_NAME} PRIVATE VERSION_INFO=${PROJECT_VERSION})
 target_include_directories(${HV_INTERNAL_MODULE_NAME} PRIVATE include)
 target_include_directories(${HV_INTERNAL_MODULE_NAME} PRIVATE ${BTREE_INCLUDE_DIRS})
-target_compile_options(${HV_INTERNAL_MODULE_NAME} BEFORE PRIVATE "-Werror")
+
+if(NOT MSVC)
+  target_compile_options(${HV_INTERNAL_MODULE_NAME} BEFORE PRIVATE "-Werror")
+endif()
 
 install(TARGETS ${HV_INTERNAL_MODULE_NAME} LIBRARY DESTINATION ${HV_MODULE_NAME})
