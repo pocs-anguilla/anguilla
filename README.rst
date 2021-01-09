@@ -1,6 +1,6 @@
 Anguilla
 ========
-|coda| |pip| |docs| |deepsource| |deepcode| |sonarcloud|
+|conda| |pip| |docs| |deepsource| |deepcode| |sonarcloud|
 
 .. |conda| image:: https://github.com/pocs-anguilla/anguilla/workflows/Conda/badge.svg?branch=main)
            :target: https://github.com/pocs-anguilla/anguilla
