@@ -5,16 +5,12 @@ from typing import Deque, List, Optional
 from anguilla.ds.rbtree import RBTree
 
 __all__ = [
-    "calculate_2d",
-    "calculate_3d",
-    "contributions_2d",
-    "contributions_2d_naive",
-    "contributions_3d",
-    "contributions_3d_naive",
+    "hv2d",
+    "hv3d",
+    "hvc3d",
 ]
 
-
-# A costum Numpy datatype for structured access to 3-D coordinate data.
+# A custom Numpy datatype for structured access to 3-D coordinate data.
 point3d_dt = np.dtype([("x", float), ("y", float), ("z", float)], align=True)
 
 
@@ -52,7 +48,7 @@ class Box3D:
         )
 
 
-def calculate_2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
+def hv2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     """Compute the exact hypervolume indicator for a set of 2-D points.
 
     Parameters
@@ -75,7 +71,7 @@ def calculate_2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     else:
         ref_x, ref_y = ref_p
 
-    # Copy point set and sort along its first dimension.
+    # Copy point set and sort along the x-axis in ascending order.
     sorted_idx = np.argsort(ps[:, 0])
     sorted_ps = ps[sorted_idx]
 
@@ -94,7 +90,52 @@ def calculate_2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     return volume
 
 
-def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
+def hvc2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
+    """Compute the exact hypervolume contributions for a set of 2-D points.
+
+    Parameters
+    ----------
+    ps
+        The point set of mutually non-dominated points.
+    ref_p: optional
+        The reference point. Otherwise assumed to be the origin.
+
+    Notes
+    -----
+    Implements the algorithm described in Lemma 1 of :cite:`2007:mo-cma-es`.
+
+    """
+    if len(ps) == 0:
+        return 0.0
+
+    if ref_p is None:
+        ref_x, ref_y = 0.0, 0.0
+    else:
+        ref_x, ref_y = ref_p
+
+    # Copy point set and sort along the x-axis in ascending order.
+    sorted_idx = np.argsort(ps[:, 0])
+    sorted_ps = ps[sorted_idx]
+
+    contribution = np.zeros(len(ps))
+
+    contribution[0] = (sorted_ps[1][0] - sorted_ps[0][0]) * (
+        ref_p[1] - sorted_ps[0][1]
+    )
+    contribution[-1] = (ref_p[0] - sorted_ps[-1][0]) * (
+        sorted_ps[-2][1] - sorted_ps[-1][1]
+    )
+
+    for i in range(1, len(ps) - 1):
+        contribution[i] = (sorted_ps[i + 1][0] - sorted_ps[i][0]) * (
+            sorted_ps[i - 1][1] - sorted_ps[i][1]
+        )
+
+    reverse_idx = np.argsort(sorted_idx)
+    return contribution[reverse_idx]
+
+
+def hv3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     """Calculate the exact hypervolume indicator for a set of 3-D points.
 
     Parameters
@@ -200,83 +241,7 @@ def calculate_3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     return volume
 
 
-def contributions_2d(
-    ps: np.ndarray, ref_p: Optional[np.ndarray] = None
-) -> np.ndarray:
-    """Compute the hypervolume contribution for a set of 2-D points.
-
-    Parameters
-    ----------
-    ps
-        The set of mutually non-dominated points.
-    ref_p: optional
-        The reference point. Otherwise assumed to be the origin.
-
-    Returns
-    -------
-    np.ndarray
-        The hypervolume contribution of each point, respectively.
-
-    Notes
-    -----
-    Implements the EF algorithm (see p. 22 of :cite:`2020:hypervolume`) \
-    presented by :cite:`2011-hypervolume-3d` for computing AllContributions. \
-    The implementation differs from the presentation of the reference paper \
-    in that it assumes a minimization problem (instead of maximization). \
-    It also incorporates some implementation details taken from \
-    :cite:`2008:shark`.
-    """
-    raise NotImplementedError()
-
-
-def contributions_2d_naive(
-    ps: np.ndarray, ref_p: Optional[np.ndarray]
-) -> np.ndarray:
-    """Compute the hypervolume contribution for a set of 2-D points.
-
-    Parameters
-    ----------
-    ps
-        The set of mutually non-dominated points.
-    ref_p: optional
-        The reference point. Otherwise assumed to be the origin.
-
-    Returns
-    -------
-    np.ndarray
-        The hypervolume contribution of each point, respectively.
-
-    Notes
-    -----
-    The brute-force approach to computing the hypervolume contributions.
-    Uses the available hypervolume calculation function to compute the \
-    contribution of each point using its definition \
-    (p. 4 of :cite:`2020:hypervolume`):
-
-    .. math::
-        H(p, S) = H(S \\cup {p}) - H(S \\ {p})
-
-    Provided only for testing the other implementation, as done in \
-    :cite:`2008:shark`.
-    """
-    if len(ps) == 0:
-        return np.empty()
-
-    if ref_p is None:
-        ref_p = np.zeros_like(ps[0])
-
-    contribution = np.zeros(len(ps))
-
-    vol = calculate_2d(ps, ref_p)
-    for i in range(len(ps)):
-        qs = np.delete(ps, i, 0)
-        contribution[i] = vol - calculate_2d(qs, ref_p)
-    return contribution
-
-
-def contributions_3d(
-    ps: np.ndarray, ref_p: Optional[np.ndarray] = None
-) -> np.ndarray:
+def hvc3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> np.ndarray:
     """Compute the hypervolume contribution for a set of 3-D points.
 
     Parameters
@@ -397,6 +362,8 @@ def contributions_3d(
                     b.upper["z"] = float("nan")
                     b.lower["z"] = p.val["z"]
                     break
+                else:
+                    break
         contribution[left.idx] += vol
 
         # (c) Process the dominated points
@@ -428,7 +395,7 @@ def contributions_3d(
         right_x = right.val["x"]
         while any(boxes[right.idx]):
             b = boxes[right.idx][0]
-            if b.upper["y"] >= p.val["y"]:
+            if b.upper["y"] > p.val["y"]:
                 b.upper["z"] = p.val["z"]
                 vol += b.volume()
                 right_x = b.upper["x"]
@@ -456,48 +423,3 @@ def contributions_3d(
 
     reverse_idx = np.argsort(sorted_idx)
     return contribution[:-1][reverse_idx]
-
-
-def contributions_3d_naive(
-    ps: np.ndarray, ref_p: Optional[np.ndarray]
-) -> np.ndarray:
-    """Compute the hypervolume contribution for a set of points.
-
-    Parameters
-    ----------
-    ps
-        The set of mutually non-dominated points.
-    ref_p: optional
-        The reference point. Otherwise assumed to be the origin.
-
-    Returns
-    -------
-    np.ndarray
-        The hypervolume contribution of each point, respectively.
-
-    Notes
-    -----
-    The brute-force approach to computing the hypervolume contributions.
-    Uses the available hypervolume calculation function to compute the \
-    contribution of each point using its definition \
-    (p. 4 of :cite:`2020:hypervolume`):
-
-    .. math::
-        H(p, S) = H(S \\cup {p}) - H(S \\ {p})
-
-    Provided only for testing the other implementation, as done in \
-    :cite:`2008:shark`.
-    """
-    if len(ps) == 0:
-        return np.empty()
-
-    if ref_p is None:
-        ref_p = np.zeros_like(ps[0])
-
-    contribution = np.zeros(len(ps))
-
-    vol = calculate_3d(ps, ref_p)
-    for i in range(len(ps)):
-        qs = np.delete(ps, i, 0)
-        contribution[i] = vol - calculate_3d(qs, ref_p)
-    return contribution

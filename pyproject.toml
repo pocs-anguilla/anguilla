@@ -2,7 +2,16 @@
 # See also: https://snarky.ca/what-the-heck-is-pyproject-toml/
 
 [build-system]
-requires = ["setuptools >= 40.6.0", "wheel"]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "pybind11>=2.6.0",
+    "cmake>=3.18",
+    "ninja",
+    "scikit-build",
+    "numpy>=1.19.4",
+]
+
 build-backend = "setuptools.build_meta"
 
 # See: https://nbqa.readthedocs.io/en/latest/configuration.html
@@ -22,11 +31,10 @@ line-length = 79
 target-version = ['py38']
 include = '\.pyi?$'
 exclude = '''
-
 (
   /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
+      \.eggs
+    | \.git
     | \.hg
     | \.mypy_cache
     | \.tox
@@ -36,8 +44,6 @@ exclude = '''
     | build
     | dist
   )/
-  | foo.py           # also separately exclude a file named foo.py in
-                     # the root of the project
 )
 '''
 

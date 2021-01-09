@@ -3,11 +3,11 @@ import math
 
 import numpy as np
 
-from anguilla.fitness.base import AbstractObjectiveFunction
+from anguilla.fitness.base import ObjectiveFunction
 from anguilla.fitness.constraints import BoxConstraintsHandler
 
 
-class FON(AbstractObjectiveFunction):
+class FON(ObjectiveFunction):
     """The FON multi-objective box-constrained benchmark function.
 
     Notes
@@ -18,7 +18,7 @@ class FON(AbstractObjectiveFunction):
     _n_sqrt: float
 
     def __init__(
-        self, n_dimensions: int, rng: np.random.Generator = None
+        self, n_dimensions: int = 2, rng: np.random.Generator = None
     ) -> None:
         super().__init__(n_dimensions, 2, rng)
 
@@ -33,7 +33,7 @@ class FON(AbstractObjectiveFunction):
         self._n_sqrt = math.sqrt(self._n_dimensions)
 
     def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_single_evaluation(x)
+        self._pre_evaluate_single(x)
         value = np.zeros(self._n_objectives)
         tmp1 = x - self._n_sqrt
         tmp2 = x + self._n_sqrt
@@ -42,7 +42,7 @@ class FON(AbstractObjectiveFunction):
         return value
 
     def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_multiple_evaluation(xs)
+        xs = self._pre_evaluate_multiple(xs)
         values = np.zeros((len(xs), self._n_objectives))
         tmp1 = xs - self._n_sqrt
         tmp2 = xs + self._n_sqrt

@@ -26,6 +26,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+_skbuild
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -137,3 +139,21 @@ dmypy.json
 
 # output from reference implementation pycmaes
 outcmaes/
+
+# other
+notebooks/**/*.pdf
+notebooks/**/*.png
+_cxx_build
+
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/

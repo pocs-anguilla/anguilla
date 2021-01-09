@@ -1,0 +1,62 @@
+{% set name = "Shark" %}
+{% set version = "4.1" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  - folder: shark
+    url: https://github.com/Shark-ML/Shark/archive/{{ version }}.tar.gz
+    sha256: 7e2650a6cead64908de207c7384e9c2936d763cc213ee63703bb3cdfeef68776
+    patches:
+      - patches/0-find-linagl-libs.patch
+  - folder: toolchains
+    path: ./toolchains
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - gxx_linux-64                # [linux]
+    - clangxx >=11                # [linux]
+    - clang >=11                  # [linux]
+    - {{ compiler('cxx') }}       # [osx]
+    - make                        # [unix]
+    - patch                       # [unix]
+    - {{ compiler('m2w64_cxx') }} # [win]
+    - ninja                       # [win]
+    - m2-patch                    # [win]
+    - cmake >=3.18
+
+  host:
+    - libstdcxx-ng  # [linux]
+    - openblas
+    - boost
+    - libjpeg-turbo
+    - libpng
+    - libzip
+  
+  run:
+    - openblas
+    - {{ pin_compatible('openblas', max_pin='x.x') }}
+    - boost
+    - {{ pin_compatible('boost', max_pin='x.x') }}
+    - libjpeg-turbo
+    - {{ pin_compatible('libjpeg-turbo', max_pin='x.x') }}
+    - libpng
+    - {{ pin_compatible('libpng', max_pin='x.x') }}
+    - libzip
+    - {{ pin_compatible('libzip', max_pin='x.x') }}
+    - libstdcxx-ng                                         # [linux]
+    - {{ pin_compatible('libstdcxx-ng', max_pin='x.x') }}  # [linux]
+
+about:
+  home: https://www.shark-ml.org
+  license: LGPL-3.0
+  license_family: LGPL
+  license_file: COPYING
+  summary: Shark is a fast, modular, general open-source C++ machine learning library.
+  doc_url: https://www.shark-ml.org/sphinx_pages/build/html/rest_sources/tutorials/tutorials.html
+  dev_url: https://github.com/Shark-ML/Shark

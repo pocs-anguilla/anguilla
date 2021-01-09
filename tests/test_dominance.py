@@ -1,4 +1,4 @@
-"""Testsuite for the dominance module."""
+"""Testsuite for the :py:mod:`dominance` module."""
 import dataclasses
 import unittest
 import typing
@@ -17,7 +17,7 @@ class Unit:
 
     ps: np.ndarray
     ranks: np.ndarray
-    target_n: typing.Optional[int] = None
+    target_size: typing.Optional[int] = None
 
 
 class TestDominanceOperators(unittest.TestCase):
@@ -33,8 +33,12 @@ class TestDominanceOperators(unittest.TestCase):
         units.append(Unit(ps=ps, ranks=np.array([1, 1, 1])))
         ps = rng.uniform(size=(5, 2))
         units.append(Unit(ps=ps, ranks=np.array([1, 2, 3, 2, 1])))
-        units.append(Unit(ps=ps, ranks=np.array([1, 0, 0, 0, 1]), target_n=2))
-        units.append(Unit(ps=ps, ranks=np.array([1, 2, 0, 2, 1]), target_n=3))
+        units.append(
+            Unit(ps=ps, ranks=np.array([1, 0, 0, 0, 1]), target_size=2)
+        )
+        units.append(
+            Unit(ps=ps, ranks=np.array([1, 2, 0, 2, 1]), target_size=3)
+        )
         ps = rng.uniform(size=(1, 1))
         units.append(Unit(ps=ps, ranks=np.array([1])))
         self.units = units
@@ -42,13 +46,15 @@ class TestDominanceOperators(unittest.TestCase):
     def test_against_units(self) -> None:
         """Test against precomputed ranks."""
         for unit in self.units:
-            ranks = fast_non_dominated_sort(unit.ps, target_n=unit.target_n)
+            ranks, _ = fast_non_dominated_sort(
+                unit.ps, target_size=unit.target_size
+            )
             self.assertTrue(np.all(ranks == unit.ranks))
 
     def test_against_naive(self) -> None:
         """Test against naive implementation."""
         for unit in self.units:
-            if unit.target_n is not None:
-                ranks = fast_non_dominated_sort(unit.ps)
+            if unit.target_size is not None:
+                ranks, _ = fast_non_dominated_sort(unit.ps)
                 ranks_naive = naive_non_dominated_sort(unit.ps)
                 self.assertTrue(np.all(ranks == ranks_naive))

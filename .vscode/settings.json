@@ -21,6 +21,7 @@
     "python.pythonPath": "/opt/conda/envs/development/bin/python",
     "editor.renderWhitespace": "trailing",
     //"jupyter.jupyterServerType": "remote",
+    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0}",
     "editor.formatOnSave": true,
     "files.associations": {
         "*.tcc": "cpp",
@@ -110,6 +111,9 @@
         "vector": "cpp",
         "memory_resource": "cpp",
         "cfenv": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "*.ipp": "cpp",
+        "__memory": "cpp",
+        "filesystem": "cpp"
     },
 }

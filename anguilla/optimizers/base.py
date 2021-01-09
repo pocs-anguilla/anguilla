@@ -1,85 +1,88 @@
 """This module contains abstract classes modeling optimizers."""
-from __future__ import annotations
-
 import abc
-from dataclasses import dataclass
-
-import numpy as np
+import dataclasses
 
 
-class AbstractOptimizer(metaclass=abc.ABCMeta):
-    """An abstract optimizer.
+from typing import Any, Callable, Iterable, Optional
 
-    Parameters
-    ----------
-    initial_point
-        The initial search point.
+try:
+    from typing import final
+except ImportError:
+    from typing_extensions import final
+
+
+class OptimizerSolution(metaclass=abc.ABCMeta):
+    """Solution of an optimizer."""
+
+
+class OptimizerParameters(metaclass=abc.ABCMeta):
+    """Parameters for an optimizer."""
+
+
+class OptimizerStoppingConditions(metaclass=abc.ABCMeta):
+    """Stopping conditions for an optimizer."""
+
+
+@dataclasses.dataclass
+class OptimizerResult:
+    """Result of an optimization run."""
+
+    solution: OptimizerSolution
+    stopping_conditions: OptimizerStoppingConditions
+
+
+class Optimizer(metaclass=abc.ABCMeta):
+    """Define interface of an optimizer.
 
     Notes
     -----
-    It uses the ask-and-tell pattern presented in \
-        :cite:`2013:oo-optimizers` and implemented by :cite:`2019:pycma`.
+    It is based on the ask-and-tell pattern presented in \
+    :cite:`2013:oo-optimizers` and implemented by :cite:`2019:pycma`.
     """
-
-    _initial_point: np.ndarray
 
     @property
     @abc.abstractmethod
+    @final
     def name(self) -> str:
         """Return the name of the optimizer."""
         raise NotImplementedError()
 
-    def __init__(self, initial_point: np.ndarray) -> None:
-        """Initialize the optimizer."""
-        self._initial_point = initial_point
-        self._fevals: int = 0
-
+    @property
     @abc.abstractmethod
-    def ask(self) -> np.ndarray:
-        """Compute a new candidate solution.
+    @final
+    def qualified_name(self) -> str:
+        """Return the qualified name of the optimizer."""
+        raise NotImplementedError()
 
-        Returns
-        -------
-        np.ndarray
-            The new candidate solution.
-        """
+    @property
+    @abc.abstractmethod
+    def stop(self) -> OptimizerStoppingConditions:
+        """Return if any conditions trigger a stop."""
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
+    def best(self) -> OptimizerSolution:
+        """Return the current best solution."""
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def tell(self, solutions: np.ndarray, fvalues: np.ndarray) -> None:
-        """Feed the optimizer with objective function information.
-
-        Parameters
-        ----------
-        solutions
-            The candidate solutions.
-        fvalues
-            The function value of the candidate solutions.
-        """
+    def ask(self, *args: Any, **kwargs: Any) -> Any:
+        """Produce offspring."""
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def stop(self) -> bool:
-        """Check for stopping conditions."""
+    def tell(self, *args: Any, **kwargs: Any) -> None:
+        """Pass offspring information to the optimizer."""
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def ask(self) -> np.ndarray:
-        """Compute a new candidate solution.
-
-        Returns
-        -------
-        np.ndarray
-            The new candidate solution.
-        """
-        raise NotImplementedError()
-
-    def optimize(self) -> AbstractOptimizer:
-        """Run the optimization.
-
-        Returns
-        -------
-        AbstractOptimizer
-            The optimizer instance.
-        """
+    def fmin(
+        self,
+        fn: Callable,
+        fn_args: Optional[Iterable[Any]] = None,
+        fn_kwargs: Optional[dict] = None,
+        **kwargs: Any,
+    ) -> OptimizerResult:
+        """Optimize the given function."""
         raise NotImplementedError()

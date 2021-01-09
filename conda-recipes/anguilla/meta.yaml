@@ -1,0 +1,49 @@
+package:
+  name: anguilla
+  version: 0.0.1
+
+source:
+  path: ../..
+
+build:
+  skip: true  # [not x86_64 or py<36]
+  number: 0
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - cmake >=3.18
+    - ninja
+
+  host:
+    - python
+    - pip
+    - setuptools
+    - scikit-build
+    - wheel
+    - pybind11 >=2.6.0
+    - numpy >=1.19.4
+
+  run:
+    - {{ pin_compatible('numpy') }}
+    - dataclasses                                    # [py==36]
+    - typing_extensions                              # [py<=37]
+
+#test:
+#  requires:
+#    - pytest
+#  imports:
+#    - anguilla
+#    - anguilla.fitness
+#    - anguilla.fitness.benchmark
+#    - anguilla.hypervolume
+#  source_files:
+#    - tests/
+#  commands:
+#    - pytest tests --import-mode append
+
+about:
+  license: LGPL-3.0
+  license_family: LGPL
+  license_file: LICENSE.txt
+  summary: An implementation of MO-CMA-ES.

@@ -1,0 +1,6 @@
+set CMAKE_GENERATOR=Ninja
+set CMAKE_INSTALL_PREFIX=%PREFIX%
+set CMAKE_PREFIX_PATH=%PREFIX%
+set CONDA_BUILD=1
+
+python -m pip install %SRC_DIR% -vvv

@@ -6,5 +6,5 @@ References
 .. bibliography:: references.bib
 """
 
-# TODO: Define what to export here.
-#       Currently all imports must be fully qualified.
+__author__ = "Anguilla Development Team"
+__version__ = "0.0.1"

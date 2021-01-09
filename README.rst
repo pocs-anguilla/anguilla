@@ -1,10 +1,14 @@
 Anguilla
 ========
-|appveyor| |docs| |deepsource| |deepcode| |sonarcloud|
+|coda| |pip| |docs| |deepsource| |deepcode| |sonarcloud|
 
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/p3c8lge6hmsq4d4q?svg=true
-              :target: https://ci.appveyor.com/project/pocs-anguilla/anguilla
-              :alt: Build status (appveyor)
+.. |conda| image:: https://github.com/pocs-anguilla/anguilla/workflows/Conda/badge.svg?branch=main)
+           :target: https://github.com/pocs-anguilla/anguilla
+           :alt: Conda build
+
+.. |pip| image:: https://github.com/pocs-anguilla/anguilla/workflows/Pip/badge.svg?branch=main)
+           :target: https://github.com/pocs-anguilla/anguilla
+           :alt: Pip build
 
 .. |docs| image:: https://readthedocs.org/projects/anguilla/badge/?version=latest
           :target: https://anguilla.readthedocs.io/en/latest/?badge=latest
