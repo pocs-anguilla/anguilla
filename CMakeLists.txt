@@ -19,6 +19,10 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 endif()
 
+if(MSYS)
+  add_compile_definitions(_hypot="hypot")
+endif()
+
 # Find Python 3
 if(DEFINED $ENV{CONDA_BUILD})
   set(Python3_EXECUTABLE $ENV{PYTHON})
