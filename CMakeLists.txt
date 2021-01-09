@@ -10,7 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF FORCE)
 message(STATUS "Using C++ standard version: ${CMAKE_CXX_STANDARD}")
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /O3")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /W4")
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpedantic -Wall")
   if (CMAKE_BUILD_TYPE MATCHES Debug)

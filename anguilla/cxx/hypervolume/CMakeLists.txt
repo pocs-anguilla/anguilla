@@ -27,6 +27,8 @@ target_include_directories(${HV_INTERNAL_MODULE_NAME} PRIVATE ${BTREE_INCLUDE_DI
 
 if(NOT MSVC)
   target_compile_options(${HV_INTERNAL_MODULE_NAME} BEFORE PRIVATE "-Werror")
+else()
+  target_compile_options(${HV_INTERNAL_MODULE_NAME} BEFORE PRIVATE "/WX")
 endif()
 
 install(TARGETS ${HV_INTERNAL_MODULE_NAME} LIBRARY DESTINATION ${HV_MODULE_NAME})
