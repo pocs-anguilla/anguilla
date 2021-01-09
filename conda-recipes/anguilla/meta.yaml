@@ -11,14 +11,11 @@ build:
 
 requirements:
   build:
-    - clangxx >=11           # [linux]
-    - gxx_linux-64           # [linux]
-    - {{ compiler('cxx') }}  # [not linux]
+    - {{ compiler('cxx') }}
     - cmake >=3.18
     - ninja
 
   host:
-    - libcxx >=11  # [linux]
     - python
     - pip
     - setuptools
@@ -28,8 +25,7 @@ requirements:
     - numpy >=1.19.4
 
   run:
-    - {{ pin_compatible('numpy', max_pin='x.x') }}
-    - {{ pin_compatible('libcxx', max_pin='x.x') }}  # [linux]
+    - {{ pin_compatible('numpy') }}
     - dataclasses                                    # [py==36]
     - typing_extensions                              # [py<=37]
 

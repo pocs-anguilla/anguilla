@@ -28,7 +28,8 @@ def main():
         package_dir={".": "anguilla"},
         cmake_install_dir="anguilla",
         cmake_languages=["CXX"],
-        cmake_minimum_required_version="3.15",
+        cmake_minimum_required_version="3.18",
+        cmake_args=["-DCMAKE_CXX_STANDARD=17"],
         install_requires=[
             "numpy >= 1.19.4",
         ],
