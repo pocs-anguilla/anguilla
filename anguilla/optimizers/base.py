@@ -1,7 +1,14 @@
 """This module contains abstract classes modeling optimizers."""
 import abc
 import dataclasses
-from typing import Any, Callable, Iterable, Optional, final
+
+
+from typing import Any, Callable, Iterable, Optional
+
+try:
+    from typing import final
+except ImportError:
+    from typing_extensions import final
 
 
 class OptimizerSolution(metaclass=abc.ABCMeta):

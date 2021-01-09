@@ -66,6 +66,6 @@ jobs:
     - name: Test
       run: |
         pip install pytest
-        pytest tests
+        pytest tests --import-mode append
 
 

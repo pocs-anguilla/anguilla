@@ -11,7 +11,6 @@ build:
 
 requirements:
   build:
-    - clang >=11             # [linux]
     - clangxx >=11           # [linux]
     - gxx_linux-64           # [linux]
     - {{ compiler('cxx') }}  # [not linux]
@@ -21,30 +20,28 @@ requirements:
   host:
     - libcxx >=11  # [linux]
     - python
-    - pybind11 >=2.6.0
-    - numpy >=1.19.0
     - pip
     - setuptools
     - scikit-build
+    - wheel
+    - pybind11 >=2.6.0
+    - numpy >=1.19.4
 
   run:
-    - python
-    - numpy >=1.19.0
     - {{ pin_compatible('numpy', max_pin='x.x') }}
-    - libcxx >=11                                    # [linux]
     - {{ pin_compatible('libcxx', max_pin='x.x') }}  # [linux]
     - dataclasses                                    # [py==36]
+    - typing_extensions                              # [py<=37]
 
 #test:
 #  requires:
 #    - pytest
 #  imports:
 #    - anguilla
-#    - anguilla.hypervolume
 #  source_files:
 #    - tests/
 #  commands:
-#    - pytest tests
+#    - pytest tests --import-mode append
 
 about:
   license: LGPL-3.0

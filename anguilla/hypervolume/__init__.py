@@ -3,16 +3,14 @@
 import numpy as np
 from typing import Optional
 
-from anguilla.hypervolume import _hypervolume as hvcxx
+from . import _hypervolume as hvcxx
 
 __all__ = ["calculate", "contributions"]
 
 # Optional
 try:
-    from anguilla.hypervolume import _shark_hypervolume as shark
+    from . import _shark_hypervolume as shark
 
-    __all__.append("shark_calculate")
-    __all__.append("shark_contributions")
     SHARK_BINDINGS_AVAILABLE = True
 except ImportError:
     SHARK_BINDINGS_AVAILABLE = False

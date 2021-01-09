@@ -1,6 +1,11 @@
 """This module contains implementations of quality indicators."""
 import abc
-from typing import Optional, final
+from typing import Optional
+
+try:
+    from typing import final
+except ImportError:
+    from typing_extensions import final
 
 import numpy as np
 

@@ -30,11 +30,14 @@ def main():
         cmake_languages=["CXX"],
         cmake_minimum_required_version="3.15",
         install_requires=[
-            "numpy",
+            "numpy >= 1.19.4",
         ],
         extras_require={
             ':python_version == "3.6"': [
                 "dataclasses",
+            ],
+            ':python_version <= "3.7"': [
+                "typing_extensions",
             ],
         },
     )

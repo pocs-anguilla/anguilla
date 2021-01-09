@@ -45,4 +45,4 @@ jobs:
       - name: Test
         run: |
           conda install pytest
-          pytest tests
+          pytest tests --import-mode append
