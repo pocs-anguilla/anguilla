@@ -37,7 +37,7 @@ find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 # Add site-packages to the search path
 execute_process(
   COMMAND
-    "${Python_EXECUTABLE}" -c
+    "${Python3_EXECUTABLE}" -c
     "import pybind11; print(pybind11.get_cmake_dir())"
   OUTPUT_VARIABLE _tmp_dir
   OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
