@@ -19,7 +19,7 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 endif()
 
-if(MinGW)
+if(MINGW)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF FORCE)
 endif()
