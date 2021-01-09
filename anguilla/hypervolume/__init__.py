@@ -16,7 +16,7 @@ __all__ = ["calculate", "contributions"]
 
 # Optional
 try:
-    from ._shark_hypervolume import hvckd_f8, hvckd_f8
+    from ._shark_hypervolume import hvkd_f8, hvckd_f8
 
     SHARK_BINDINGS_AVAILABLE = True
 except ImportError:
