@@ -34,6 +34,9 @@ requirements:
 #    - pytest
 #  imports:
 #    - anguilla
+#    - anguilla.fitness
+#    - anguilla.fitness.benchmark
+#    - anguilla.hypervolume
 #  source_files:
 #    - tests/
 #  commands:
