@@ -26,9 +26,9 @@ jobs:
         python -m build
         PYBIND11_GLOBAL_SDIST=ON python -m build
 
-    #- uses: actions/upload-artifact@v2
-    #  with:
-    #    path: dist/*
+    - uses: actions/upload-artifact@v2
+      with:
+        path: dist/*
 
   build:
     name: Build with Pip
@@ -43,10 +43,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    #- uses: actions/download-artifact@v2
-    #  with:
-    #    name: artifact
-    #    path: dist
+    - uses: actions/download-artifact@v2
+      with:
+        name: artifact
+        path: dist
 
     - uses: actions/setup-python@v2
       with:

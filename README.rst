@@ -1,6 +1,14 @@
 Anguilla
 ========
-|docs| |deepsource| |deepcode| |sonarcloud|
+|coda| |pip| |docs| |deepsource| |deepcode| |sonarcloud|
+
+.. |conda| image:: https://github.com/pocs-anguilla/anguilla/workflows/Conda/badge.svg?branch=main)
+           :target: https://github.com/pocs-anguilla/anguilla
+           :alt: Conda build
+
+.. |pip| image:: https://github.com/pocs-anguilla/anguilla/workflows/Pip/badge.svg?branch=main)
+           :target: https://github.com/pocs-anguilla/anguilla
+           :alt: Pip build
 
 .. |docs| image:: https://readthedocs.org/projects/anguilla/badge/?version=latest
           :target: https://anguilla.readthedocs.io/en/latest/?badge=latest
