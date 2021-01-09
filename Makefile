@@ -1,4 +1,4 @@
-COMMON_CMAKE_OPTS=-DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libcxx.cmake
+COMMON_CMAKE_OPTS=-DWITH_SHARK_BINDINGS=ON -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libcxx.cmake
 
 cxx_extension: CMakeLists.txt
 	mkdir -p _cxx_build

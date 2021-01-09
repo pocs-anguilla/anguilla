@@ -1,4 +1,7 @@
-# Module
+find_package(Shark REQUIRED)
+include(${SHARK_USE_FILE})
+find_package(Boost REQUIRED COMPONENTS regex system filesystem serialization)
+
 set(SHARK_HV_MODULE_NAME "_shark_hypervolume")
 
 set(HV_MODULE_SRC

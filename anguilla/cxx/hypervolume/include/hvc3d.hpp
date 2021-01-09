@@ -264,7 +264,8 @@ py::array_t<T> contributions(const Point3DList<T> &points, const Point3D<T> &ref
 
     // The paper uses a 'z sentinel' to close any remaining boxes.
     // Instead, here we do it as Shark's does.
-    for ([[maybe_unused]] const auto &[_, index] : front) {
+    for (auto it = front.begin(), end = front.end(); it != end; ++it) {
+        const auto index = it->second;
         auto &boxes = boxLists[index];
         for (auto &box : boxes) {
             box.u_z = refZ;

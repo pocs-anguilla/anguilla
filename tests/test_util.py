@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from anguilla.util import exp_norm_chi, random_orthogonal_matrix
+from anguilla.util import random_orthogonal_matrix
 
 
 class TestRandomMatrices(unittest.TestCase):
