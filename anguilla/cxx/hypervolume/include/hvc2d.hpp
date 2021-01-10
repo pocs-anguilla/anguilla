@@ -21,7 +21,7 @@ py::array_t<T> contributions(const Point2DList<T> &points, const Point2D<T> &ref
 
     // Here we allocate memory for the contributions, initialized to zero,
     // plus an additional element for the sentinel nodes.
-    auto contributionsPtr = new std::vector<T>(n);
+    auto contributionsPtr = new std::vector<T>(n + 1U);
     auto &contributions = *contributionsPtr;
 
     py::capsule freeContributionsMemory(contributionsPtr, [](void *ptr) {
@@ -47,11 +47,11 @@ py::array_t<T> contributions(const Point2DList<T> &points, const Point2D<T> &ref
     constexpr auto lowest = std::numeric_limits<T>::lowest();
 
     // Copy point set.
-    input.push_back(std::make_pair(Point2D<T>(lowest, refPoint.y), n + 1U));
+    input.push_back(std::move(std::make_pair(Point2D<T>(lowest, refPoint.y), n + 1U)));
     {
         auto i = 0U;
         for (const auto &p : points) {
-            input.push_back(std::make_pair(p, i++));
+            input.emplace_back(p, i++);
         }
     }
 
@@ -60,7 +60,10 @@ py::array_t<T> contributions(const Point2DList<T> &points, const Point2D<T> &ref
               [](auto const &l, auto const &r) { return l.first.x < r.first.x; });
 
     // Add succesor sentinel point.
-    input.push_back(std::make_pair(Point2D<T>(refPoint.x, lowest), n + 1U));
+    input.push_back(std::move(std::make_pair(Point2D<T>(refPoint.x, lowest), n + 1U)));
+
+    // A working buffer for tracking repeated point mappings.
+    std::vector<std::pair<std::size_t, std::size_t>> equalMappings;
 
     // Process the points
     for (std::size_t i = 1U, m = n + 1U, rl = n + 2U; i < m; ++i) {

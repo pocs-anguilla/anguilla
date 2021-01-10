@@ -83,7 +83,7 @@ py::array_t<T> contributions(const Point3DList<T> &points, const Point3D<T> &ref
     {
         auto i = 0U;
         for (const auto &p : points) {
-            input.push_back(std::make_pair(p, i++));
+            input.emplace_back(p, i++);
         }
     }
 
@@ -99,19 +99,19 @@ py::array_t<T> contributions(const Point3DList<T> &points, const Point3D<T> &ref
     const T refZ = refPoint.z;
 
     const auto xSentinel = Point3D<T>(refX, lowest, lowest);
-    front.insert(std::make_pair(xSentinel, n));
+    front.emplace(xSentinel, n);
 
     const auto ySentinel = Point3D<T>(lowest, refY, lowest);
-    front.insert(std::make_pair(ySentinel, n));
+    front.emplace(ySentinel, n);
 
     // Create the lists of boxes.
     std::vector<std::deque<Box3D<T>>> boxLists(n + 1U);
 
     // A working buffer for tracking dominated nodes.
-    std::list<std::size_t> dominatedIndices;
+    std::vector<std::size_t> dominatedIndices;
 
     // A working buffer for tracking repeated point mappings.
-    std::list<std::pair<std::size_t, std::size_t>> equalMappings;
+    std::vector<std::pair<std::size_t, std::size_t>> equalMappings;
 
     // Start by processing the first point.
     auto prevP = input[0U].first;
@@ -119,7 +119,7 @@ py::array_t<T> contributions(const Point3DList<T> &points, const Point3D<T> &ref
     {
         auto box = Box3D<T>(prevP, refPoint);
         box.u_z = NaN;
-        boxLists[prevIndex].push_back(box);
+        boxLists[prevIndex].push_back(std::move(box));
         front.insert(input[0U]);
     }
 
@@ -131,7 +131,7 @@ py::array_t<T> contributions(const Point3DList<T> &points, const Point3D<T> &ref
         // Skip duplicate point and map its index to the previous one's to
         // output the correct value.
         if (prevP == p) {
-            equalMappings.push_back(std::make_pair(prevIndex, index));
+            equalMappings.emplace_back(prevIndex, index);
             continue;
         } else {
             prevP = p;
@@ -162,7 +162,7 @@ py::array_t<T> contributions(const Point3DList<T> &points, const Point3D<T> &ref
         ++nodeRight;
 
         while (!(p.y > nodeRight->first.y)) {
-            dominatedIndices.push_front(nodeRight->second);  // reversely sorted
+            dominatedIndices.push_back(nodeRight->second);  // caution: reverse order
             ++nodeRight;
         }
         const auto right_index = nodeRight->second;
@@ -204,7 +204,9 @@ py::array_t<T> contributions(const Point3DList<T> &points, const Point3D<T> &ref
         // (c) Process the dominated points.
         {
             auto rightX = nodeRight->first.x;
-            for (auto dom_index : dominatedIndices) {
+
+            for (auto dom_index_it = dominatedIndices.rbegin(), end = dominatedIndices.rend(); dom_index_it != end; ++dom_index_it) {
+                auto dom_index = *dom_index_it;
                 auto &d = points[dom_index];
                 auto &boxes = boxLists[dom_index];
                 // close boxes of dominated point 'd'
@@ -218,7 +220,7 @@ py::array_t<T> contributions(const Point3DList<T> &points, const Point3D<T> &ref
                     box.u_x = rightX;
                     box.u_z = NaN;
                     box.l_x = d.x;
-                    boxLists[index].push_front(box);
+                    boxLists[index].push_front(std::move(box));
                 }
                 rightX = d.x;
             }
@@ -227,7 +229,7 @@ py::array_t<T> contributions(const Point3DList<T> &points, const Point3D<T> &ref
                 auto box = Box3D<T>(p, left);
                 box.u_x = rightX;
                 box.u_z = NaN;
-                boxLists[index].push_front(box);
+                boxLists[index].push_front(std::move(box));
             }
         }
 
@@ -252,7 +254,7 @@ py::array_t<T> contributions(const Point3DList<T> &points, const Point3D<T> &ref
                 box.u_x = rightX;
                 box.u_z = NaN;
                 box.l_z = p.z;
-                boxLists[right_index].push_front(box);
+                boxLists[right_index].push_front(std::move(box));
             }
             contributions[right_index] += volume;
         }

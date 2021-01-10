@@ -23,19 +23,14 @@ T calculate(Point2DList<T> &points, const Point2D<T> &refPoint) {
         return 0.0;
     }
 
-    // Copy point set and sort along the x-axis in ascending order.
+    // Sort the point list along the x-axis in ascending order.
     std::sort(points.begin(), points.end(),
               [](auto const &l, auto const &r) { return l.x < r.x; });
 
     // Perform the integration
     T volume = 0.0;
-    T lastY = 0.0;
-    {
-        const auto &p = points[0U];
-        lastY = p.y;
-        volume += (refPoint.x - p.x) * (refPoint.y - lastY);
-    }
-    for (std::size_t i = 1U; i < n; ++i) {
+    T lastY = refPoint.y;
+    for (std::size_t i = 0U; i < n; ++i) {
         const auto &p = points[i];
         auto yDiff = lastY - p.y;
         // skip dominated points

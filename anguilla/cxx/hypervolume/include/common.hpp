@@ -10,29 +10,45 @@ namespace py = pybind11;
 template <typename T>
 struct Point2D {
     Point2D(const Point2D<T> &other) : x(other.x), y(other.y) {}
+    Point2D(const Point2D<T> &&other) : x(other.x), y(other.y) {}
     Point2D(T x = std::numeric_limits<T>::signaling_NaN(),
             T y = std::numeric_limits<T>::signaling_NaN()) : x(x), y(y) {}
-    T x;
-    T y;
+
+    Point2D<T> &operator=(const Point2D<T> &other) = default;
+
+    inline bool operator==(Point2D<T> &other) {
+        return (x == other.x) && (y == other.y);
+    }
 
     inline bool operator==(const Point2D<T> &other) const {
         return (x == other.x) && (y == other.y);
     }
+
+    T x;
+    T y;
 };
 
 template <typename T>
 struct Point3D {
     Point3D(const Point3D<T> &other) : x(other.x), y(other.y), z(other.z) {}
+    Point3D(const Point3D<T> &&other) : x(other.x), y(other.y), z(other.z) {}
     Point3D(T x = std::numeric_limits<T>::signaling_NaN(),
             T y = std::numeric_limits<T>::signaling_NaN(),
             T z = std::numeric_limits<T>::signaling_NaN()) : x(x), y(y), z(z) {}
-    T x;
-    T y;
-    T z;
+
+    Point3D<T> &operator=(const Point3D<T> &other) = default;
+
+    inline bool operator==(Point3D<T> &other) {
+        return (x == other.x) && (y == other.y) && (z == other.z);
+    }
 
     inline bool operator==(const Point3D<T> &other) const {
         return (x == other.x) && (y == other.y) && (z == other.z);
     }
+
+    T x;
+    T y;
+    T z;
 };
 
 template <typename T>
