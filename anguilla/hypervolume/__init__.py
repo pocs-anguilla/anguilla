@@ -1,22 +1,47 @@
 """Hypervolume algorithms."""
 
+import os
+import platform
+
 import numpy as np
 from typing import Optional
 
-from ._hypervolume import (
-    hv2d_f8,
-    hv3d_btree_f8,
-    hv3d_rbtree_f8,
-    hvc2d_f8,
-    hvc3d_btree_f8,
-    hvc3d_rbtree_f8,
-)
+
+try:
+    from ._hypervolume import (
+        hv2d_f8,
+        hv3d_btree_f8,
+        hv3d_rbtree_f8,
+        hvc2d_f8,
+        hvc3d_btree_f8,
+        hvc3d_rbtree_f8,
+    )
+except ImportError:
+    # Required since Python 3.8 in Windows
+    # See: https://docs.python.org/3/library/os.html#os.add_dll_directory
+    if platform.system() == "Windows":
+        dll_dir = os.path.dirname(os.path.abspath(__file__))
+        with os.add_dll_directory(dll_dir):
+            from ._hypervolume import (
+                hv2d_f8,
+                hv3d_btree_f8,
+                hv3d_rbtree_f8,
+                hvc2d_f8,
+                hvc3d_btree_f8,
+                hvc3d_rbtree_f8,
+            )
+
 
 __all__ = ["calculate", "contributions"]
 
 # Optional
 try:
-    from ._shark_hypervolume import hvkd_f8, hvckd_f8
+    from ._shark_hypervolume import hvkd_f8 as shark_calculate
+
+    __all__.append("shark_calculate")
+    from ._shark_hypervolume import hvckd_f8 as shark_contributions
+
+    __all__.append("shark_contributions")
 
     SHARK_BINDINGS_AVAILABLE = True
 except ImportError:
@@ -63,7 +88,7 @@ def calculate(
             raise ValueError("ds: {}".format(ds))
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
-            hvkd_f8(ps, ref_p)
+            shark_calculate(ps, ref_p)
         else:
             raise NotImplementedError()
     else:
@@ -113,7 +138,7 @@ def contributions(
             raise ValueError("ds: {}".format(ds))
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
-            hvckd_f8(ps, ref_p)
+            shark_contributions(ps, ref_p)
         else:
             raise NotImplementedError()
     else:
