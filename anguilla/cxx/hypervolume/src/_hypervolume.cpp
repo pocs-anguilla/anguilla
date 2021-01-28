@@ -3,10 +3,10 @@
 #include <pybind11/stl.h>
 namespace py = pybind11;
 
-#include "hv2d.hpp"
-#include "hv3d.hpp"
-#include "hvc2d.hpp"
-#include "hvc3d.hpp"
+#include <anguilla/hypervolume/hv2d.hpp>
+#include <anguilla/hypervolume/hv3d.hpp>
+#include <anguilla/hypervolume/hvc2d.hpp>
+#include <anguilla/hypervolume/hvc3d.hpp>
 
 typedef double f8;  // following Numba's convention
 
