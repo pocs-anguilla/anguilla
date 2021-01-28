@@ -209,7 +209,7 @@ class UPMOCMA(Optimizer):
         -------
         The optimizer's qualified name.
         """
-        return self.name()
+        return self.name
 
     @property
     def size(self) -> int:
