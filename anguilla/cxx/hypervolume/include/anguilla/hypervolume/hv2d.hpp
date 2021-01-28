@@ -46,7 +46,7 @@ static constexpr const char *docstring = R"_(
     Ported from :cite:`2008:shark`.)_";
 
 template <typename T>
-[[nodiscard]] auto calculate(py::array_t<T> &, std::optional<py::array_t<T>> &);
+[[nodiscard]] auto calculate(const py::array_t<T> &, const std::optional<py::array_t<T>> &);
 }  // namespace hv2d
 
 /* Internal interface */
@@ -58,11 +58,11 @@ template <typename T>
 /* Public implementation */
 namespace hv2d {
 template <typename T>
-auto calculate(py::array_t<T> &_points, std::optional<py::array_t<T>> &_reference) {
+auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference) {
     static_assert(std::is_floating_point<T>::value,
                   "HV2D is not meant to be instantiated with non floating point type.");
 
-    auto pointsR = _points.template mutable_unchecked<2>();
+    auto pointsR = _points.template unchecked<2>();
     assert(pointsR.shape(0) >= 0);
     const auto n = static_cast<std::size_t>(pointsR.shape(0));
     if (n == 0U) {
@@ -75,7 +75,7 @@ auto calculate(py::array_t<T> &_points, std::optional<py::array_t<T>> &_referenc
     const bool refGiven = _reference.has_value();
 
     if (refGiven) {
-        auto referenceR = _reference.value().template mutable_unchecked<1>();
+        auto referenceR = _reference.value().template unchecked<1>();
         refX = referenceR(0);
         refY = referenceR(1);
     }

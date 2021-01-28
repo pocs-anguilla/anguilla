@@ -12,10 +12,14 @@ namespace py = pybind11;
 
 typedef double f8;  // following Numba's convention
 
+[[nodiscard]] auto non_dominated_sort_f8(const py::array_t<f8> &_points, const std::optional<std::size_t> &maxRank) {
+    return dominance::nonDominatedSort<f8>(_points, maxRank);
+}
+
 PYBIND11_MODULE(_dominance, m) {
     m.doc() = "This module contains operators related to Pareto dominance.";
 
-    m.def("non_dominated_sort_f8", &dominance::nonDominatedSort<f8>,
+    m.def("non_dominated_sort_f8", &non_dominated_sort_f8,
           dominance::docstring,
           py::arg("points"),
           py::arg("max_rank") = std::nullopt);
