@@ -2,10 +2,10 @@ set(HV_MODULE_NAME "hypervolume")
 set(HV_INTERNAL_MODULE_NAME "_${HV_MODULE_NAME}")
 
 set(HV_MODULE_SRC
-    include/hv2d.hpp
-    include/hv3d.hpp
-    include/hvc2d.hpp
-    include/hvc3d.hpp
+    include/anguilla/hypervolume/hv2d.hpp
+    include/anguilla/hypervolume/hv3d.hpp
+    include/anguilla/hypervolume/hvc2d.hpp
+    include/anguilla/hypervolume/hvc3d.hpp
     "src/${HV_INTERNAL_MODULE_NAME}.cpp"
 )
 
