@@ -3,7 +3,6 @@
 import enum
 import dataclasses
 import math
-from collections.abc import Iterable
 from typing import Any, Iterable, Optional
 
 import numpy as np
