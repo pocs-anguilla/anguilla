@@ -15,27 +15,32 @@ namespace py = pybind11;
 
 typedef double f8;  // following Numba's convention
 
-auto hvc2d_f8(const py::array_t<f8>& points,
-              const std::optional<py::array_t<f8>>& reference = std::nullopt,
-              const bool nonDominated = true) {
+[[nodiscard]] auto hv2d_f8(const py::array_t<f8>& points,
+                           const std::optional<py::array_t<f8>>& reference = std::nullopt) {
+    return hv2d::calculate<f8>(points, reference);
+}
+
+[[nodiscard]] auto hvc2d_f8(const py::array_t<f8>& points,
+                            const std::optional<py::array_t<f8>>& reference = std::nullopt,
+                            const bool nonDominated = true) {
     if (reference.has_value()) {
         return hvc2d::contributionsWithRef<f8>(points, reference.value(), nonDominated);
     }
     return hvc2d::contributions<f8>(points, nonDominated);
 }
 
-auto hv3d_f8(const py::array_t<f8>& points,
-             const std::optional<py::array_t<f8>>& reference = std::nullopt,
-             const bool useBtree = true) {
+[[nodiscard]] auto hv3d_f8(const py::array_t<f8>& points,
+                           const std::optional<py::array_t<f8>>& reference = std::nullopt,
+                           const bool useBtree = true) {
     if (useBtree) {
         return hv3d::calculate<f8, hv3d::BTreeMap<f8>>(points, reference);
     }
     return hv3d::calculate<f8, hv3d::RBTreeMap<f8>>(points, reference);
 }
 
-auto hvc3d_f8(const py::array_t<f8>& points,
-              const std::optional<py::array_t<f8>>& reference = std::nullopt,
-              const bool useBtree = true) {
+[[nodiscard]] auto hvc3d_f8(const py::array_t<f8>& points,
+                            const std::optional<py::array_t<f8>>& reference = std::nullopt,
+                            const bool useBtree = true) {
     if (useBtree) {
         return hvc3d::contributions<f8, hvc3d::BTreeMap<f8>>(points, reference);
     }
@@ -45,7 +50,7 @@ auto hvc3d_f8(const py::array_t<f8>& points,
 PYBIND11_MODULE(_hypervolume, m) {
     m.doc() = "Hypervolume algorithms implemented in C++.";
 
-    m.def("hv2d_f8", &hv2d::calculate<f8>,
+    m.def("hv2d_f8", &hv2d_f8,
           hv2d::docstring,
           py::arg("points"),
           py::arg("reference") = std::nullopt);
