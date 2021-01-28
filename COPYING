@@ -25,15 +25,15 @@ Files: *
 Copyright: 2020-2021, Anguilla Development Team
 License: LGPL-3-or-later
 
-Files: anguilla/cxx/external/boost/*
+Files: vendor/cxx/boost/*
 Copyright: ?
 License: BSL-1
 
-Files anguilla/cxx/external/spatial/*
+Files vendor/cxx/spatial/*
 Copyright: 2011-2016, Sylvain Bougerel
 License: BSL-1
 
-Files: anguilla/cxx/external/btree/*
+Files: vendor/cxx/btree/*
 Copyright: 2019, German Mendez Bravo (Kronuz)
            2013, Google Inc.
 License: Apache-2
