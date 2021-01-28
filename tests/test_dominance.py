@@ -5,19 +5,29 @@ import typing
 
 import numpy as np
 
-from anguilla.dominance import (
-    fast_non_dominated_sort,
-    naive_non_dominated_sort,
-)
+from anguilla.dominance import non_dominated_sort
 
 
-@dataclasses.dataclass
-class Unit:
-    """A container of a unit test example."""
+def line(m, b):
+    """Compute a line"""
+    return lambda x: m * x + b
 
-    ps: np.ndarray
-    ranks: np.ndarray
-    target_size: typing.Optional[int] = None
+
+def curve(a, b):
+    """Compute a quadratic curve"""
+    return lambda x: a * x * x + b
+
+
+def get_objective_points(domain, *fns):
+    """Evaluate the functions on the domain to create a population."""
+    size = len(domain) * len(fns)
+    points = np.empty((size, 2))
+    i = 0
+    for fn in fns:
+        points[i : i + len(domain), 0] = domain
+        points[i : i + len(domain), 1] = fn(domain)
+        i += len(domain)
+    return points
 
 
 class TestDominanceOperators(unittest.TestCase):
@@ -25,36 +35,83 @@ class TestDominanceOperators(unittest.TestCase):
 
     def setUp(self) -> None:
         """Initialize state."""
-        rng = np.random.default_rng(0)
-        units = []
-        ps = rng.uniform(size=(3, 2))
-        units.append(Unit(ps=ps, ranks=np.array([2, 1, 3])))
-        ps = rng.uniform(size=(3, 2))
-        units.append(Unit(ps=ps, ranks=np.array([1, 1, 1])))
-        ps = rng.uniform(size=(5, 2))
-        units.append(Unit(ps=ps, ranks=np.array([1, 2, 3, 2, 1])))
-        units.append(
-            Unit(ps=ps, ranks=np.array([1, 0, 0, 0, 1]), target_size=2)
-        )
-        units.append(
-            Unit(ps=ps, ranks=np.array([1, 2, 0, 2, 1]), target_size=3)
-        )
-        ps = rng.uniform(size=(1, 1))
-        units.append(Unit(ps=ps, ranks=np.array([1])))
-        self.units = units
+        self._rng = np.random.default_rng(0)
 
-    def test_against_units(self) -> None:
-        """Test against precomputed ranks."""
-        for unit in self.units:
-            ranks, _ = fast_non_dominated_sort(
-                unit.ps, target_size=unit.target_size
-            )
-            self.assertTrue(np.all(ranks == unit.ranks))
+    def test_all_ranks_different(self) -> None:
+        """Test that all ranks are different."""
+        # Create a line with positive unitary slope
+        # Each point to the right in the x dimension
+        # is dominated by all points to the left
+        size = 10
+        points = get_objective_points(np.arange(0, size), line(1, 0))
+        ranks, max_rank = non_dominated_sort(points)
+        self.assertTrue(
+            np.all(ranks == np.arange(1, size + 1, dtype=int)), "Ranks"
+        )
+        self.assertTrue(max_rank == 10, "Max. rank")
 
-    def test_against_naive(self) -> None:
-        """Test against naive implementation."""
-        for unit in self.units:
-            if unit.target_size is not None:
-                ranks, _ = fast_non_dominated_sort(unit.ps)
-                ranks_naive = naive_non_dominated_sort(unit.ps)
-                self.assertTrue(np.all(ranks == ranks_naive))
+    def test_all_ranks_equal(self) -> None:
+        """Test that all ranks are equal."""
+        # Create a line with negative unitary slope
+        # Values increase monotonically in the x dimension
+        # and decrease monotonically in the y dimension
+        # So no point dominates another
+        size = 10
+        points = get_objective_points(np.arange(0, size), line(-1, 0))
+        ranks, max_rank = non_dominated_sort(points)
+        self.assertTrue(np.all(ranks == np.repeat(1, size)), "Ranks")
+        self.assertTrue(max_rank == 1, "Max. rank")
+
+    def test_three_translated_lines(self) -> None:
+        """Test ranks of three lines with same slope but different bias"""
+        # Create three lines with the same slope but different bias
+        # Sort the points wrt the x dimension
+        # The rank of the first point is 1 and the last is size * 2 + 1
+        size = 5
+        true_max_rank = size * 2 + 1
+        points = get_objective_points(
+            np.arange(0, size), line(1, 2), line(1, 3), line(1, 4)
+        )
+        sorted_points = np.array(sorted(points, key=lambda x: (x[0], x[1])))
+        ranks, max_rank = non_dominated_sort(sorted_points)
+        self.assertTrue(ranks[0] == 1, "First rank")
+        self.assertTrue(ranks[-1] == true_max_rank, "Last rank")
+        self.assertTrue(max_rank == true_max_rank, "Max. rank")
+        for i in range(0, size * 3, 3):
+            self.assertTrue(ranks[i] + 1 == ranks[i + 1], "Next point")
+            self.assertTrue(ranks[i] + 2 == ranks[i + 2], "Second next point")
+            if i > 0:
+                self.assertTrue(ranks[i] == ranks[i - 1], "Previous point")
+
+    def test_curve_and_line(self) -> None:
+        """Test the ranks of points created with a curve and a line."""
+        # Sort the points wrt x dimension
+        # The first and last point have the minimum and maximum ranks
+        # Every next two points have the same rank
+        start = 5
+        end = 20
+        true_max_rank = end - start + 1
+        points = get_objective_points(
+            np.arange(start, end), curve(1, 0), line(1, 0)
+        )
+        sorted_points = np.array(sorted(points, key=lambda x: (x[0], x[1])))
+        ranks, max_rank = non_dominated_sort(sorted_points)
+        self.assertTrue(ranks[0] == 1, "First rank")
+        self.assertTrue(ranks[-1] == true_max_rank, "Last rank")
+        self.assertTrue(max_rank == true_max_rank, "Max. rank")
+        for i in range(1, end - start, 2):
+            self.assertTrue(ranks[i - 1] + 1 == ranks[i], "Prev. rank")
+            self.assertTrue(ranks[i] == ranks[i + 1], "Peer rank")
+            self.assertTrue(ranks[i] + 1 == ranks[i + 2], "Next rank")
+
+    def test_shuffled(self) -> None:
+        """Test the ranks of the shuffled points are the same."""
+        points = self._rng.normal(size=(151, 2))
+        ranks, max_rank = non_dominated_sort(points)
+        shuffled_idx = np.arange(151, dtype=int)
+        self._rng.shuffle(shuffled_idx)
+        ranks_shuffled, max_rank_shuffled = non_dominated_sort(
+            points[shuffled_idx]
+        )
+        self.assertTrue(max_rank == max_rank_shuffled, "Max. rank")
+        self.assertTrue(np.all(ranks[shuffled_idx] == ranks_shuffled), "Ranks")

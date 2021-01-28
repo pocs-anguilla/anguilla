@@ -4,16 +4,25 @@
 #include <shark/Algorithms/DirectSearch/Operators/Hypervolume/HypervolumeCalculator.h>
 #include <shark/Algorithms/DirectSearch/SteadyStateMOCMA.h>
 #include <shark/ObjectiveFunctions/Benchmarks/Benchmarks.h>
+#include <stdlib.h>
 
+#include <algorithm>
 #include <boost/format.hpp>
 #include <ios>
 #include <iostream>
 
-#include "matplotlibcpp.h"
+#include "matplotlibcpp/matplotlibcpp.h"
+#include "moq/benchmarks.h"
 
 using namespace shark;
 
 namespace plt = matplotlibcpp;
+
+std::string safe_name(std::string name) {
+    std::replace(name.begin(), name.end(), '/', 'N');
+    std::replace(name.begin(), name.end(), '|', 'A');
+    return name;
+}
 
 struct PointExtractor {
     template <class T>
@@ -22,22 +31,31 @@ struct PointExtractor {
     }
 };
 
-template <typename Optimizer = MOCMA, typename ObjectiveFunction = benchmarks::CIGTAB2>
+template <typename Optimizer = MOCMA>
 class PopulationPlotExperiment {
    public:
-    static void run(int mu, int n, int maxEvaluations, RealVector *reference = nullptr, bool individual = false) {
+    static void run(int mu, int n, int maxEvaluations, RealVector *reference = nullptr, bool individual = false, std::string extra = "1|C", int instance = 1, std::size_t maxTrials = 3) {
         std::cout.setf(std::ios_base::scientific);
         std::cout.precision(10);
-        std::vector<std::string> formats = {"rx", "bx", "gx"};
-        plt::figure_size(500, 500);
+        std::vector<std::string> formats = {"xb", "xg", "xy"};
+        plt::figure_size(500, 350);
 
         std::string st = individual ? "I" : "P";
-        for (int i = 0; i < formats.size(); i++) {
-            ObjectiveFunction fn;
+        auto nTrials = std::min(formats.size(), maxTrials);
+        for (int i = 0; i < nTrials; i++) {
+            //benchmarks::DTLZ3 fn(n);
+            MOBenchmark fn(extra, n, instance);
             if (fn.hasScalableObjectives()) {
                 fn.setNumberOfObjectives(2);
             }
-            fn.setNumberOfVariables(n);
+            if (fn.hasScalableDimensionality()) {
+                fn.setNumberOfVariables(n);
+            }
+
+            if (i == 0) {
+                auto [frontY1, frontY2] = fn.paretoFront(50);
+                plt::plot(frontY1, frontY2, "r-");
+            }
 
             Optimizer optimizer;
             if (individual) {
@@ -72,9 +90,9 @@ class PopulationPlotExperiment {
                 double volume = hyp(boost::adaptors::transform(solution, PointExtractor()), *reference);
                 std::cout << "Trial " << i << ": " << volume << std::endl;
             }
-            if (i + 1 == formats.size()) {
+            if (i + 1 == nTrials) {
                 plt::title(boost::str(boost::format("%1%(n=%2%), %3%-%4%\nmu=%5%,evals=%6%") % fn.name() % n % optimizer.name() % st % mu % fn.evaluationCounter()));
-                plt::save(boost::str(boost::format("./%1%n%2%-%3%-%4%-mu%5%-fe%6%.png") % fn.name() % n % optimizer.name() % st % mu % fn.evaluationCounter()));
+                plt::save(boost::str(boost::format("./%1%n%2%-%3%-%4%-mu%5%-fe%6%.png") % safe_name(fn.name()) % n % optimizer.name() % st % mu % fn.evaluationCounter()));
             }
         }
     }
@@ -83,18 +101,20 @@ class PopulationPlotExperiment {
 int main(int argc, char *argv[]) {
     int mu = argc > 1 ? std::atoi(argv[1]) : 10;
     int n = argc > 2 ? std::atoi(argv[2]) : 5;
-    int maxEvaluations = argc > 3 ? std::atoi(argv[3]) : 1000;
+    int maxEvaluations = argc > 3 ? std::atoi(argv[3]) : 5000;
     bool useSteadyState = argc > 4 ? std::strcmp("steady", argv[4]) == 0 : false;
     bool individual = argc > 5 ? std::strcmp("individual", argv[5]) == 0 : false;
+    std::string extra = argc > 6 ? std::string(argv[6]) : "1|C";
+    int instance = argc > 7 ? std::atoi(argv[7]) : rand();
 
     RealVector reference = {11.0, 11.0};
     RealVector *reference_ptr = nullptr;
-
+    std::size_t maxTrials = 1;
     if (useSteadyState) {
-        PopulationPlotExperiment<SteadyStateMOCMA, benchmarks::ZDT1> experiment;
-        experiment.run(mu, n, maxEvaluations, reference_ptr, individual);
+        PopulationPlotExperiment<SteadyStateMOCMA> experiment;
+        experiment.run(mu, n, maxEvaluations, reference_ptr, individual, extra, instance, maxTrials);
     } else {
-        PopulationPlotExperiment<MOCMA, benchmarks::ZDT1> experiment;
-        experiment.run(mu, n, maxEvaluations, reference_ptr, individual);
+        PopulationPlotExperiment<MOCMA> experiment;
+        experiment.run(mu, n, maxEvaluations, reference_ptr, individual, extra, instance, maxTrials);
     }
 }

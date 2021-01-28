@@ -3,7 +3,8 @@
 import enum
 import dataclasses
 import math
-from typing import Any, Callable, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any, Iterable, Optional
 
 import numpy as np
 
@@ -13,9 +14,9 @@ from anguilla.optimizers.base import (
     OptimizerSolution,
     OptimizerStoppingConditions,
     OptimizerResult,
+    OptimizableFunction,
 )
 
-from anguilla.dominance import fast_non_dominated_sort
 from anguilla.selection import indicator_selection
 from anguilla.indicators import Indicator, HypervolumeIndicator
 
@@ -90,13 +91,10 @@ class MOStoppingConditions(OptimizerStoppingConditions):
         Maximum number of function evaluations.
     target_indicator_value: optional
         Target indicator value.
-    target_indicator_ref_point: optional
-        Reference to compute the target indicator value.
-    target_indicator_value_rtol: optional
-        Relative tolerance for the target indicator value.
     triggered: optional
         Indicates if any condition was triggered, when returned as an output.
-
+    is_output: optional
+        Indicates the class is used as an output.
     Notes
     -----
     The class can be used as an input to specify stopping conditions and as an
@@ -106,9 +104,19 @@ class MOStoppingConditions(OptimizerStoppingConditions):
     max_generations: Optional[int] = None
     max_evaluations: Optional[int] = None
     target_indicator_value: Optional[float] = None
-    target_indicator_ref_point: Optional[np.ndarray] = None
-    target_indicator_value_rtol: float = 1e-6
     triggered: bool = False
+    is_output: dataclasses.InitVar[bool] = False
+
+    def __post_init__(self, is_output):
+        if (
+            not is_output
+            and self.max_generations is None
+            and self.max_evaluations is None
+            and self.target_indicator_value is None
+        ):
+            raise ValueError(
+                "At least one stopping condition must be provided"
+            )
 
 
 @dataclasses.dataclass
@@ -137,6 +145,18 @@ class SuccessNotion(enum.IntEnum):
         if self.value == SuccessNotion.PopulationBased.value:
             return "P"
         return "I"
+
+
+class CovModel(enum.IntEnum):
+    """Define how to store the covariance information."""
+
+    Full = 0
+    Cholesky = 1
+
+    def __str__(self) -> str:
+        if self.value == CovModel.Full.value:
+            return "F"
+        return "C"
 
 
 class FixedSizePopulation:
@@ -214,16 +234,29 @@ class MOCMA(Optimizer):
     initial_step_size: optional
         The initial step size. Ignored if `parameters` is provided.
     success_notion: optional
-        The notion of success.
+        The notion of success (either `individual` or `population`).
     indicator: optional
         The indicator to use.
-    stopping_conditions: optional
-        The stopping conditions.
+    max_generations: optional
+        Maximum number of generations to trigger stop.
+    max_evaluations: optional
+        Maximum number of function evaluations to trigger stop.
+    target_indicator_value: optional
+        Target value of the indicator to trigger stop.
     parameters: optional
         The external parameters. Allows to provide custom values other than \
         the recommended in the literature.
     rng: optional
         A random number generator.
+    cov_model: optional
+        How to store the covariance information (either `full` or `cholesky`).
+
+    Raises
+    ------
+    ValueError
+        A parameter was provided with an invalid value.
+    NotImplementedError
+        A parameter value is not supported yet.
 
     Notes
     -----
@@ -238,11 +271,14 @@ class MOCMA(Optimizer):
         parent_fitness: np.ndarray,
         n_offspring: Optional[int] = None,
         initial_step_size: float = 1e-4,
-        success_notion: SuccessNotion = SuccessNotion.PopulationBased,
+        success_notion: str = "population",
         indicator: Optional[Indicator] = None,
-        stopping_conditions: Optional[MOStoppingConditions] = None,
+        max_generations: Optional[int] = None,
+        max_evaluations: Optional[int] = None,
+        target_indicator_value: Optional[float] = None,
         parameters: Optional[MOParameters] = None,
         rng: Optional[np.random.Generator] = None,
+        cov_model: str = "full",
     ) -> None:
         if len(parent_points.shape) < 2:
             parent_points = parent_points.reshape((1, len(parent_points)))
@@ -250,7 +286,23 @@ class MOCMA(Optimizer):
             parent_fitness = parent_fitness.reshape((1, len(parent_fitness)))
         self._n_dimensions = parent_points.shape[1]
         self._n_objectives = parent_fitness.shape[1]
-        self._success_notion = success_notion
+
+        if success_notion == "individual":
+            self._success_notion = SuccessNotion.IndividualBased
+        elif success_notion == "population":
+            self._success_notion = SuccessNotion.PopulationBased
+        else:
+            raise ValueError("Invalid value for success_notion.")
+
+        if cov_model == "full":
+            self._cov_model = CovModel.Full
+        elif cov_model == "cholesky":
+            raise NotImplementedError(
+                "Support for Cholesky factors has not been implemented."
+            )
+        else:
+            raise ValueError("Invalid value for cov_model.")
+
         self._n_parents = parent_points.shape[0]
         if n_offspring is None:
             self._n_offspring = self._n_parents
@@ -269,15 +321,16 @@ class MOCMA(Optimizer):
                     "Invalid value for n_dimensions in provided parameters"
                 )
 
-        if stopping_conditions is None:
-            self._stopping_conditions = MOStoppingConditions()
-        else:
-            self._stopping_conditions = stopping_conditions
+        self._stopping_conditions = MOStoppingConditions(
+            max_generations=max_generations,
+            max_evaluations=max_evaluations,
+            target_indicator_value=target_indicator_value,
+        )
 
         if rng is None:
             self._rng = np.random.default_rng()
         else:
-            self._rng = np.random.default_rng()
+            self._rng = rng
 
         if indicator is None:
             self._indicator = HypervolumeIndicator()
@@ -298,8 +351,11 @@ class MOCMA(Optimizer):
         self._population.p_succ[:] = self._parameters.p_target_succ
         self._population.step_size[:] = self._parameters.initial_step_size
 
+        self._parent_ranks = np.ones(self._n_parents)
+        self._parent_idx = np.arange(self._n_parents)
         self._evaluation_count = 0
         self._generation_count = 0
+        self._ask_called = False
 
     @property
     def name(self) -> str:
@@ -330,7 +386,7 @@ class MOCMA(Optimizer):
 
     @property
     def indicator(self) -> Indicator:
-        """Return a reference of the indicator."""
+        """Return a reference to the indicator."""
         return self._indicator
 
     @property
@@ -343,7 +399,8 @@ class MOCMA(Optimizer):
     @property
     def stop(self) -> MOStoppingConditions:
         conditions = self._stopping_conditions
-        result = MOStoppingConditions()
+
+        result = MOStoppingConditions(is_output=True)
         if (
             conditions.max_generations is not None
             and self._generation_count >= conditions.max_generations
@@ -357,31 +414,48 @@ class MOCMA(Optimizer):
             result.triggered = True
             result.max_evaluations = self._evaluation_count
         if conditions.target_indicator_value is not None:
-            raise NotImplementedError()
+            value = self._indicator(
+                self._population.fitness[: self._n_parents]
+            )
+            if value > conditions.target_indicator_value:
+                result.triggered = True
+                result.target_indicator_value = value
         return result
 
     def ask(self) -> np.ndarray:
+        """Generate new search points.
+
+        Returns
+        -------
+        np.ndarray
+            A reference to the new search points.
+
+        Notes
+        -----
+        Internally, it stores data related to the new points, such as
+        their covariance matrix, a reference to their parent, etc.
+        """
         # Compute offspring
         if self._n_offspring == self._n_parents:
-            # Algorithm 1, line 4a [2010:mo-cma-es]
+            # Algorithm 1, line 4b [2010:mo-cma-es]
             oidx = self._n_parents
             for pidx in range(self._n_parents):
                 self._mutate(pidx, oidx)
                 oidx += 1
         else:
-            # Algorithm 1, line 4b [2010:mo-cma-es]
-            ranks, _ = fast_non_dominated_sort(
-                self._population.penalized_fitness[: self._n_parents]
+            # Algorithm 1, line 4a [2010:mo-cma-es]
+            parents = self._rng.choice(
+                self._parent_idx[self._parent_ranks == 1],
+                size=self._n_offspring,
+                replace=True,
             )
-            parents = np.argwhere(ranks == 1).flatten()
-            chosen_parents = self._rng.choice(
-                parents, size=self._n_offspring, replace=True
-            )
-            for oidx, pidx in zip(
-                range(self._n_parents, self._n_parents + self._n_offspring),
-                chosen_parents,
-            ):
+            oidx = self._n_parents
+            for i in range(self._n_offspring):
+                pidx = parents[i]
                 self._mutate(pidx, oidx)
+                oidx += 1
+
+        self._ask_called = True
         return self._population.points[self._n_parents :]
 
     def tell(
@@ -390,6 +464,31 @@ class MOCMA(Optimizer):
         input_penalized_fitness: Optional[np.ndarray] = None,
         evaluation_count: Optional[int] = None,
     ) -> None:
+        """
+        Pass fitness information to the optimizer.
+
+        Parameters
+        ----------
+        input_fitness
+            The fitness of the search points.
+        input_penalized_fitness: optional
+            The penalized fitness of the search points. \
+            Use case: constrained functions.
+        evaluation_count: optional
+            Total evaluation count. Use case: noisy functions.
+
+        Raises
+        ------
+        RuntimeError
+            When `tell` is called before `ask`.
+
+        Notes
+        -----
+        Assumes stored offspring data (i.e covariance matrices) corresponds to
+        the search points produced by the last call to `ask`.
+        """
+        if not self._ask_called:
+            raise RuntimeError("Tell called before ask")
         # Convenience local variables
         n_parents = self._n_parents
         n_offspring = self._n_offspring
@@ -418,7 +517,7 @@ class MOCMA(Optimizer):
         )
 
         # Perform adaptation
-        # [2007:mo-cma-es] Algorithm 4, lines 7-10
+        # [2007:mo-cma-es] Algorithm 4, lines 8-10
         old_step_size = step_size.copy()
         for oidx in range(n_parents, n_parents + n_offspring):
             pidx = parents[oidx]
@@ -426,6 +525,7 @@ class MOCMA(Optimizer):
                 oidx, pidx, selected, ranks
             )
             if selected[oidx]:
+                # assert success_indicator > 0.0
                 self._update_step_size(oidx, success_indicator)
                 x_step = (points[oidx] - points[pidx]) / old_step_size[pidx]
                 self._update_covariance_matrix(oidx, x_step)
@@ -441,27 +541,61 @@ class MOCMA(Optimizer):
         cov[:n_parents] = cov[selected]
         path[:n_parents] = path[selected]
         p_succ[:n_parents] = p_succ[selected]
+        self._parent_ranks = ranks[selected]
 
         self._generation_count += 1
+        self._ask_called = False
 
     def fmin(
         self,
-        fn: Callable,
+        fn: OptimizableFunction,
         fn_args: Optional[Iterable[Any]] = None,
         fn_kwargs: Optional[dict] = None,
-        **kwargs: Any,
     ) -> OptimizerResult:
-        raise NotImplementedError()
+        """Optimize a function.
+
+        Parameters
+        ----------
+        fn
+            The function to optimize.
+        fn_args: optional
+            Positional arguments to pass when calling the function.
+        fn_kwargs: optional
+            Keyword arguments to pass when calling the function.
+
+        Returns
+        -------
+        OptimizerResult
+            The result of the optimization.
+        """
+        if fn_args is None:
+            fn_args = ()
+        if fn_kwargs is None:
+            fn_kwargs = {}
+
+        while not self.stop.triggered:
+            points = self.ask()
+            result = fn(points, *fn_args, **fn_kwargs)
+            # Decide which type of OptimizableFunction we're given
+            if not isinstance(result, tuple):
+                self.tell(*result)
+            elif isinstance(result[1], dict):
+                self.tell(result[0], **result[1])
+            else:
+                self.tell(*result)
+        return OptimizerResult(self.best, self.stop)
 
     def _mutate(self, pidx: int, oidx: int) -> None:
         self._population.parents[oidx] = pidx
-        # [2007:mo-cma-es] Algorithm 4, lines 3-6 (except evaluating fitness)
+        # [2007:mo-cma-es] Algorithm 4, lines 3-6
         # Sample point
         self._population.points[oidx, :] = self._rng.multivariate_normal(
             self._population.points[pidx],
             (
-                self._population.step_size[pidx]
-                * self._population.step_size[pidx]
+                (
+                    self._population.step_size[pidx]
+                    * self._population.step_size[pidx]
+                )
                 * self._population.cov[pidx]
             ),
         )
@@ -471,14 +605,14 @@ class MOCMA(Optimizer):
         self._population.path[oidx, :] = self._population.path[pidx, :]
         self._population.p_succ[oidx] = self._population.p_succ[pidx]
 
-    def _update_step_size(self, idx: int, p_succ: float) -> None:
+    def _update_step_size(self, idx: int, success_indicator: float) -> None:
         # [2007:mo-cma-es] Procedure in p. 4
         # [2010:mo-cma-es] Algorithm 1 in p. 2, lines 9-10, 17-18
         c_p = self._parameters.c_p
         d_inv = 1.0 / self._parameters.d
         p_target_succ = self._parameters.p_target_succ
         self._population.p_succ[idx] *= 1.0 - c_p
-        self._population.p_succ[idx] += c_p * p_succ
+        self._population.p_succ[idx] += c_p * success_indicator
         num = self._population.p_succ[idx] - p_target_succ
         den = 1.0 - p_target_succ
         self._population.step_size[idx] *= math.exp(d_inv * (num / den))
@@ -507,7 +641,11 @@ class MOCMA(Optimizer):
             ] + c_cov * (path_prod + c_c_prod * self._population.cov[idx])
 
     def _success_indicator(
-        self, oidx: int, pidx: int, selected: np.ndarray, ranks: np.ndarray
+        self,
+        oidx: int,
+        pidx: int,
+        selected: np.ndarray,
+        ranks: np.ndarray,
     ) -> float:
         success = False
         if self._success_notion == SuccessNotion.IndividualBased:

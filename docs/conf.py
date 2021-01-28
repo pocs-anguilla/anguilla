@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "Anguilla"
-copyright = "2020, Anguilla Development Team"
+copyright = "2021, Anguilla Development Team"
 author = "Anguilla Development Team"
 
 

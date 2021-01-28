@@ -71,7 +71,7 @@ class BaseTestFunction:
         start = fn.n_dimensions
         fn.n_dimensions = start + 1
         end = fn.n_dimensions
-        if fn.scalable_dimensions:
+        if fn.has_scalable_dimensions:
             self.assertTrue(start != end, "!= operator")
         else:
             self.assertTrue(start == end, "== operator")
@@ -81,7 +81,7 @@ class BaseTestFunction:
         start = fn.n_objectives
         fn.n_objectives = start + 1
         end = fn.n_objectives
-        if fn.scalable_objectives:
+        if fn.has_scalable_objectives:
             self.assertTrue(start != end, "!= operator")
         else:
             self.assertTrue(start == end, "== operator")

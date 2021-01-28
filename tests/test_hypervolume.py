@@ -5,6 +5,7 @@ import unittest
 import numpy as np
 
 from anguilla.hypervolume import calculate, contributions, contributions_naive
+from anguilla.util import random_2d_3d_front
 
 
 class TestExact(unittest.TestCase):
@@ -93,14 +94,45 @@ class TestExact(unittest.TestCase):
         vol = calculate(self.ps_3d, self.ref_p_3d)
         self.assertTrue(math.isclose(self.vol_3d, vol, rel_tol=1e-15))
 
-    def test_contribution_3d(self) -> None:
+    def test_contributions_3d(self) -> None:
         """Test the contributions_3d function."""
         contrib_a = contributions_naive(self.ps_3d, self.ref_p_3d)
-        contrib_b = contributions(self.ps_3d, self.ref_p_3d)
+        contrib_b = contributions(self.ps_3d, self.ref_p_3d, use_btree=True)
         self.assertTrue(np.allclose(contrib_a, contrib_b))
 
-    def test_contribution_2d(self) -> None:
+    def test_contributions_3d(self) -> None:
+        """Test the contributions_3d function."""
+        contrib_a = contributions_naive(self.ps_3d, self.ref_p_3d)
+        contrib_b = contributions(self.ps_3d, self.ref_p_3d, use_btree=False)
+        self.assertTrue(np.allclose(contrib_a, contrib_b))
+
+    def test_contributions_2d_a(self) -> None:
         """Test the contributions_2d function."""
         contrib_a = contributions_naive(self.ps_2d, self.ref_p_2d)
-        contrib_b = contributions(self.ps_2d, self.ref_p_2d)
+        contrib_b = contributions(
+            self.ps_2d, self.ref_p_2d, non_dominated=True
+        )
+        self.assertTrue(np.allclose(contrib_a, contrib_b))
+
+    def test_contributions_2d_b(self) -> None:
+        """Test the contributions_2d function."""
+        contrib_a = contributions_naive(self.ps_2d, self.ref_p_2d)
+        contrib_b = contributions(
+            self.ps_2d, self.ref_p_2d, non_dominated=False
+        )
+        self.assertTrue(np.allclose(contrib_a, contrib_b))
+
+    def test_contributions_2d_c(self) -> None:
+        """Test the contributions_2d function."""
+        contrib_a = contributions(self.ps_2d)
+        contrib_b = contributions(self.ps_2d, non_dominated=False)
+        self.assertTrue(np.allclose(contrib_a, contrib_b))
+
+    def test_2d_3d(self) -> None:
+        """Test the 3-D implementation using the simplest of the 2-D."""
+        front_3d, nadir_3d, front_2d, nadir_2d = random_2d_3d_front(
+            10, dominated=False
+        )
+        contrib_a = contributions(front_3d, nadir_3d)
+        contrib_b = contributions(front_2d, nadir_2d, non_dominated=True)
         self.assertTrue(np.allclose(contrib_a, contrib_b))

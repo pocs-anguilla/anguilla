@@ -18,9 +18,9 @@ static constexpr const char *_hvkd_docstring =
 static constexpr const char *_hvckd_docstring =
     "Calculate the hypervolume contributions using Shark's implementation.";
 
-double hvkd_f8(const PySharkVectorList<double> &ps,
-               const PySharkVector<double> &ref_p,
-               const bool use_approximation = false) {
+auto hvkd_f8(const PySharkVectorList<double> &ps,
+             const PySharkVector<double> &ref_p,
+             const bool use_approximation = false) {
     shark::HypervolumeCalculator hv;
     if (use_approximation) {
         hv.useApproximation(true);
@@ -29,29 +29,28 @@ double hvkd_f8(const PySharkVectorList<double> &ps,
     return hv(ps, ref_p);
 }
 
-py::array_t<double> hvckd_f8(const PySharkVectorList<double> &ps,
-                             const PySharkVector<double> &ref_p,
-                             const bool use_approximation = false) {
+auto hvckd_f8(const PySharkVectorList<double> &ps,
+              const PySharkVector<double> &ref_p,
+              const bool use_approximation = false) {
     shark::HypervolumeContribution hvckd;
     if (use_approximation) {
         hvckd.useApproximation(true);
     }
 
     auto contributionPairs = hvckd.smallest(ps, ps.size(), ref_p);
-    auto contributionsPtr = new std::vector<double>(contributionPairs.size());
-    auto &contributions = *contributionsPtr;
-    for (const auto [contribution, index] : contributionPairs) {
-        contributions[index] = contribution;
+    const auto n = contributionPairs.size();
+    auto contribution = new double[n]();
+    for (const auto [contrib, index] : contributionPairs) {
+        contribution[index] = contrib;
     }
 
-    py::capsule freeContributionsMemory(contributionsPtr, [](void *ptr) {
-        auto concretePtr = static_cast<decltype(contributionsPtr)>(ptr);
-        delete concretePtr;
+    py::capsule freeContributionsMemory(contribution, [](void *ptr) {
+        std::unique_ptr<double[]>(static_cast<decltype(contribution)>(ptr));
     });
 
-    const auto output = py::array_t<double>({contributionsPtr->size()},
-                                            {sizeof(double)},
-                                            contributionsPtr->data(),
+    const auto output = py::array_t<double>({n},               // shape
+                                            {sizeof(double)},  // stride
+                                            contribution,
                                             freeContributionsMemory);
     return output;
 }

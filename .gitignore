@@ -144,6 +144,7 @@ outcmaes/
 notebooks/**/*.pdf
 notebooks/**/*.png
 _cxx_build
+_cxx_experiments_build
 
 # CMake
 CMakeLists.txt.user

@@ -1,4 +1,4 @@
-"""Implementations for computing the exact hypervolume indicator."""
+"""Prototype implementations of different hypervolume algorithms."""
 import numpy as np
 from collections import deque
 from typing import Deque, List, Optional
@@ -48,32 +48,36 @@ class Box3D:
         )
 
 
-def hv2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
+def hv2d(points: np.ndarray, reference: Optional[np.ndarray] = None) -> float:
     """Compute the exact hypervolume indicator for a set of 2-D points.
 
     Parameters
     ----------
-    ps
+    points
         The point set of mutually non-dominated points.
-    ref_p: optional
+    reference: optional
         The reference point. Otherwise assumed to be the origin.
+
+    Returns
+    -------
+    float
+        The hypervolume indicator.
 
     Notes
     -----
     Ported from :cite:`2008:shark`.
-
     """
-    if len(ps) == 0:
+    if len(points) == 0:
         return 0.0
 
-    if ref_p is None:
+    if reference is None:
         ref_x, ref_y = 0.0, 0.0
     else:
-        ref_x, ref_y = ref_p
+        ref_x, ref_y = reference
 
     # Copy point set and sort along the x-axis in ascending order.
-    sorted_idx = np.argsort(ps[:, 0])
-    sorted_ps = ps[sorted_idx]
+    sorted_idx = np.argsort(points[:, 0])
+    sorted_ps = points[sorted_idx]
 
     # Perform the integration.
     p_x, p_y = sorted_ps[0]
@@ -90,43 +94,47 @@ def hv2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     return volume
 
 
-def hvc2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
+def hvc2d(points: np.ndarray, reference: Optional[np.ndarray] = None) -> float:
     """Compute the exact hypervolume contributions for a set of 2-D points.
 
     Parameters
     ----------
-    ps
+    points
         The point set of mutually non-dominated points.
-    ref_p: optional
+    reference: optional
         The reference point. Otherwise assumed to be the origin.
+
+    Returns
+    -------
+    np.ndarray
+        The hypervolume contribution of each point, respectively.
 
     Notes
     -----
     Implements the algorithm described in Lemma 1 of :cite:`2007:mo-cma-es`.
-
     """
-    if len(ps) == 0:
+    if len(points) == 0:
         return 0.0
 
-    if ref_p is None:
+    if reference is None:
         ref_x, ref_y = 0.0, 0.0
     else:
-        ref_x, ref_y = ref_p
+        ref_x, ref_y = reference
 
     # Copy point set and sort along the x-axis in ascending order.
-    sorted_idx = np.argsort(ps[:, 0])
-    sorted_ps = ps[sorted_idx]
+    sorted_idx = np.argsort(points[:, 0])
+    sorted_ps = points[sorted_idx]
 
-    contribution = np.zeros(len(ps))
+    contribution = np.zeros(len(points))
 
     contribution[0] = (sorted_ps[1][0] - sorted_ps[0][0]) * (
-        ref_p[1] - sorted_ps[0][1]
+        reference[1] - sorted_ps[0][1]
     )
-    contribution[-1] = (ref_p[0] - sorted_ps[-1][0]) * (
+    contribution[-1] = (reference[0] - sorted_ps[-1][0]) * (
         sorted_ps[-2][1] - sorted_ps[-1][1]
     )
 
-    for i in range(1, len(ps) - 1):
+    for i in range(1, len(points) - 1):
         contribution[i] = (sorted_ps[i + 1][0] - sorted_ps[i][0]) * (
             sorted_ps[i - 1][1] - sorted_ps[i][1]
         )
@@ -135,15 +143,20 @@ def hvc2d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     return contribution[reverse_idx]
 
 
-def hv3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
+def hv3d(points: np.ndarray, reference: Optional[np.ndarray] = None) -> float:
     """Calculate the exact hypervolume indicator for a set of 3-D points.
 
     Parameters
     ----------
-        ps
-            The point set of mutually non-dominated points.
-        ref_p: optional
+        points
+            The point set of points.
+        reference: optional
             The reference point. Otherwise assumed to be the origin.
+
+    Returns
+    -------
+    float
+        The hypervolume indicator.
 
     Notes
     -----
@@ -165,17 +178,17 @@ def hv3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
        :width: 750
        :alt: Example of the algorithm for minimization problem.
     """
-    if len(ps) == 0:
+    if len(points) == 0:
         return 0.0
 
-    if ref_p is None:
+    if reference is None:
         ref_x, ref_y, ref_z = 0.0, 0.0, 0.0
     else:
-        ref_x, ref_y, ref_z = ref_p
+        ref_x, ref_y, ref_z = reference
 
     # Sort the points by their z-coordinate in ascending order.
-    sorted_idx = np.argsort(ps[:, 2])
-    sorted_ps = ps[sorted_idx]
+    sorted_idx = np.argsort(points[:, 2])
+    sorted_ps = points[sorted_idx]
 
     # The algorithm works by performing sweeping in the z-axis,
     # and it uses a tree with balanced height as its sweeping structure
@@ -241,14 +254,16 @@ def hv3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> float:
     return volume
 
 
-def hvc3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> np.ndarray:
+def hvc3d(
+    points: np.ndarray, reference: Optional[np.ndarray] = None
+) -> np.ndarray:
     """Compute the hypervolume contribution for a set of 3-D points.
 
     Parameters
     ----------
-    ps
-        The set of mutually non-dominated points.
-    ref_p: optional
+    points
+        The set of points.
+    reference: optional
         The reference point. Otherwise assumed to be the origin.
 
     Returns
@@ -258,30 +273,30 @@ def hvc3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> np.ndarray:
 
     Notes
     -----
-    Implements the EF algorithm (see p. 22 of :cite:`2020:hypervolume`) \
+    Implements the HVC3D algorithm (see p. 22 of :cite:`2020:hypervolume`) \
     presented by :cite:`2011-hypervolume-3d` for computing AllContributions. \
     The implementation differs from the presentation of the reference paper \
     in that it assumes a minimization problem (instead of maximization). \
     It also incorporates some implementation details taken from \
     :cite:`2008:shark`.
     """
-    n = len(ps)
+    n = len(points)
 
     if n == 0:
         return np.empty()
 
-    if ref_p is None:
+    if reference is None:
         zero = np.array([(0, 0, 0)], dtype=point3d_dt)[0]
         _ref_p = zero
     else:
-        _ref_p = ref_p
+        _ref_p = reference
 
     # Sort the points by their z-coordinate in ascending order
-    sorted_idx = np.argsort(ps[:, 2])
-    sorted_ps = ps[sorted_idx]
+    sorted_idx = np.argsort(points[:, 2])
+    sorted_ps = points[sorted_idx]
 
     # "Cast" to allow access by "key"
-    ps = sorted_ps.view(dtype=point3d_dt).reshape(-1)
+    points = sorted_ps.view(dtype=point3d_dt).reshape(-1)
     _ref_p = _ref_p.view(dtype=point3d_dt)[0]
 
     # Initialization
@@ -303,14 +318,14 @@ def hvc3d(ps: np.ndarray, ref_p: Optional[np.ndarray] = None) -> np.ndarray:
     contribution[n] = float("nan")
 
     # Process first point
-    p0 = ps[0]
+    p0 = points[0]
     upper0 = _ref_p.copy()
     upper0["z"] = float("nan")
     boxes[0].appendleft(Box3D(p0.copy(), upper0))
     front_xy[p0["x"]] = SweepItem(p0, 0)
 
     # Create pending points list
-    pending = [SweepItem(p, i) for i, p in enumerate(ps[1:], 1)]
+    pending = [SweepItem(p, i) for i, p in enumerate(points[1:], 1)]
 
     # Process the rest of the points
     for p in pending:

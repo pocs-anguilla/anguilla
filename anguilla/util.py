@@ -103,3 +103,90 @@ def random_orthogonal_matrix(n: int, rng: np.random.Generator) -> np.ndarray:
     Q, r = np.linalg.qr(Z)
     d = np.diag(r)
     return Q * (d / np.abs(d)) @ Q
+
+
+def random_cliff_3d(n, rng=np.random.default_rng()):
+    """Generate a random Cliff 3D front.
+
+    Parameters
+    ----------
+    n
+        Size of the front.
+    rng
+        A random number generator.
+
+    Returns
+    -------
+    np.ndarray
+        The random front.
+
+    Notes
+    -----
+    Implements the Cliff3D as described on sec. 5 of \
+    :cite:`2011:hypervolume-3d`.
+    """
+    vs = rng.standard_normal(size=(n, 2))
+    ys = np.zeros((n, 3))
+    for i in range(n):
+        c = np.linalg.norm(vs[i])
+        ys[i, 0:2] = 10.0 * np.abs(vs[i]) / c
+    ys[:, 2] = rng.uniform(low=0.0, high=10.0, size=n)
+    return ys
+
+
+def random_3d_front(n, rng=np.random.default_rng(), dominated=False):
+    """Generate a random 3D front.
+
+    Parameters
+    ----------
+    n
+        Size of the front.
+    rng
+        A random number generator.
+    dominated
+        If true, generates some dominated points.
+
+    Returns
+    -------
+    np.ndarray
+        The random 3D front and a reference point.
+    """
+    cliff3d = random_cliff_3d(n, rng=rng)
+    dom = None
+    if dominated:
+        m = max(2, n // 3)
+        dom = cliff3d[rng.choice(n, m, replace=False), :]
+        for i in range(m):
+            dom[i, rng.integers(0, 2)] += 0.01
+    front = np.vstack([x for x in [cliff3d, dom] if x is not None])
+    rng.shuffle(front)
+    nadir = np.ceil(np.max(front, axis=0))
+    return front, nadir
+
+
+def random_2d_3d_front(n, dominated=False):
+    """Generate a random pair of 2D and 3D fronts.
+
+    Parameters
+    ----------
+    n
+        Size of the fronts.
+    rng
+        A random number generator.
+    dominated
+        If true, generates some dominated points.
+
+    Returns
+    -------
+    np.ndarray
+        The random fronts and reference points.
+    """
+    front_3d, nadir_3d = random_3d_front(n, dominated=dominated)
+    n = len(front_3d)
+    front_3d[:, 2] = 0.0
+    nadir_3d[2] = 1.0
+    front_2d = np.delete(front_3d, 2, 1)
+    nadir_2d = np.empty(2)
+    nadir_2d[0] = nadir_3d[0]
+    nadir_2d[1] = nadir_3d[1]
+    return front_3d, nadir_3d, front_2d, nadir_2d

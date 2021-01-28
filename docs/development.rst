@@ -13,11 +13,20 @@ This requires having `Docker <https://www.docker.com/>`_ installed in addition t
 
 In VS Code, you can open a Bash terminal that runs in the dev container. Some useful commands are shown below.
 
+To initialize the Git submodules (for external C++ libraries such as Boost.Intrusive):
+
+.. code-block:: bash
+
+  make update_submodules
+
 To run Jupyter Lab using the devcontainer:
 
 .. code-block:: bash
 
-  jupyter-lab --allow-root
+  make jupyter
+
+  # Add environment some environment variables for debugging
+  make jupyter_debug
 
 The Jupyter setup supports both Python and C++ (through `cling <https://github.com/root-project/cling>`_). This allows you to run Shark from a notebook!
 
@@ -32,6 +41,9 @@ To build a local copy of the C++ extension modules:
 .. code-block:: bash
 
   make cxx_extension
+
+  # Compiles version suitable for debugging
+  make cxx_extension_debug
 
 To run the test suite:
 

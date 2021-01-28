@@ -23,16 +23,28 @@ set(EXP1_SRC
 )
 set(MOCMA_SRC
   src/mocma.cpp
+  src/moq/benchmarks.cpp
 )
 
 set(FITNESS_SRC
   src/fitness.cpp
 )
 
+set(EXP_MQO_SRC
+  src/moq/experiments.cpp
+  src/moq/benchmarks.cpp
+)
+
 ## Project executable
 add_executable(experiment1 ${EXP1_SRC})
 target_link_libraries(experiment1 PRIVATE ${SHARK_LIBRARIES})
 target_link_libraries(experiment1 PRIVATE ${Boost_LIBRARIES})
+target_include_directories(experiment1 PRIVATE include)
+
+add_executable(experiment_moq ${EXP_MQO_SRC})
+target_link_libraries(experiment_moq PRIVATE ${SHARK_LIBRARIES})
+target_link_libraries(experiment_moq PRIVATE ${Boost_LIBRARIES})
+target_include_directories(experiment_moq PRIVATE include)
 
 add_executable(mocma ${MOCMA_SRC})
 target_link_libraries(mocma PRIVATE ${SHARK_LIBRARIES})
@@ -40,7 +52,9 @@ target_link_libraries(mocma PRIVATE ${Boost_LIBRARIES})
 target_link_libraries(mocma PRIVATE ${Python3_LIBRARIES})
 target_include_directories(mocma PRIVATE ${Python3_INCLUDE_DIRS})
 target_include_directories(mocma PRIVATE ${Python3_NumPy_INCLUDE_DIRS})
+target_include_directories(mocma PRIVATE include)
 
 add_executable(fitness ${FITNESS_SRC})
 target_link_libraries(fitness PRIVATE ${SHARK_LIBRARIES})
 target_link_libraries(fitness PRIVATE ${Boost_LIBRARIES})
+target_include_directories(fitness PRIVATE include)

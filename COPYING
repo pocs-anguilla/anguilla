@@ -1,0 +1,48 @@
+Anguilla: a MO-CMA-ES implementation in Python 3.
+Copyright (C) 2020-2021 Anguilla Development Team
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+--------------------------------------------------------------------
+
+Format-Specification: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Anguilla
+Upstream-Contact: <pending>
+Source: <pending>
+
+Files: *
+Copyright: 2020-2021, Anguilla Development Team
+License: LGPL-3-or-later
+
+Files: anguilla/cxx/external/boost/*
+Copyright: ?
+License: BSL-1
+
+Files anguilla/cxx/external/spatial/*
+Copyright: 2011-2016, Sylvain Bougerel
+License: BSL-1
+
+Files: anguilla/cxx/external/btree/*
+Copyright: 2019, German Mendez Bravo (Kronuz)
+           2013, Google Inc.
+License: Apache-2
+
+Files: notebooks/shark/exploration/include/moq/*
+       notebooks/shark/exploration/src/moq/*
+Copyright: 2018, Tobias Glasmachers
+License: MIT
+
+Files: notebooks/shark/exploration/include/matplotlibcpp/*
+Copyright: 2014, Benno Evers
+License: MIT
