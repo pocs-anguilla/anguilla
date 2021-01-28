@@ -15,15 +15,15 @@ class Parameters {
         std::size_t nDimensions, T initialStepSize, std::optional<T> d, std::optional<T> pTargetSucc, std::optional<T> cP, T pThreshold, std::optional<T> cCov, T pExtreme, T sigmaMin, T alpha, std::optional<T> cR) {
         auto n = (T)nDimensions;
         this->initialStepSize = initialStepSize;
-        this->d = !d.has_value() ? 1.0 + n / 2.0 : d.value();
-        this->pTargetSucc = !pTargetSucc.has_value() ? 0.5 : pTargetSucc.value();
-        this->cP = !cP.has_value() ? this->pTargetSucc / (2.0 + this->pTargetSucc) : cP.value();
+        this->d = d.value_or(1.0 + n / 2.0);
+        this->pTargetSucc = pTargetSucc.value_or(0.5);
+        this->cP = cP.value_or(this->pTargetSucc / (2.0 + this->pTargetSucc));
         this->pThreshold = pThreshold;
-        this->cCov = !cCov.has_value() ? 2.0 / (std::pow(n, 2.1) + 3.0) : cCov.value();
+        this->cCov = cCov.value_or(2.0 / (std::pow(n, 2.1) + 3.0));
         this->pExtreme = pExtreme;
         this->sigmaMin = sigmaMin;
         this->alpha = alpha;
-        this->cR = !cR.has_value() ? this->cCov / 2.0 : cR.value();
+        this->cR = cR.value_or(this->cCov / 2.0);
     }
 
     T initialStepSize;
