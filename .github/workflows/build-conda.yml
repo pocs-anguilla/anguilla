@@ -23,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - name: Get conda
         # See: https://github.com/conda-incubator/setup-miniconda
