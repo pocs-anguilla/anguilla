@@ -2,8 +2,8 @@
 # For example, that from the provided devcontainer for VS Code.
 
 # For development, prefer the C++20 toolchain, as it has template support for the nodiscard attribute.
-TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libstdcxx.cmake
-#TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libcxx.cmake
+#TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libstdcxx.cmake
+TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libcxx.cmake
 
 COMMON_CMAKE_OPTS=-DWITH_SHARK_BINDINGS=ON -DCMAKE_TOOLCHAIN_FILE=$(TOOLCHAIN_FILE)
 

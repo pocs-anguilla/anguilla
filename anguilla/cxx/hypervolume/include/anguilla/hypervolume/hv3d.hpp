@@ -14,9 +14,7 @@ namespace py = pybind11;
 #include <numeric>
 #include <vector>
 
-#ifndef _LIBCPP_VERSION
-// In the case of libc++, support is marked as pending.
-// See: https://libcxx.llvm.org/docs/Cxx1zStatus.html
+#ifdef __cpp_lib_memory_resource
 #include <memory_resource>
 #endif
 
@@ -83,7 +81,7 @@ static constexpr const char *docstring = R"_(
 
 /* Supporting datatypes for the implementation. */
 
-#ifndef _LIBCPP_VERSION
+#ifdef __cpp_lib_memory_resource
 template <typename T>
 using MapPair = std::pair<const T, T>;
 
@@ -176,7 +174,7 @@ auto calculate(const std::vector<Point3D<T>> &points, const T refX, const T refY
     // the x-coordinates and the values are the y-coordinates.
     // See p. 6 of [2009:hypervolume-hv3d].
 
-#ifndef _LIBCPP_VERSION
+#ifdef __cpp_lib_memory_resource
     std::unique_ptr<std::pmr::monotonic_buffer_resource> frontPoolPtr(new std::pmr::monotonic_buffer_resource(sizeof(hv3d::MapPair<T>) * points.size()));
     std::unique_ptr<Map> frontPtr(new Map(frontPoolPtr.get()));
     auto &front = *frontPtr;
