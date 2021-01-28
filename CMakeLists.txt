@@ -60,32 +60,36 @@ option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
 
 # Add the different modules
 
-## BTree
-set(BTREE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/external/btree/include")
+## Vendor
 
-## Boost
-list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/external/boost/assert/include")
-list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/external/boost/config/include")
-list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/external/boost/move/include")
-list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/external/boost/static_assert/include")
-list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/external/boost/intrusive/include")
+### BTree
+set(BTREE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/btree/include")
 
-## Spatial
-set(SPATIAL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/external/spatial/include")
+### Boost
+list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/assert/include")
+list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/config/include")
+list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/move/include")
+list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/static_assert/include")
+list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/intrusive/include")
 
-## Common
+### Spatial
+set(SPATIAL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/spatial/include")
+
+## Anguilla
+
+### Common
 set(COMMON_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/common/include")
 
-## Hypervolume
+### Hypervolume
 add_subdirectory(anguilla/cxx/hypervolume)
 
-## Dominance
+### Dominance
 add_subdirectory(anguilla/cxx/dominance)
 
-## Archive
+### Archive
 add_subdirectory(anguilla/cxx/archive)
 
-## Bindings for Shark's Hypervolume (optional)
+### Bindings for Shark's Hypervolume (optional)
 if(WITH_SHARK_BINDINGS)
   add_subdirectory(anguilla/cxx/shark_hypervolume)
 endif()
