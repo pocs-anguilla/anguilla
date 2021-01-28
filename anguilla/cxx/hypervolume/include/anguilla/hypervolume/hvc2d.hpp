@@ -201,8 +201,8 @@ auto contributionsNonDominated(const std::vector<IndexedPoint2D<T>> &points, con
     // Process all the points
     for (std::size_t i = 1U, m = n + 1U; i < m; ++i) {
         const auto [pX, pY, index] = points[i];
-        const auto [leftX, leftY, leftIndex] = points[i - 1U];
-        const auto [rightX, rightY, rightIndex] = points[i + 1U];
+        const auto leftY = points[i - 1U].pY;
+        const auto rightX = points[i + 1U].pX;
         contribution[index] = (rightX - pX) * (leftY - pY);
     }
 
