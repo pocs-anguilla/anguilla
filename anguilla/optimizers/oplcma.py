@@ -362,7 +362,7 @@ class OnePlusLambdaCMA(Optimizer):
             result = fn(points, *fn_args, **fn_kwargs)
             # Decide which type of OptimizableFunction we're given
             if not isinstance(result, tuple):
-                self.tell(result)
+                self.tell(*result)
             elif isinstance(result[1], dict):
                 self.tell(result[0], **result[1])
             else:
