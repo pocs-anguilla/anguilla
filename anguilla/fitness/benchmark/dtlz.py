@@ -11,13 +11,15 @@ from anguilla.fitness.constraints import BoxConstraintsHandler
 class DTLZ(ObjectiveFunction):
     """Common functionality for the DTLZ family of functions."""
 
+    _has_scalable_objectives = True
+    _has_known_pareto_front = True
+
     def __init__(
         self,
         n_dimensions: int = 2,
         n_objectives: int = 2,
         rng: np.random.Generator = None,
     ) -> None:
-        self._scalable_objectives = True
         super().__init__(n_dimensions, n_objectives, rng)
 
     @property
@@ -90,9 +92,9 @@ class DTLZ1(DTLZ):
 
     def pareto_front(self, num=50) -> np.ndarray:
         if self._n_objectives == 2:
-            x1 = np.linspace(0.0, 0.5, num, True)
-            x2 = 0.5 - x1
-            return np.vstack((x1, x2))
+            y1 = np.linspace(0.0, 0.5, num, True)
+            y2 = 0.5 - y1
+            return np.vstack((y1, y2))
         raise NotImplementedError()
 
 
@@ -127,9 +129,9 @@ class DTLZ2(DTLZ):
 
     def pareto_front(self, num=50) -> np.ndarray:
         if self._n_objectives == 2:
-            x1 = np.linspace(0.0, 1.0, num, True)
-            x2 = np.sqrt(1.0 - x1)
-            return np.vstack((x1, x2))
+            y1 = np.linspace(0.0, 1.0, num, True)
+            y2 = np.sqrt(1.0 - y1 * y1)
+            return np.vstack((y1, y2))
         raise NotImplementedError()
 
 
@@ -164,9 +166,9 @@ class DTLZ3(DTLZ):
 
     def pareto_front(self, num=50) -> np.ndarray:
         if self._n_objectives == 2:
-            x1 = np.linspace(0.0, 1.0, num, True)
-            x2 = np.sqrt(1.0 - x1)
-            return np.vstack((x1, x2))
+            y1 = np.linspace(0.0, 1.0, num, True)
+            y2 = np.sqrt(1.0 - y1 * y1)
+            return np.vstack((y1, y2))
         raise NotImplementedError()
 
 
@@ -214,9 +216,9 @@ class DTLZ4(DTLZ):
 
     def pareto_front(self, num=50) -> np.ndarray:
         if self._n_objectives == 2:
-            x1 = np.linspace(0.0, 1.0, num, True)
-            x2 = np.sqrt(1.0 - x1)
-            return np.vstack((x1, x2))
+            y1 = np.linspace(0.0, 1.0, num, True)
+            y2 = np.sqrt(1.0 - y1 * y1)
+            return np.vstack((y1, y2))
         raise NotImplementedError()
 
 
@@ -227,6 +229,8 @@ class DTLZ5(DTLZ):
     -----
     Implements the function as defined in :cite:`2008:shark`.
     """
+
+    _has_known_pareto_front = False
 
     @property
     def name(self) -> str:
@@ -256,6 +260,8 @@ class DTLZ6(DTLZ):
     Implements the function as defined in :cite:`2008:shark`.
     """
 
+    _has_known_pareto_front = False
+
     @property
     def name(self) -> str:
         return "DTLZ6"
@@ -284,6 +290,8 @@ class DTLZ7(DTLZ):
     Pareto front as in `this page <https://bit.ly/3hUuMIk>`_.
     """
 
+    _has_continuous_pareto_front = False
+
     @property
     def name(self) -> str:
         return "DTLZ7"
@@ -301,17 +309,17 @@ class DTLZ7(DTLZ):
     def pareto_front(self, num=50) -> np.ndarray:
         if self._n_objectives == 2:
             size = num // 4
-            x1 = np.zeros(num)
-            x1[:size] = np.linspace(0.0, 0.2514118360, size, True)
-            x1[size : size * 2] = np.linspace(
+            y1 = np.zeros(num)
+            y1[:size] = np.linspace(0.0, 0.2514118360, size, True)
+            y1[size : size * 2] = np.linspace(
                 0.6316265307 + 1e-6, 0.8594008566, size, True
             )
-            x1[size * 2 : size * 3] = np.linspace(
+            y1[size * 2 : size * 3] = np.linspace(
                 1.3596178367 + 1e-6, 1.5148392681, size, True
             )
-            x1[size * 3 :] = np.linspace(
+            y1[size * 3 :] = np.linspace(
                 2.0518383519 + 1e-6, 2.116426807, size + num % 4, True
             )
-            x2 = 4.0 - x1 * (1.0 + np.sin(3.0 * np.pi * x1))
-            return np.vstack((x1, x2))
+            y2 = 4.0 - y1 * (1.0 + np.sin(3.0 * np.pi * y1))
+            return np.vstack((y1, y2))
         raise NotImplementedError()

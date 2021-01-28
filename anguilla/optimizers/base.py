@@ -2,13 +2,19 @@
 import abc
 import dataclasses
 
+import numpy as np
 
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional, Union, Tuple
 
 try:
     from typing import final
 except ImportError:
     from typing_extensions import final
+
+OptimizableFunctionResult = Union[
+    np.ndarray, Tuple[np.ndarray, np.ndarray, int], Tuple[np.ndarray, dict]
+]
+OptimizableFunction = Callable[[np.ndarray, Any], OptimizableFunctionResult]
 
 
 class OptimizerSolution(metaclass=abc.ABCMeta):
@@ -79,7 +85,7 @@ class Optimizer(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def fmin(
         self,
-        fn: Callable,
+        fn: OptimizableFunction,
         fn_args: Optional[Iterable[Any]] = None,
         fn_kwargs: Optional[dict] = None,
         **kwargs: Any,

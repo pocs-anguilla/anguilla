@@ -83,8 +83,10 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
     _n_dimensions: int
     _evaluation_count: int
     _constraints_handler: Optional[ConstraintsHandler]
-    _scalable_dimensions: bool = True
-    _scalable_objectives: bool = False
+    _has_scalable_dimensions: bool = True
+    _has_scalable_objectives: bool = False
+    _has_known_pareto_front: bool = False
+    _has_continuous_pareto_front: bool = True
 
     def __init__(
         self,
@@ -130,15 +132,15 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         ValueError
             The provided value is not valid.
         """
-        if self._scalable_dimensions:
+        if self._has_scalable_dimensions:
             self._pre_update_n_dimensions(n_dimensions)
             self._n_dimensions = n_dimensions
             self._post_update_n_dimensions()
 
     @property
-    def scalable_dimensions(self):
+    def has_scalable_dimensions(self):
         """Return True if number of dimensions can be scaled."""
-        return self._scalable_dimensions
+        return self._has_scalable_dimensions
 
     @property
     def n_objectives(self) -> int:
@@ -156,15 +158,25 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         AttributeError
             The value cannot be changed.
         """
-        if self._scalable_objectives:
+        if self._has_scalable_objectives:
             self._pre_update_n_objectives(n_objectives)
             self._n_objectives = n_objectives
             self._post_update_n_objectives()
 
     @property
-    def scalable_objectives(self):
+    def has_scalable_objectives(self):
         """Return True if number of objectives can be scaled."""
-        return self._scalable_objectives
+        return self._has_scalable_objectives
+
+    @property
+    def has_known_pareto_front(self):
+        """Return True if the Pareto front is known and implemented."""
+        return self._has_known_pareto_front
+
+    @property
+    def has_continuous_pareto_front(self):
+        """Return True if the Pareto front is continuous."""
+        return self._has_continuous_pareto_front
 
     @property
     def evaluation_count(self) -> int:
@@ -325,7 +337,13 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         feasible_xs = self.closest_feasible(xs)
         tmp = xs - feasible_xs
         ys = self.__call__(feasible_xs)
-        return ys, ys + penalty * np.sum(tmp * tmp)
+        size = len(xs)
+        if size == 1:
+            ys = np.reshape(ys, (1, self._n_objectives))
+        penalized_ys = np.empty_like(ys)
+        for i in range(size):
+            penalized_ys[i] = ys[i] + penalty * np.sum(tmp[i] * tmp[i])
+        return ys, penalized_ys
 
     def pareto_front(self, num: int = 50) -> np.ndarray:
         """Return the true Pareto front.

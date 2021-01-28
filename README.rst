@@ -36,3 +36,8 @@ It is based on the reference implementations from
 `PyCMA <https://github.com/CMA-ES/pycma>`_.
 
 Please see the `documentation <https://anguilla.readthedocs.io/en/latest/>`_ for more details about this project.
+
+References
+----------
+
+Please see `REFERENCES <REFERENCES>`_ or the `documentation's bibtext file <docs/references.bib>`_.

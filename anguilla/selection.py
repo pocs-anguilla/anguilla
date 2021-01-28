@@ -3,7 +3,7 @@ from typing import Tuple
 
 import numpy as np
 
-from anguilla.dominance import fast_non_dominated_sort
+from anguilla.dominance import non_dominated_sort
 from anguilla.indicators import Indicator
 
 
@@ -31,16 +31,16 @@ def indicator_selection(
     Based on the `IndicatorBasedSelection` class from :cite:`2008:shark`.
     """
     selected = np.ones(len(points), dtype=bool)
-    fronts, rank = fast_non_dominated_sort(points)
+    ranks, rank = non_dominated_sort(points)
 
-    current_size = len(fronts)
-    current_front = fronts == rank
+    current_size = len(ranks)
+    current_front = ranks == rank
     current_front_size = np.sum(current_front)
     while current_size - current_front_size >= target_size:
         selected[current_front] = False
         current_size -= current_front_size
         rank -= 1
-        current_front = fronts == rank
+        current_front = ranks == rank
         current_front_size = np.sum(current_front)
 
     current_front = np.argwhere(current_front).flatten()
@@ -50,4 +50,4 @@ def indicator_selection(
     sorted_idx = np.argsort(contributions)
     selected[current_front[sorted_idx[: current_size - target_size]]] = False
 
-    return selected, fronts
+    return selected, ranks

@@ -18,6 +18,7 @@ from anguilla.fitness.benchmark.dtlz import (
     DTLZ7,
 )
 from anguilla.fitness.benchmark.ihr import IHR1, IHR2, IHR3, IHR4, IHR6
+from anguilla.fitness.benchmark.moq import MOQ
 
 __all__ = [
     "Sphere",
@@ -47,4 +48,5 @@ __all__ = [
     "DTLZ5",
     "DTLZ6",
     "DTLZ7",
+    "MOQ",
 ]

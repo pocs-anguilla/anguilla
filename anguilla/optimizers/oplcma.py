@@ -2,7 +2,7 @@
     algorithm for real-valued single-objective optimization (MOO)."""
 import dataclasses
 import math
-from typing import Any, Callable, Iterable, Optional, Union
+from typing import Any, Iterable, Optional, Union
 
 import numpy as np
 
@@ -12,6 +12,7 @@ from anguilla.optimizers.base import (
     OptimizerSolution,
     OptimizerStoppingConditions,
     OptimizerResult,
+    OptimizableFunction,
 )
 
 
@@ -83,18 +84,30 @@ class OPLStoppingConditions(OptimizerStoppingConditions):
         Maximum number of generations
     max_evaluations: optional
         Maximum number of evaluations
-    target_fitness: optional
+    target_fitness_value: optional
         Target objective value.
-    target_fitness_rtol: optional
-        Relative tolerance of target objective value.
     triggered: optional
+        Indicates if any condition was triggered, when returned as an output.
+    is_output: optional
+        Indicates the class is used as an output.
     """
 
     max_generations: Optional[int] = None
     max_evaluations: Optional[int] = None
-    target_fitness: Optional[float] = None
-    target_fitness_rtol: float = 1e-6
+    target_fitness_value: Optional[float] = None
     triggered: bool = False
+    is_output: dataclasses.InitVar[bool] = False
+
+    def __post_init__(self, is_output):
+        if (
+            not is_output
+            and self.max_generations is None
+            and self.max_evaluations is None
+            and self.target_fitness_value is None
+        ):
+            raise ValueError(
+                "At least one stopping condition must be provided"
+            )
 
 
 @dataclasses.dataclass
@@ -126,8 +139,12 @@ class OnePlusLambdaCMA(Optimizer):
         Number of offspring.
     initial_step_size: optional
         Initial step size.
-    stopping_conditions: optional
-        The stopping conditions.
+    max_generations: optional
+        Maximum number of generations to trigger stop.
+    max_evaluations: optional
+        Maximum number of evaluations to trigger stop.
+    target_fitness_value: optional
+        Target fitness value to trigger stop.
     parameters: optional
         The external parameters. Allows to provide custom values other than \
         the recommended in the literature.
@@ -145,8 +162,10 @@ class OnePlusLambdaCMA(Optimizer):
         parent_fitness: np.ndarray,
         n_offspring: int,
         initial_step_size: float = 1e-4,
+        max_generations: Optional[int] = None,
+        max_evaluations: Optional[int] = None,
+        target_fitness_value: Optional[float] = None,
         parameters: Optional[OPLParameters] = None,
-        stopping_conditions: Optional[OPLStoppingConditions] = None,
         rng: Optional[np.random.Generator] = None,
     ) -> None:
         self._n_dimensions = len(parent_point)
@@ -164,10 +183,11 @@ class OnePlusLambdaCMA(Optimizer):
                 )
             self._parameters = parameters
 
-        if stopping_conditions is None:
-            self._stopping_conditions = OPLStoppingConditions()
-        else:
-            self._stopping_conditions = stopping_conditions
+        self._stopping_conditions = OPLStoppingConditions(
+            max_generations=max_generations,
+            max_evaluations=max_evaluations,
+            target_fitness_value=target_fitness_value,
+        )
 
         if rng is None:
             self._rng = np.random.default_rng()
@@ -211,10 +231,7 @@ class OnePlusLambdaCMA(Optimizer):
     @property
     def stop(self) -> OPLStoppingConditions:
         conditions = self._stopping_conditions
-        result = OPLStoppingConditions()
-        max_generations = self._stopping_conditions.max_generations
-        max_evaluations = self._stopping_conditions.max_evaluations
-        target_fitness = self._stopping_conditions.target_fitness
+        result = OPLStoppingConditions(is_output=True)
 
         if (
             conditions.max_generations is not None
@@ -223,17 +240,17 @@ class OnePlusLambdaCMA(Optimizer):
             result.triggered = True
             result.max_generations = self._generation_count
         if (
-            max_evaluations is not None
+            conditions.max_evaluations is not None
             and self._evaluation_count >= conditions.max_evaluations
         ):
             result.triggered = True
             result.max_evaluations = self._evaluation_count
         if (
-            conditions.target_fitness is not None
-            and self.fitness < conditions.target_fitness
+            conditions.target_fitness_value is not None
+            and self.fitness < conditions.target_fitness_value
         ):
             result.triggered = True
-            result.target_fitness = self.fitness
+            result.target_fitness_value = self.fitness
         return result
 
     @property
@@ -241,6 +258,13 @@ class OnePlusLambdaCMA(Optimizer):
         return OPLSolution(np.copy(self.point), self.fitness)
 
     def ask(self):
+        """Generate new search points.
+
+        Returns
+        -------
+        np.ndarray
+            A reference to the new search points.
+        """
         return self._rng.multivariate_normal(
             self.point,
             (self.step_size * self.step_size) * self.cov,
@@ -254,6 +278,21 @@ class OnePlusLambdaCMA(Optimizer):
         penalized_fitness: Optional[np.ndarray] = None,
         evaluation_count: Optional[int] = None,
     ) -> None:
+        """
+        Pass fitness information to the optimizer.
+
+        Parameters
+        ----------
+        points
+            The search points.
+        fitness
+            The objective points.
+        penalized_fitness: optional
+            The penalized fitness of the search points. \
+            Use case: constrained functions.
+        evaluation_count: optional
+            Total evaluation count. Use case: noisy functions.
+        """
         points = points.squeeze()
         if len(points.shape) < 2:
             points = points.reshape((1, len(points)))
@@ -309,9 +348,23 @@ class OnePlusLambdaCMA(Optimizer):
 
     def fmin(
         self,
-        fn: Callable,
+        fn: OptimizableFunction,
         fn_args: Optional[Iterable[Any]] = None,
         fn_kwargs: Optional[dict] = None,
-        **kwargs: Any,
     ) -> OptimizerResult:
-        raise NotImplementedError()
+        if fn_args is None:
+            fn_args = ()
+        if fn_kwargs is None:
+            fn_kwargs = {}
+
+        while not self.stop.triggered:
+            points = self.ask()
+            result = fn(points, *fn_args, **fn_kwargs)
+            # Decide which type of OptimizableFunction we're given
+            if not isinstance(result, tuple):
+                self.tell(result)
+            elif isinstance(result[1], dict):
+                self.tell(result[0], **result[1])
+            else:
+                self.tell(*result)
+        return OptimizerResult(self.best, self.stop)

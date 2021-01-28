@@ -26,7 +26,7 @@ namespace detail {
 template <typename T>
 struct type_caster<PySharkVector<T>> {
    public:
-    PYBIND11_TYPE_CASTER(PySharkVector<T>, _("PySharkVector<T>"));
+    PYBIND11_TYPE_CASTER(PySharkVector<T>, _("PySharkVector"));
 
     // Python to CPP
     bool load(py::handle src, bool convert) {
@@ -72,7 +72,7 @@ struct type_caster<PySharkVector<T>> {
 template <typename T>
 struct type_caster<PySharkMatrix<T>> {
    public:
-    PYBIND11_TYPE_CASTER(PySharkMatrix<T>, _("PySharkMatrix<T>"));
+    PYBIND11_TYPE_CASTER(PySharkMatrix<T>, _("PySharkMatrix"));
 
     // Python to CPP
     bool load(py::handle src, bool convert) {

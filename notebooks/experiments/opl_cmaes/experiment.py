@@ -56,10 +56,6 @@ def run_experiment(get_fn: Callable, config: ExperimentConfiguration):
     for i, n_offspring in enumerate(config.ns_offspring):
         n_trials = config.n_trials
 
-        stopping_conditions = OPLStoppingConditions(
-            max_evaluations=config.max_evaluations,
-            target_fitness=config.target_fitness,
-        )
         history = np.zeros((n_trials, max_generations[i])) - 1.0
         generations = np.zeros(n_trials, dtype=int) - 1
         fitness = np.zeros(n_trials) - 1.0
@@ -80,7 +76,8 @@ def run_experiment(get_fn: Callable, config: ExperimentConfiguration):
                 parent_fitness,
                 n_offspring=n_offspring,
                 initial_step_size=config.initial_step_size,
-                stopping_conditions=stopping_conditions,
+                max_evaluations=config.max_evaluations,
+                target_fitness_value=config.target_fitness,
                 rng=rng,
             )
             while not optimizer.stop.triggered:

@@ -41,7 +41,7 @@ class Indicator(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     @final
     def __call__(self, points: np.ndarray) -> np.ndarray:
-        """Compute the quality indicator.
+        """Compute the indicator value.
 
         Parameters
         ----------
@@ -83,8 +83,9 @@ class HypervolumeIndicator(Indicator):
         self._reference = reference
 
     def contributions(self, points: np.ndarray) -> np.ndarray:
-        if self._reference is None:
-            return hv.contributions(points, np.max(points, axis=0))
+        # if self._reference is None:
+        # TODO: Check zero contribs (set to max + something (1))
+        # return hv.contributions(points, np.max(points, axis=0))
         return hv.contributions(points, self._reference)
 
     def __call__(self, points: np.ndarray) -> float:

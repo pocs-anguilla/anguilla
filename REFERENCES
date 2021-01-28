@@ -1,0 +1,28 @@
+[1] N. Hansen and A. Ostermeier. Completely derandomized self-adaptation in evolution strategies. Evolutionary computation, 9(2):159–195, 2001.
+[2] H. G. Beyer and H. P. Schwefel. Evolution strategies–a comprehensive introduction. Natural computing, 1(1):3–52, 2002.
+[3] K. Deb, A. Pratap, S. Agarwal, and T. Meyarivan. A fast and elitist multiobjective genetic algorithm: nsga-ii. IEEE Transactions on Evolutionary Computation, 6(2):182–197, 2002. doi:10.1109/4235.996017.
+[4] K. Deb, L. Thiele, M. Laumanns, and E. Zitzler. Scalable multi-objective optimization test problems. In Proceedings of the 2002 Congress on Evolutionary Computation. CEC'02 (Cat. No.02TH8600), volume 1, 825–830 vol.1. 2002. doi:10.1109/CEC.2002.1007032.
+[5] G. A. Jastrebski and D. V. Arnold. Improving evolution strategies through active covariance matrix adaptation. In 2006 IEEE international conference on evolutionary computation, 2814–2821. IEEE, 2006.
+[6] C. Igel, N. Hansen, and S. Roth. Covariance matrix adaptation for multi-objective optimization. Evolutionary Computation, 15(1):1–28, 2007. doi:10.1162/evco.2007.15.1.1.
+[7] F. Mezzadri. How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050v2, 2007.
+[8] C. Igel, V. Heidrich-Meisner, and T. Glasmachers. Shark. Journal of Machine Learning Research, 9:993–996, 2008.
+[9] N. Beume, C. Fonseca, M. Lopez-Ibanez, L. Paquete, and J. Vahrenhold. On the complexity of computing the hypervolume indicator. IEEE transactions on evolutionary computation, 13(5):1075–1082, 2009.
+[10] T. Cormen, C. Leiserson, R. Rivest, and C. Stein. Introduction to Algorithms, Third Edition. The MIT Press, 3rd edition, 2009. ISBN 0262033844.
+[11] K. Bringmann and T. Friedrich. Approximating the volume of unions and intersections of high-dimensional geometric objects. Computational geometry : theory and applications, 43(6):601–610, 2010.
+[12] T. Voß, N. Hansen, and C. Igel. Improved Step Size Adaptation for the MO-CMA-ES. In Genetic And Evolutionary Computation Conference, 487–494. Portland, United States, July 2010. ACM. URL: https://hal.archives-ouvertes.fr/hal-00503251, doi:10.1145/1830483.1830573.
+[13] M. Emmerich and C. Fonseca. Computing hypervolume contributions in low dimensions: asymptotically optimal algorithm and complexity results. In Ricardo H. C. Takahashi, Kalyanmoy Deb, Elizabeth F. Wanner, and Salvatore Greco, editors, Evolutionary Multi-Criterion Optimization, 121–135. Berlin, Heidelberg, 2011. Springer Berlin Heidelberg.
+[14] N. Hansen. The CMA evolution strategy: A tutorial. 2011. URL: http://www.cmap.polytechnique.fr/~nikolaus.hansen/cmatutorial110628.pdf.
+[15] A. Auger, J. Bader, D. Brockhoff, and E. Zitzler. Hypervolume-based Multiobjective Optimization: Theoretical Foundations and Practical Implications. Theoretical Computer Science, 425:75–103, March 2011. URL: https://hal.inria.fr/inria-00638989, doi:10.1016/j.tcs.2011.03.012.
+[16] I. Hupkens and M. Emmerich. Logarithmic-time updates in sms-emoa and hypervolume-based archiving. In EVOLVE - A Bridge between Probability, Set Oriented Numerics, and Evolutionary Computation IV, 155–169. Heidelberg, 2013. Springer International Publishing.
+[17] Iris Hupkens and Michael Emmerich. Logarithmic-time updates in sms-emoa and hypervolume-based archiving. In EVOLVE-A Bridge between Probability, Set Oriented Numerics, and Evolutionary Computation IV, pages 155–169. Springer, 2013.
+[18] Y. Collette, N. Hansen, G. Pujol, D. Aponte, and R. L. Riche. Object‐oriented programming of optimizers – examples in scilab. In Multidisciplinary Design Optimization in Computational Mechanics. 2013.
+[19] S. Surjanovic and D. Bingham. Virtual library of simulation experiments: test functions and datasets. Retrieved November 24, 2020, from \url http://www.sfu.ca/ ssurjano.
+[20] O. Krause and C. Igel. A more efficient rank-one covariance matrix update for evolution strategies. In Proceedings of the 2015 ACM Conference on Foundations of Genetic Algorithms XIII, 129–136. 2015.
+[21] N. Hansen, D. V. Arnold, and A. Auger. Evolution strategies. In Springer handbook of computational intelligence, pages 871–898. Springer, 2015.
+[22] N. Hansen. The CMA evolution strategy: A tutorial. CoRR, 2016. URL: http://arxiv.org/abs/1604.00772, arXiv:1604.00772.
+[23] O. Krause, T. Glasmachers, N. Hansen, and C. Igel. Unbounded Population MO-CMA-ES for the Bi-Objective BBOB Test Suite. In GECCO'16 - Companion of Proceedings of the 2016 Genetic and Evolutionary Computation Conference, 1177–1184. Denver, United States, July 2016. ACM. URL: https://hal.inria.fr/hal-01381653, doi:10.1145/2908961.2931699.
+[24] O. Krause, T. Glasmachers, and C. Igel. Multi-objective optimization with unbounded solution sets. In Proceedings of neural information processing systems (NIPS) workshop on Bayesian optimization: Black-box optimization and beyond. 2016.
+[25] T. Glasmachers. A fast incremental archive for multi-objective optimization. CoRR, 2016. URL: http://arxiv.org/abs/1604.01169, arXiv:1604.01169.
+[26] W. Jakob, J. Rhinelander, and D. Moldovan. Pybind11 – seamless operability between c++11 and python. 2017. https://github.com/pybind/pybind11.
+[27] N. Hansen, Y. Akimoto, and P. Baudis. CMA-ES/pycma on Github. Zenodo, DOI:10.5281/zenodo.2559634, February 2019. URL: https://doi.org/10.5281/zenodo.2559634, doi:10.5281/zenodo.2559634.
+[28] A. P. Guerreiro, C. M. Fonseca, and L. Paquete. The hypervolume indicator: problems and algorithms. 2020. arXiv:2005.00515.

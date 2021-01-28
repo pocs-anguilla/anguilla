@@ -2,7 +2,6 @@ set(HV_MODULE_NAME "hypervolume")
 set(HV_INTERNAL_MODULE_NAME "_${HV_MODULE_NAME}")
 
 set(HV_MODULE_SRC
-    include/common.hpp
     include/hv2d.hpp
     include/hv3d.hpp
     include/hvc2d.hpp
@@ -21,15 +20,16 @@ else()
   pybind11_add_module(${HV_INTERNAL_MODULE_NAME} MODULE ${HV_MODULE_SRC})
 endif()
 
-target_compile_definitions(${HV_INTERNAL_MODULE_NAME} PRIVATE VERSION_INFO=${PROJECT_VERSION})
-target_include_directories(${HV_INTERNAL_MODULE_NAME} PRIVATE include)
-target_include_directories(${HV_INTERNAL_MODULE_NAME} PRIVATE ${BTREE_INCLUDE_DIRS})
-
 if(NOT MSVC)
-  target_compile_options(${HV_INTERNAL_MODULE_NAME} BEFORE PRIVATE "-Werror")
+  target_compile_options(${HV_INTERNAL_MODULE_NAME} BEFORE PRIVATE "-Wconversion" "-Werror")
 else()
   # TODO: enable and check warnings
   #target_compile_options(${HV_INTERNAL_MODULE_NAME} BEFORE PRIVATE "/WX")
 endif()
+
+target_compile_definitions(${HV_INTERNAL_MODULE_NAME} PRIVATE VERSION_INFO=${PROJECT_VERSION})
+target_include_directories(${HV_INTERNAL_MODULE_NAME} PRIVATE include)
+target_include_directories(${HV_INTERNAL_MODULE_NAME} PRIVATE ${BTREE_INCLUDE_DIRS})
+target_include_directories(${HV_INTERNAL_MODULE_NAME} PRIVATE ${COMMON_INCLUDE_DIRS})
 
 install(TARGETS ${HV_INTERNAL_MODULE_NAME} LIBRARY DESTINATION ${HV_MODULE_NAME})

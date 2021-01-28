@@ -21,6 +21,7 @@ def main():
         long_description_content_type="text/x-rst",
         packages=[
             "anguilla",
+            "anguilla.archive",
             "anguilla.optimizers",
             "anguilla.fitness",
             "anguilla.fitness.benchmark",

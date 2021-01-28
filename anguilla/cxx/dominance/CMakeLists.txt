@@ -1,0 +1,32 @@
+set(DOMINANCE_MODULE_NAME "dominance")
+set(DOMINANCE_INTERNAL_MODULE_NAME "_${DOMINANCE_MODULE_NAME}")
+
+set(DOMINANCE_MODULE_SRC
+    include/anguilla/dominance/dominance.hpp
+    "src/${DOMINANCE_INTERNAL_MODULE_NAME}.cpp"
+)
+
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+  pybind11_add_module(${DOMINANCE_INTERNAL_MODULE_NAME} MODULE NO_EXTRAS ${DOMINANCE_MODULE_SRC})
+  set_target_properties(${DOMINANCE_INTERNAL_MODULE_NAME} PROPERTIES DEBUG_POSTFIX "")
+  if(NOT MSVC)
+    find_library(Asan_LIBRARY asan REQUIRED)
+    target_link_libraries(${DOMINANCE_INTERNAL_MODULE_NAME} PRIVATE ${Asan_LIBRARY})
+  endif()
+else()
+  pybind11_add_module(${DOMINANCE_INTERNAL_MODULE_NAME} MODULE ${DOMINANCE_MODULE_SRC})
+endif()
+
+if(NOT MSVC)
+  target_compile_options(${DOMINANCE_INTERNAL_MODULE_NAME} BEFORE PRIVATE "-Wconversion" "-Werror")
+else()
+  # TODO: enable and check warnings
+  #target_compile_options(${DOMINANCE_INTERNAL_MODULE_NAME} BEFORE PRIVATE "/WX")
+endif()
+
+target_compile_definitions(${DOMINANCE_INTERNAL_MODULE_NAME} PRIVATE VERSION_INFO=${PROJECT_VERSION})
+target_include_directories(${DOMINANCE_INTERNAL_MODULE_NAME} PRIVATE include)
+target_include_directories(${DOMINANCE_INTERNAL_MODULE_NAME} PRIVATE ${BTREE_INCLUDE_DIRS})
+target_include_directories(${DOMINANCE_INTERNAL_MODULE_NAME} PRIVATE ${COMMON_INCLUDE_DIRS})
+
+install(TARGETS ${DOMINANCE_INTERNAL_MODULE_NAME} LIBRARY DESTINATION ${DOMINANCE_MODULE_NAME})

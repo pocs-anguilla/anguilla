@@ -6,31 +6,12 @@ import platform
 import numpy as np
 from typing import Optional
 
-
-try:
-    from ._hypervolume import (
-        hv2d_f8,
-        hv3d_btree_f8,
-        hv3d_rbtree_f8,
-        hvc2d_f8,
-        hvc3d_btree_f8,
-        hvc3d_rbtree_f8,
-    )
-except ImportError:
-    # Required since Python 3.8 in Windows
-    # See: https://docs.python.org/3/library/os.html#os.add_dll_directory
-    if platform.system() == "Windows":
-        dll_dir = os.path.dirname(os.path.abspath(__file__))
-        with os.add_dll_directory(dll_dir):
-            from ._hypervolume import (
-                hv2d_f8,
-                hv3d_btree_f8,
-                hv3d_rbtree_f8,
-                hvc2d_f8,
-                hvc3d_btree_f8,
-                hvc3d_rbtree_f8,
-            )
-
+from ._hypervolume import (
+    hv2d_f8,
+    hv3d_f8,
+    hvc2d_f8,
+    hvc3d_f8,
+)
 
 __all__ = ["calculate", "contributions"]
 
@@ -39,6 +20,7 @@ try:
     from ._shark_hypervolume import hvkd_f8 as shark_calculate
 
     __all__.append("shark_calculate")
+
     from ._shark_hypervolume import hvckd_f8 as shark_contributions
 
     __all__.append("shark_contributions")
@@ -49,7 +31,9 @@ except ImportError:
 
 
 def calculate(
-    ps: np.ndarray, ref_p: Optional[np.ndarray] = None, ds: str = "btree"
+    ps: np.ndarray,
+    ref_p: Optional[np.ndarray] = None,
+    use_btree: bool = True,
 ) -> float:
     """Compute the exact hypervolume indicator for a set of k-D points.
 
@@ -80,12 +64,7 @@ def calculate(
     if d == 2:
         return hv2d_f8(ps, ref_p)
     elif d == 3:
-        if ds == "btree":
-            return hv3d_btree_f8(ps, ref_p)
-        elif ds == "rbtree":
-            return hv3d_rbtree_f8(ps, ref_p)
-        else:
-            raise ValueError("ds: {}".format(ds))
+        return hv3d_f8(ps, ref_p, use_btree)
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
             shark_calculate(ps, ref_p)
@@ -97,19 +76,26 @@ def calculate(
 
 
 def contributions(
-    ps: np.ndarray, ref_p: Optional[np.ndarray] = None, ds: str = "btree"
+    ps: np.ndarray,
+    ref_p: Optional[np.ndarray] = None,
+    use_btree: bool = True,
+    non_dominated: bool = True,
 ) -> np.ndarray:
     """Compute the hypervolume contribution for a set of k-D points.
 
     Parameters
     ----------
     ps
-        The set of mutually non-dominated points.
+        The set of points.
     ref_p: optional
         The reference point.
-    ds: optional
+    use_btree
+        Only relevant for the 3-D implementation.
         The data structure to use for implementing the sweeping structure.
         By default `btree` (B-tree), but can also be `rbtree` (Red-black tree).
+    non_dominated
+        Only relevant for the 2-D implementation.
+        If true, selects a more efficiente algorithm to perform the computation.
 
     Returns
     -------
@@ -128,14 +114,9 @@ def contributions(
     """
     d = len(ps[0])
     if d == 2:
-        return hvc2d_f8(ps, ref_p)
+        return hvc2d_f8(ps, ref_p, non_dominated)
     elif d == 3:
-        if ds == "btree":
-            return hvc3d_btree_f8(ps, ref_p)
-        elif ds == "rbtree":
-            return hvc3d_rbtree_f8(ps, ref_p)
-        else:
-            raise ValueError("ds: {}".format(ds))
+        return hvc3d_f8(ps, ref_p, use_btree)
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
             shark_contributions(ps, ref_p)
@@ -147,7 +128,9 @@ def contributions(
 
 
 def contributions_naive(
-    ps: np.ndarray, ref_p: Optional[np.ndarray] = None
+    ps: np.ndarray,
+    ref_p: Optional[np.ndarray] = None,
+    duplicates_possible: bool = True,
 ) -> np.ndarray:
     """Compute the hypervolume contribution for a set of points.
 
@@ -176,16 +159,50 @@ def contributions_naive(
     Provided only for testing the other implementation, as done in \
     :cite:`2008:shark`.
     """
-    if ps.size == 0:
+    n = len(ps)
+
+    if n == 0:
         return np.empty(0)
 
     if ref_p is None:
         ref_p = np.zeros_like(ps[0])
 
-    contribution = np.zeros(len(ps))
-
     vol = calculate(ps, ref_p)
+
+    unique = []
+    mappings = []
+
+    sorted_idx = np.empty(0)
+    if duplicates_possible:
+        sorted_idx = np.argsort(ps[:, 0])
+        ps = ps[sorted_idx, :]
+        prev_index = 0
+        prev_p = ps[prev_index]
+        unique.append(prev_index)
+
+        for index in range(1, n):
+            p = ps[index]
+            if np.array_equiv(prev_p, p):
+                mappings.append((prev_index, index))
+            else:
+                unique.append(index)
+            prev_index = index
+            prev_p = p
+
+        ps = ps[unique]
+
+    tmp = np.zeros(len(ps))
     for i in range(len(ps)):
         qs = np.delete(ps, i, 0)
-        contribution[i] = vol - calculate(qs, ref_p)
-    return contribution
+        tmp[i] = vol - calculate(qs, ref_p)
+
+    if duplicates_possible:
+        contribution = np.zeros(n)
+        for index, contrib in zip(unique, tmp):
+            contribution[index] = contrib
+        for orig, duplicate in mappings:
+            contribution[duplicate] = contribution[orig]
+        reverse_idx = np.argsort(sorted_idx)
+        return contribution[reverse_idx]
+    else:
+        return tmp
