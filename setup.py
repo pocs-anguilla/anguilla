@@ -22,6 +22,7 @@ def main():
         packages=[
             "anguilla",
             "anguilla.archive",
+            "anguilla.dominance",
             "anguilla.optimizers",
             "anguilla.fitness",
             "anguilla.fitness.benchmark",
