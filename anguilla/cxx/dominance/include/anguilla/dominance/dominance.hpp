@@ -6,6 +6,7 @@
 // PyBind11
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 namespace py = pybind11;
 
 // STL
@@ -43,7 +44,7 @@ static constexpr const char *docstring = R"_(
     Implements the algorithm presented in :cite:`2002:nsga-ii`.)_";
 
 template <typename T>
-[[nodiscard]] auto nonDominatedSort(py::array_t<T> &_points, std::optional<size_t> maxRank) {
+[[nodiscard]] auto nonDominatedSort(const py::array_t<T> &_points, const std::optional<size_t> &maxRank) {
     static_assert(std::is_floating_point<T>::value,
                   "fast_non_dominated_sort is not meant to be instantiated with a non floating point type.");
     const auto points = _points.template unchecked<2>();
