@@ -190,7 +190,7 @@ class Archive {
             // Always reset the extreme points to 'max'.
             constexpr auto max = std::numeric_limits<T>::max();
             std::next(m_archive.begin())->individual.contribution = max;
-            std::next(m_archive.rbegin())->individual.contribution = max;
+            std::prev(std::prev(m_archive.end()))->individual.contribution = max;
         }
         return &(node->individual);
     }
@@ -222,8 +222,7 @@ class Archive {
 
     [[nodiscard]] Individual<T> *rightExterior() {
         if (size() != 0U) {
-            auto &individual = std::next(m_archive.rbegin())->individual;
-            assert(&(std::prev(std::next(m_archive.rbegin()).base())->individual) == &individual);
+            auto &individual = std::prev(std::prev(m_archive.end()))->individual;
             return &individual;
         }
         return nullptr;
@@ -279,11 +278,11 @@ class Archive {
         if (p > 1.0 || p < 0.0) {
             throw std::invalid_argument("p must be between zero and one");
         }
-        if (size() == 0U) {
+        if (size() <= 2U) {
             return nullptr;
         }
         //std::cout << "Sampling interior (size " << size() << ")" << std::endl;
-        auto rightExtreme = std::prev(std::next(m_archive.rbegin()).base());
+        auto rightExtreme = std::prev(std::prev(m_archive.end()));
         auto leftExtreme = std::next(m_archive.begin());
         auto rightExtremePtr = rightExtreme.pointed_node();
         auto leftExtremePtr = leftExtreme.pointed_node();
@@ -339,7 +338,6 @@ class Archive {
 
     [[nodiscard]] T _updateAccContributions(NodePointer &ptr) const {
         auto rightExtreme = std::prev(std::prev(m_archive.end()));
-        //auto rightExtreme = std::prev(std::next(m_archive.rbegin()).base());
         auto leftExtreme = std::next(m_archive.begin());
         auto rightExtremePtr = rightExtreme.pointed_node();
         auto leftExtremePtr = leftExtreme.pointed_node();
