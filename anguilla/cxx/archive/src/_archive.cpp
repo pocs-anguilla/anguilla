@@ -1,8 +1,13 @@
+// PyBind11
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 namespace py = pybind11;
 
+// STL
+#include <optional>
+
+// Anguilla
 #include <anguilla/archive/archive.hpp>
 #include <anguilla/archive/archive_kd.hpp>
 #include <anguilla/archive/individual.hpp>
@@ -108,33 +113,6 @@ PYBIND11_MODULE(_archive, m) {
         .def_readonly("sigma_min", &archive::Parameters<f8>::sigmaMin)
         .def_readonly("alpha", &archive::Parameters<f8>::alpha)
         .def_readonly("c_r", &archive::Parameters<f8>::cR);
-
-    /* FIXME: implement.
-    py::class_<archive::ArchiveKD<f8>>(m, "UPMOArchiveKD")
-        .def(py::init<const archive::Parameters<f8> &, const std::optional<py::array_t<f8>> &>(),
-             py::arg("parameters"),
-             py::arg("reference") = std::nullopt)
-        .def_property("size", &archive::ArchiveKD<f8>::size, nullptr)
-        .def_property("empty", &archive::ArchiveKD<f8>::empty, nullptr)
-        .def_property("nbytes", &archive::ArchiveKD<f8>::nbytes, nullptr)
-        .def_property("reference", &archive::ArchiveKD<f8>::reference, nullptr, py::return_value_policy::reference)
-        .def_property("left_exterior", &archive::ArchiveKD<f8>::leftExterior, nullptr, py::return_value_policy::reference)
-        .def_property("right_exterior", &archive::ArchiveKD<f8>::rightExterior, nullptr, py::return_value_policy::reference)
-        .def("insert", &archive::ArchiveKD<f8>::insert, py::arg("point"), py::return_value_policy::reference)
-        .def("sample_exterior", &archive::ArchiveKD<f8>::sampleExterior,
-             py::arg("p"), py::return_value_policy::reference)
-        .def("sample_interior", &archive::Archive<f8>::sampleInterior,
-             py::arg("p"), py::return_value_policy::reference)
-        .def(
-            "__iter__", [](archive::ArchiveKD<f8> &archive) {
-                // Based on: https://git.io/JtCsK
-                return pybind11::make_iterator(archive.begin(), archive.end());
-            },
-            pybind11::keep_alive<0, 1>())
-        .def("prev", &archive::ArchiveKD<f8>::prev, py::arg("iterator"), pybind11::keep_alive<0, 1>())
-        .def("next", &archive::ArchiveKD<f8>::next, py::arg("iterator"), pybind11::keep_alive<0, 1>())
-        .def("merge", &archive::ArchiveKD<f8>::merge, py::arg("other"));
-    */
 
 #ifdef VERSION_INFO
     m.attr("__version__") = Py_STRINGIFY(VERSION_INFO);

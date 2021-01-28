@@ -17,9 +17,7 @@ namespace py = pybind11;
 #include <type_traits>
 #include <vector>
 
-#ifndef _LIBCPP_VERSION
-// In the case of libc++, support is marked as pending.
-// See: https://libcxx.llvm.org/docs/Cxx1zStatus.html
+#ifdef __cpp_lib_memory_resource
 #include <memory_resource>
 #endif
 
@@ -84,7 +82,7 @@ struct MapValue {
     std::size_t index;
 };
 
-#ifndef _LIBCPP_VERSION
+#ifdef __cpp_lib_memory_resource
 template <typename T>
 using MapPair = std::pair<const T, MapValue<T>>;
 
@@ -238,7 +236,7 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
                                        freeContributionsMemory);
 
 // Create the sweeping structure.
-#ifndef _LIBCPP_VERSION
+#ifdef __cpp_lib_memory_resource
     std::unique_ptr<std::pmr::monotonic_buffer_resource> frontPoolPtr(new std::pmr::monotonic_buffer_resource(sizeof(hvc3d::MapPair<T>) * (n + 2U)));
     std::unique_ptr<Map> frontPtr(new Map(frontPoolPtr.get()));
     auto &front = *frontPtr;
