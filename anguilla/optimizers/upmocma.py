@@ -194,15 +194,32 @@ class UPMOCMA(Optimizer):
 
     @property
     def name(self):
-        return "UP-MO-CMA-ES-{}".format(self.name(), self._success_notion)
+        """Return the name of the optimizer.
+
+        Returns
+        -------
+        The optimizer's name.
+        """
+        return "UP-MO-CMA-ES-{}".format(self._success_notion)
 
     @property
     def qualified_name(self):
+        """Return the qualified name of the optimizer.
+
+        Returns
+        -------
+        The optimizer's qualified name.
+        """
         return self.name()
 
     @property
     def size(self) -> int:
-        """Return the size of the population."""
+        """Return the size of the population.
+
+        Returns
+        -------
+        The size of the population.
+        """
         return self._population.size
 
     @property
