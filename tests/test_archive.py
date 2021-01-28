@@ -108,7 +108,9 @@ class TestArchive(unittest.TestCase):
         )
         self.assertTrue(
             max_acc_contributions == (n_f - 2.0),
-            "Max. cumulative contribution",
+            "Max. cumulative contribution, got {}, expected {}".format(
+                max_acc_contributions, n_f - 2.0
+            ),
         )
 
         # Exterior empirical probabilities
@@ -229,7 +231,10 @@ class TestArchive(unittest.TestCase):
             sorted(map(lambda individual: individual.contribution, archive))
         )
         self.assertTrue(
-            np.allclose(sorted_contribs, output_contribs), "Contributions"
+            np.allclose(sorted_contribs, output_contribs),
+            "Contributions, got {}, expected {}".format(
+                output_contribs, sorted_contribs
+            ),
         )
 
     def test_merge(self):

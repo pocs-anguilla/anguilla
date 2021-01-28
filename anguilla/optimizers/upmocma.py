@@ -245,7 +245,7 @@ class UPMOCMA(Optimizer):
         c_r = self._parameters.c_r
         c_r_h = 0.5 * c_r
         p = self._rng.uniform(size=2)
-        if p[0] < p_extreme:
+        if p[0] < p_extreme or self._population.size <= 2:
             self._parent = self._population.sample_exterior(p[1])
             if self._parent.step_size < sigma_min:
                 self._parent = self._population.sample_interior(p[1])
