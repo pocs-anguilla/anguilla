@@ -1,15 +1,15 @@
 [submodule "anguilla/cxx/boost/static_assert"]
-	path = anguilla/cxx/external/boost/static_assert
+	path = vendor/cxx/boost/static_assert
 	url = https://github.com/boostorg/static_assert
 [submodule "anguilla/cxx/boost/move"]
-	path = anguilla/cxx/external/boost/move
+	path = vendor/cxx/boost/move
 	url = https://github.com/boostorg/move
 [submodule "anguilla/cxx/boost/intrusive"]
-	path = anguilla/cxx/external/boost/intrusive
+	path = vendor/cxx/boost/intrusive
 	url = https://github.com/boostorg/intrusive
 [submodule "anguilla/cxx/external/boost/config"]
-	path = anguilla/cxx/external/boost/config
+	path = vendor/cxx/boost/config
 	url = https://github.com/boostorg/config
 [submodule "anguilla/cxx/external/boost/assert"]
-	path = anguilla/cxx/external/boost/assert
+	path = vendor/cxx/boost/assert
 	url = https://github.com/boostorg/assert
