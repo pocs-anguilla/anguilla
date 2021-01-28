@@ -274,7 +274,7 @@ struct btree_common_params {
 
 // A parameters structure for holding the type parameters for a map.
 template <typename Key, typename Data, typename Compare, typename Alloc, int TargetNodeSize>
-struct btree_map_params : public btree_common_params<Key, Compare, Alloc, TargetNodeSize, sizeof(Key) + sizeof(Data)> {
+struct btree_map_params : public btree_common_params<Key, Compare, Alloc, TargetNodeSize, int(sizeof(Key)) + int(sizeof(Data))> {
     typedef Data data_type;
     typedef Data mapped_type;
     typedef std::pair<const Key, data_type> value_type;
@@ -299,7 +299,7 @@ struct btree_map_params : public btree_common_params<Key, Compare, Alloc, Target
 
 // A parameters structure for holding the type parameters for a btree_set.
 template <typename Key, typename Compare, typename Alloc, int TargetNodeSize>
-struct btree_set_params : public btree_common_params<Key, Compare, Alloc, TargetNodeSize, sizeof(Key)> {
+struct btree_set_params : public btree_common_params<Key, Compare, Alloc, TargetNodeSize, int(sizeof(Key))> {
     typedef std::false_type data_type;
     typedef std::false_type mapped_type;
     typedef Key value_type;
