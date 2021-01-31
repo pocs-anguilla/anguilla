@@ -3,6 +3,7 @@ name: Conda
 
 on:
   workflow_dispatch:
+  release:
   pull_request:
   push:
     branches:
@@ -49,7 +50,7 @@ jobs:
           pytest tests --import-mode=append --color=yes
 
       - name: Upload
-        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+        if: github.event_name == 'release'
         run: |
           anaconda login
           anaconda upload anguilla
