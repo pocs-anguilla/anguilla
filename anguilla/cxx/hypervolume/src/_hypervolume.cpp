@@ -24,7 +24,7 @@ typedef double f8;  // following Numba's convention
                             const std::optional<py::array_t<f8>>& reference = std::nullopt,
                             const bool nonDominated = true) {
     if (reference.has_value()) {
-        return hvc2d::contributionsWithRef<f8>(points, reference.value(), nonDominated);
+        return hvc2d::contributionsWithRef<f8>(points, *reference, nonDominated);
     }
     return hvc2d::contributions<f8>(points, nonDominated);
 }

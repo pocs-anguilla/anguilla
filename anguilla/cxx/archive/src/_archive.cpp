@@ -9,7 +9,7 @@ namespace py = pybind11;
 
 // Anguilla
 #include <anguilla/archive/archive.hpp>
-#include <anguilla/archive/archive_kd.hpp>
+//#include <anguilla/archive/archive_kd.hpp>
 #include <anguilla/archive/individual.hpp>
 
 typedef double f8;  // following Numba's convention
