@@ -64,14 +64,16 @@ class VolumeBaseTestFunction:
                         rng=self.rng,
                     )
                     optimizer.indicator.reference = reference
-                    while not optimizer.stop.triggered:
-                        points = optimizer.ask()
+
+                    def evaluate(points):
                         if fn.has_constraints:
-                            optimizer.tell(*fn.evaluate_with_penalty(points))
-                        else:
-                            optimizer.tell(fn(points))
+                            return fn.evaluate_with_penalty(points)
+                        return fn(points)
+
+                    result = optimizer.fmin(evaluate)
+
                     volumes[trial] = optimizer.indicator(
-                        optimizer.best.fitness
+                        result.solution.fitness
                     )
 
                 reference_volume = np.median(volumes)

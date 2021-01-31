@@ -419,4 +419,8 @@ class UPMOCMA(Optimizer):
         raise NotImplementedError()
 
 
-__all__ = ["UPMOCMA", "UPMOArchive", "UPMOParameters"]
+__all__ = [
+    "UPMOCMA",
+    "UPMOArchive",
+    "UPMOParameters",
+]
