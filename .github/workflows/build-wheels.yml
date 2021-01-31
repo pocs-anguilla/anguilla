@@ -1,5 +1,4 @@
 # Based on: https://github.com/joerick/cibuildwheel/blob/master/examples/github-deploy.yml
-
 name: Wheels
 
 on:
