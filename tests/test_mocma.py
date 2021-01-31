@@ -53,6 +53,13 @@ class VolumeBaseTestFunction:
                 fn = self.fn_cls(rng=self.rng)
                 fn.n_dimensions = n_dimensions
                 fn.n_objectives = n_objectives
+
+                # We will call fmin with evaluate
+                def evaluate(points):
+                    if fn.has_constraints:
+                        return fn.evaluate_with_penalty(points)
+                    return fn(points)
+
                 for trial in range(VOLUME_TEST_N_TRIALS):
                     parent_points = fn.random_points(n_parents)
                     parent_fitness = fn(parent_points)
@@ -65,11 +72,6 @@ class VolumeBaseTestFunction:
                         rng=self.rng,
                     )
                     optimizer.indicator.reference = reference
-
-                    def evaluate(points):
-                        if fn.has_constraints:
-                            return fn.evaluate_with_penalty(points)
-                        return fn(points)
 
                     result = optimizer.fmin(evaluate)
 

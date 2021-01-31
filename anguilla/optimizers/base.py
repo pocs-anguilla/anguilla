@@ -126,7 +126,7 @@ class Optimizer(metaclass=abc.ABCMeta):
             points = self.ask()
             result = fn(points, *fn_args, **fn_kwargs)
             # Determine which kind of result we're given
-            if isinstance(result, np.ndarray) or isinstance(result, float):
+            if isinstance(result, (float, np.ndarray)):
                 if not self._tell_points:
                     self.tell(result)
                 else:
