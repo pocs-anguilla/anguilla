@@ -173,7 +173,7 @@ template <typename T, class Map>
     const bool refGiven = _reference.has_value();
 
     if (refGiven) {
-        const auto referenceR = _reference.value().template unchecked<1>();
+        const auto referenceR = _reference->template unchecked<1>();
         refX = referenceR(0);
         refY = referenceR(1);
         refZ = referenceR(2);

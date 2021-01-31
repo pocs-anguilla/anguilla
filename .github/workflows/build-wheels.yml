@@ -1,0 +1,53 @@
+# Based on: https://github.com/joerick/cibuildwheel/blob/master/examples/github-deploy.yml
+name: Wheels
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macOS-10.15]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: joerick/cibuildwheel@v1.8.0
+        env:
+          # Skip: unsupported Python versions, PyPy and 32-bit versions
+          CIBW_SKIP: "cp27-* cp35-* pp* *-win32 *-manylinux_i686"
+          MACOSX_DEPLOYMENT_TARGET: "10.15"
+          CIBW_DEPENDENCY_VERSIONS: "latest"
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: "pytest {project}/tests --import-mode append"
+          # Skip testing in Windows + Python 3.8+ due to DLL loading issues.
+          CIBW_TEST_SKIP: "cp3{8,9}-win_amd64"
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
+  #upload_pypi:
+  #  needs: [build_wheels]
+  #  runs-on: ubuntu-latest
+  #  if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+  #  steps:
+  #    - uses: actions/download-artifact@v2
+  #      with:
+  #        name: artifact
+  #        path: dist
+  #    - uses: pypa/gh-action-pypi-publish@master
+  #      with:
+  #        user: __token__
+  #        password: ${{ secrets.pypi_password }}
+  #        repository_url: https://test.pypi.org/legacy/
