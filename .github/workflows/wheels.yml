@@ -31,6 +31,8 @@ jobs:
           CIBW_DEPENDENCY_VERSIONS: "latest"
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: "pytest {project}/tests --import-mode append"
+          # Skip testing in Windows + Python 3.8+ due to DLL loading issues.
+          CIBW_TEST_SKIP: "cp3{8,9}-win_amd64"
 
       - uses: actions/upload-artifact@v2
         with:
