@@ -12,8 +12,9 @@ namespace archive {
 
 template <typename T>
 struct Individual {
-    explicit Individual(py::array_t<T> const &point, py::array_t<T> const &fitness, T step_size = 1.0, T p_succ = 0.5) : containerPtr(nullptr), contribution(0.0), accContribution(0.0), step_size(step_size), p_succ(p_succ), point(point), fitness(fitness), fitnessR(this->fitness.template unchecked<1>()), cov(new T[static_cast<std::size_t>(point.shape(0)) * static_cast<std::size_t>(point.shape(0))]) {
+    explicit Individual(py::array_t<T> const &point, py::array_t<T> const &fitness, T step_size = 1.0, T p_succ = 0.5) : containerPtr(nullptr), contribution(0.0), accContribution(0.0), step_size(step_size), p_succ(p_succ), point(py::array_t<T>::ensure(point)), fitness(py::array_t<T>::ensure(fitness)), fitnessR(this->fitness.template unchecked<1>()), cov(nullptr) {
         // cov is initialized to be the identity matrix
+        cov = new T[static_cast<std::size_t>(point.shape(0)) * static_cast<std::size_t>(point.shape(0))];
         const auto d = static_cast<std::size_t>(point.shape(0));
         const auto d_sq = d * d;
         for (auto i = 0U; i < d_sq; ++i) {
@@ -22,11 +23,9 @@ struct Individual {
         for (auto i = 0U; i < d; ++i) {
             cov[i * d + i] = 1.0;
         }
-        //std::cout << "Individual (" << fitnessR(0) << ", " << fitnessR(1) << ") with address " << static_cast<void *>(&cov[0]) << std::endl;
     }
-    ~Individual() {
-        delete[] cov;
-        cov = nullptr;
+    ~Individual(){
+        //delete[] cov;
     };
 
     friend bool operator<(const Individual &l, const Individual &r) {
@@ -51,7 +50,9 @@ struct Individual {
 
     auto getCov() const {
         const auto d = point.shape(0);
-        // We use 'point' as the handle...
+        // Note: in order to avoid returning a copy we need to provide a
+        // handle to the array constructor.
+        // In this case we can use the 'point' data member.
         return py::array_t<T>({d, d}, cov, point);
     }
 
@@ -68,10 +69,10 @@ struct Individual {
     // Smooth probability of success
     T p_succ;
     // Search point
-    py::array_t<T> point;
+    const py::array_t<T> point;
     // Objective fitness
-    py::array_t<T> fitness;
-    py::detail::unchecked_reference<T, 1> fitnessR;
+    const py::array_t<T> fitness;
+    const py::detail::unchecked_reference<T, 1> fitnessR;
     // Covariance matrix
     T *cov;
 };

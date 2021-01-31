@@ -18,11 +18,12 @@ else()
   if (CMAKE_BUILD_TYPE MATCHES Debug)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1 -g -fdiagnostics-color -Wstrict-aliasing")
     set(ASAN_FLAGS "-fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize-address-use-after-scope")
-    set(UBSAN_FLAGS "-fsanitize=return -fsanitize=implicit-conversion -fsanitize=float-cast-overflow -fsanitize=float-divide-by-zero \
-    -fsanitize=implicit-unsigned-integer-truncation -fsanitize=implicit-signed-integer-truncation -fsanitize=unsigned-integer-overflow")
+    #set(UBSAN_FLAGS "-fsanitize=return -fsanitize=implicit-conversion -fsanitize=float-cast-overflow -fsanitize=float-divide-by-zero \
+    #-fsanitize=implicit-unsigned-integer-truncation -fsanitize=implicit-signed-integer-truncation -fsanitize=unsigned-integer-overflow")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${ASAN_FLAGS} ${UBSAN_FLAGS}")
-    set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} ${ASAN_FLAGS} -shared-libasan -shared-libubsan")
-  else()
+    #set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} ${ASAN_FLAGS} -shared-libasan -shared-libubsan")
+    set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} ${ASAN_FLAGS} -shared-libasan")
+    else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -fno-trapping-math -fno-math-errno")
   endif()
   if(MINGW)
@@ -91,6 +92,7 @@ add_subdirectory(anguilla/cxx/dominance)
 
 ### Archive
 add_subdirectory(anguilla/cxx/archive)
+set(ANGUILLA_ARCHIVE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/archive/include")
 
 ### Bindings for Shark's Hypervolume (optional)
 if(WITH_SHARK_BINDINGS)

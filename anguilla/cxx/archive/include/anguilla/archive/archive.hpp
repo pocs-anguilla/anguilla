@@ -16,8 +16,6 @@ namespace py = pybind11;
 // STL
 #include <algorithm>
 #include <cmath>
-#include <functional>
-#include <iostream>
 #include <iterator>
 #include <list>
 #include <map>
@@ -26,6 +24,7 @@ namespace py = pybind11;
 // Anguilla
 #include <anguilla/archive/individual.hpp>
 #include <anguilla/archive/parameters.hpp>
+#include <anguilla/archive/statistics.hpp>
 
 /*
 DESCRIPTION
@@ -52,8 +51,7 @@ T. Glasmachers (2016). A Fast Incremental Archive for Multi-objective Optimizati
 namespace archive {
 
 template <typename T>
-//struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optimize_size<true>, boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
-struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optimize_size<true>> {
+struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optimize_size<false>> {
     explicit Node(const py::array_t<T> &point, const py::array_t<T> &fitness, T step_size = 1.0, T p_succ = 0.5) : individual(point, fitness, step_size, p_succ) {
         individual.containerPtr = this;
     }
@@ -67,19 +65,18 @@ struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optim
 };
 
 template <typename T>
+using BaseArchive = boost::intrusive::avl_set<Node<T>, boost::intrusive::compare<std::less<Node<T>>>>;
+
+template <typename T>
+class Archive;
+
+template <typename T>
 struct NodeDisposer {
     void operator()(Node<T> *instancePtr) {
-        if (instancePtr) {
-            instancePtr->individual.containerPtr = nullptr;
-            delete instancePtr;
-        }
+        delete instancePtr;
     }
 };
 
-template <typename T>
-using BaseArchive = boost::intrusive::avl_set<Node<T>, boost::intrusive::compare<std::less<Node<T>>>>;
-
-// FIXME: Define abstract interface and subclass from it
 template <typename T>
 class Archive {
     using NodeTraits = typename BaseArchive<T>::node_traits;
@@ -91,7 +88,6 @@ class Archive {
     explicit Archive(const Parameters<T> &parameters, const std::optional<py::array_t<T>> &reference = std::nullopt) : m_parameters(parameters), m_reference(reference) {
         constexpr auto max = std::numeric_limits<T>::max();
         constexpr auto lowest = std::numeric_limits<T>::lowest();
-
         Node<T> *ySentinel;
         Node<T> *xSentinel;
         const py::array_t<T> empty(0);
@@ -111,8 +107,6 @@ class Archive {
             xSentinel = new Node<T>(empty, xSA);
             ySentinel = new Node<T>(empty, ySA);
         }
-        //std::cout << "ySentinel (address " << static_cast<void *>(ySentinel) << ")" << std::endl;
-        //std::cout << "xSentinel (address " << static_cast<void *>(xSentinel) << ")" << std::endl;
         m_archive.insert(*ySentinel);
         m_archive.insert(*xSentinel);
     }
@@ -122,20 +116,15 @@ class Archive {
     }
 
     [[nodiscard]] auto insert(const py::array_t<T> &point, const py::array_t<T> &fitness) {
-        //auto tmp = fitness.template unchecked<1>();
-        //std::cout << "Inserting ("
-        //          << tmp(0U)
-        //          << ", "
-        //          << tmp(1U)
-        //          << ")" << std::endl;
-        auto newNode = std::make_unique<Node<T>>(point, fitness, m_parameters.initialStepSize, m_parameters.pTargetSucc);
-        //std::cout << "Success (address " << static_cast<void *>(newNode.get()) << ")" << std::endl;
+        auto newNode = new Node<T>(point, fitness, m_parameters.initialStepSize, m_parameters.pTargetSucc);
         return insertInternal(newNode);
     }
 
-    [[nodiscard]] Individual<T> *insertInternal(std::unique_ptr<Node<T>> &newNode) {
-        auto pX = newNode->individual.coord(0);
-        auto pY = newNode->individual.coord(1);
+    [[nodiscard]] Individual<T> *insertInternal(Node<T> *newNode) {
+        m_statistics.insertAttempts++;
+        // Based on the algorithm described in [2013:2d-archive].
+        const auto pX = newNode->individual.coord(0);
+        const auto pY = newNode->individual.coord(1);
         // We seek the greatest 'qX' s.t. 'qX' =< 'pX'.
         // The interface of lower_bound is s.t. it returns an iterator that
         // points to the first 'qX' s.t. 'qX' >= 'pX'.
@@ -150,6 +139,7 @@ class Archive {
         assert(!(nodeLeft->individual.coord(0) > pX));
         // Find if 'p' is dominated by 'q' or otherwise.
         if (!(nodeLeft->individual.coord(1) > pY)) {
+            delete newNode;
             return nullptr;  // 'p' is dominated by 'q'
         }
         if (!(nodeLeft->individual.coord(0) < pX)) {  // qX == pX
@@ -162,15 +152,16 @@ class Archive {
         while (!(pY > nodeRight->individual.coord(1))) {
             ++nodeRight;
         }
+        assert(nodeRight != m_archive.end());
         auto hintNode = m_archive.erase_and_dispose(std::next(nodeLeft), nodeRight, m_disposer);
         // Insert point
         const auto pContribution = (nodeRight->individual.coord(0) - pX) * (nodeLeft->individual.coord(1) - pY);
         newNode->individual.contribution = pContribution;
         newNode->individual.accContribution = 0.0;
-        auto node = m_archive.insert(hintNode, *(newNode.release()));
+        auto node = m_archive.insert(hintNode, *newNode);
+        assert(static_cast<Node<T> *>(node.pointed_node()) == newNode);
 
         // Update contributions of left and right nodes
-        // We use the algorithm described in [2013:2d-archive].
         const bool updateLeft = nodeLeft != m_archive.begin();
         if (updateLeft) {
             const auto prev = std::prev(nodeLeft);
@@ -189,9 +180,10 @@ class Archive {
         if (!m_reference.has_value()) {
             // Always reset the extreme points to 'max'.
             constexpr auto max = std::numeric_limits<T>::max();
-            std::next(m_archive.begin())->individual.contribution = max;
-            std::prev(std::prev(m_archive.end()))->individual.contribution = max;
+            rightExtremeIndividual()->contribution = max;
+            leftExtremeIndividual()->contribution = max;
         }
+        m_statistics.inserts++;
         return &(node->individual);
     }
 
@@ -212,80 +204,99 @@ class Archive {
         return m_reference;
     }
 
-    [[nodiscard]] Individual<T> *leftExterior() {
-        if (size() != 0U) {
-            auto &individual = std::next(m_archive.begin())->individual;
-            return &individual;
-        }
-        return nullptr;
+    [[nodiscard]] Statistics getStatistics() const {
+        return m_statistics;
     }
 
-    [[nodiscard]] Individual<T> *rightExterior() {
-        if (size() != 0U) {
-            auto &individual = std::prev(std::prev(m_archive.end()))->individual;
-            return &individual;
-        }
-        return nullptr;
+    [[nodiscard]] constexpr auto isInteriorNode(NodePointer ptr) {
+        return (ptr != leftExtreme().pointed_node()) &&
+               (ptr != rightExtreme().pointed_node()) &&
+               (ptr != leftSentinel().pointed_node()) &&
+               (ptr != rightSentinel().pointed_node());
+    }
+
+    [[nodiscard]] constexpr auto isSentinelNode(NodePointer ptr) {
+        return (ptr == leftSentinel().pointed_node()) ||
+               (ptr == rightSentinel().pointed_node());
+    }
+
+    [[nodiscard]] constexpr auto isExtremeNode(NodePointer ptr) {
+        return (ptr == leftExtreme().pointed_node()) ||
+               (ptr == rightExtreme().pointed_node());
+    }
+
+    [[nodiscard]] constexpr auto rightSentinel() {
+        return std::prev(m_archive.end());
+    }
+
+    [[nodiscard]] constexpr auto leftSentinel() {
+        return m_archive.begin();
+    }
+
+    [[nodiscard]] constexpr auto leftExtreme() {
+        return std::next(leftSentinel());
+    }
+
+    [[nodiscard]] constexpr auto rightExtreme() {
+        return std::prev(rightSentinel());
+    }
+
+    [[nodiscard]] constexpr auto *leftExtremeIndividual() {
+        return (size() != 0U) ? &(leftExtreme()->individual) : nullptr;
+    }
+
+    [[nodiscard]] constexpr auto *rightExtremeIndividual() {
+        return (size() != 0U) ? &(rightExtreme()->individual) : nullptr;
     }
 
     [[nodiscard]] std::pair<Individual<T> *, Individual<T> *> nearest(Individual<T> *individualPtr) {
-        const auto nodePtr = reinterpret_cast<NodePointer>(individualPtr->containerPtr);
+        auto *nodePtr = reinterpret_cast<NodePointer>(individualPtr->containerPtr);
         NodeIterator node;
-        node = nodePtr;
-        auto left = std::prev(node);
-        auto right = std::next(node);
-        auto leftSentinel = m_archive.begin();
-        auto rightSentinel = std::prev(m_archive.end());
-        auto size = this->size();
+        node = nodePtr;  // no suitable constructor is available, so we use assignment
+        const auto left = std::prev(node);
+        const auto right = std::next(node);
+        const auto size = this->size();
         if (size >= 3U) {
-            if (left == leftSentinel) {
-                return {&(right->individual), &((right++)->individual)};
+            if (left == leftSentinel()) {
+                return {&(right->individual), &(std::next(right)->individual)};
             }
-            if (right == rightSentinel) {
-                return {&(left->individual), &((left--)->individual)};
+            if (right == rightSentinel()) {
+                return {&(std::prev(left)->individual), &(left->individual)};
             }
             return {&(left->individual), &(right->individual)};
         } else {
             if (size == 2U) {
-                if (left == leftSentinel) {
-                    return {&(right->individual), individualPtr};
+                if (left == leftSentinel()) {
+                    return {nullptr, &(right->individual)};
                 }
-                if (right == rightSentinel) {
-                    return {&(left->individual), individualPtr};
+                if (right == rightSentinel()) {
+                    return {&(left->individual), nullptr};
                 }
                 return {&(left->individual), &(right->individual)};
             } else {
-                if (size == 1U) {
-                    return {individualPtr, individualPtr};
-                }
                 return {nullptr, nullptr};
             }
         }
     }
 
-    [[nodiscard]] Individual<T> *sampleExterior(T p) {
+    [[nodiscard]] Individual<T> *sampleExtreme(T p) {
         if (p > 1.0 || p < 0.0) {
             throw std::invalid_argument("p must be between zero and one");
         }
         if (p < 0.5) {
-            return leftExterior();
+            return leftExtremeIndividual();
         }
-        return rightExterior();
+        return rightExtremeIndividual();
     }
 
     // p ~ Uniform[0, 1]
-    [[nodiscard]] Individual<T> *sampleInterior(T p) {
+    [[nodiscard]] Individual<T> *sampleInteriorOld(T p) {
         if (p > 1.0 || p < 0.0) {
             throw std::invalid_argument("p must be between zero and one");
         }
-        if (size() <= 2U) {
+        if (size() < 3U) {
             return nullptr;
         }
-        //std::cout << "Sampling interior (size " << size() << ")" << std::endl;
-        auto rightExtreme = std::prev(std::prev(m_archive.end()));
-        auto leftExtreme = std::next(m_archive.begin());
-        auto rightExtremePtr = rightExtreme.pointed_node();
-        auto leftExtremePtr = leftExtreme.pointed_node();
         auto currentPtr = m_archive.root().pointed_node();
         NodePointer result = nullptr;
         T accContribution = static_cast<Node<T> *>(currentPtr)->individual.accContribution;
@@ -293,7 +304,7 @@ class Archive {
         while ((result == nullptr) && (currentPtr != nullptr)) {
             currentBound = 0.0;
             leftBound = 0.0;
-            if (currentPtr != leftExtremePtr && currentPtr != rightExtremePtr) {
+            if (isInteriorNode(currentPtr)) {
                 currentBound = static_cast<Node<T> *>(currentPtr)->individual.contribution / accContribution;
             }
             auto leftNode = NodeTraits::get_left(currentPtr);
@@ -326,7 +337,30 @@ class Archive {
         return &(static_cast<Node<T> *>(result)->individual);
     }
 
-    T updateAccContributions() const {
+    // p ~ Uniform[0, 1]
+    [[nodiscard]] Individual<T> *sampleInterior(T p) {
+        if (p > 1.0 || p < 0.0) {
+            throw std::invalid_argument("p must be between zero and one");
+        }
+        auto root = m_archive.root().pointed_node();
+        T accContrib = static_cast<Node<T> *>(root)->individual.accContribution;
+        auto current = std::next(m_archive.begin());
+        T accP = 0.0;
+        std::optional<Individual<T> *> result = std::nullopt;
+        while (!result.has_value() || current == m_archive.end()) {
+            if (!isExtremeNode(static_cast<Node<T> *>(current->individual.containerPtr))) {
+                auto contrib = std::pow(current->individual.contribution, m_parameters.alpha);
+                accP += contrib / accContrib;
+                if (p < accP) {
+                    result = &(current->individual);
+                }
+            }
+            current = std::next(current);
+        }
+        return result.value_or(nullptr);
+    }
+
+    T updateAccContributions() {
         // FIXME: O(n). Update should be O(log n).
         // FIXME: recursion. Use iteration + stack.
         auto root = m_archive.root().pointed_node();
@@ -336,29 +370,25 @@ class Archive {
         return 0.0;
     }
 
-    [[nodiscard]] T _updateAccContributions(NodePointer &ptr) const {
-        auto rightExtreme = std::prev(std::prev(m_archive.end()));
-        auto leftExtreme = std::next(m_archive.begin());
-        auto rightExtremePtr = rightExtreme.pointed_node();
-        auto leftExtremePtr = leftExtreme.pointed_node();
+    [[nodiscard]] T _updateAccContributions(NodePointer &ptr) {
         auto self = static_cast<Node<T> *>(ptr);
-
-        if ((ptr != rightExtremePtr) && (ptr != leftExtremePtr)) {
+        if (!isExtremeNode(ptr)) {
+            // We store the sum of contribution_i^alpha for i in the subtree.
+            // A sentinel has 0 contribution always, so it doesn't affect the
+            // accumulated value of its subtree.
             self->individual.accContribution = std::pow(self->individual.contribution, m_parameters.alpha);
         } else {
+            // Don't consider the infinite contibution of extreme nodes.
             self->individual.accContribution = 0.0;
         }
-
-        auto baseLeft = NodeTraits::get_left(ptr);
-        if ((baseLeft != nullptr)) {
-            self->individual.accContribution += _updateAccContributions(baseLeft);
+        auto left = NodeTraits::get_left(ptr);
+        if ((left != nullptr)) {
+            self->individual.accContribution += _updateAccContributions(left);
         }
-
-        auto baseRight = NodeTraits::get_right(ptr);
-        if ((baseRight != nullptr)) {
-            self->individual.accContribution += _updateAccContributions(baseRight);
+        auto right = NodeTraits::get_right(ptr);
+        if ((right != nullptr)) {
+            self->individual.accContribution += _updateAccContributions(right);
         }
-
         return self->individual.accContribution;
     }
 
@@ -370,27 +400,19 @@ class Archive {
         return ArchiveIterator(std::forward<NodeIterator>(std::prev(m_archive.end())));
     }
 
-    [[nodiscard]] auto prev(ArchiveIterator &it) {
-        return it--;
-    }
-
-    [[nodiscard]] auto next(ArchiveIterator &it) {
-        return it++;
-    }
-
     void merge(Archive<T> &other) {
-        auto current = std::next(other.m_archive.begin());
-        auto end = std::prev(other.m_archive.end());
+        auto current = std::next(other.m_archive.begin());  // left extreme
+        auto end = std::prev(other.m_archive.end());        // right sentinel
         while (current != end) {
             auto nodePtr = current.pointed_node();
             auto tmp = current++;
             other.m_archive.erase(tmp);
-            std::unique_ptr<Node<T>> node(static_cast<Node<T> *>(nodePtr));
-            (void)insertInternal(node);
+            (void)insertInternal(static_cast<Node<T> *>(nodePtr));
         }
     }
 
    private:
+    Statistics m_statistics;
     Parameters<T> m_parameters;
     std::optional<py::array_t<T>> m_reference;
     BaseArchive<T> m_archive;
@@ -400,8 +422,8 @@ class Archive {
 template <typename T>
 struct Archive<T>::ArchiveIterator {
     // Custom iterator implementation based on:
-    // https://internalpointers.com/post/writing-custom-iterators-modern-cpp
-    // https://en.cppreference.com/w/cpp/iterator/iterator_traits
+    // - https://internalpointers.com/post/writing-custom-iterators-modern-cpp
+    // - https://en.cppreference.com/w/cpp/iterator/iterator_traits
     using NodeIterator = typename Archive<T>::NodeIterator;
     using difference_type = typename NodeIterator::difference_type;
 #if __cplusplus >= 201703L

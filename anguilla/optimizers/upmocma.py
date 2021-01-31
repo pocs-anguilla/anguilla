@@ -14,6 +14,8 @@ from anguilla.optimizers.base import (
     OptimizerResult,
 )
 
+from anguilla.dominance import dominates
+
 from anguilla.archive import UPMOArchive, UPMOParameters
 
 
@@ -212,6 +214,21 @@ class UPMOCMA(Optimizer):
         return self.name
 
     @property
+    def generation_count(self) -> int:
+        """Return the number of elapsed generations."""
+        return self._generation_count
+
+    @property
+    def evaluation_count(self) -> int:
+        """Return the number of function evaluations."""
+        return self._evaluation_count
+
+    @property
+    def parameters(self) -> UPMOParameters:
+        """Return a read-only version of the external parameters."""
+        return self._parameters
+
+    @property
     def size(self) -> int:
         """Return the size of the population.
 
@@ -240,30 +257,38 @@ class UPMOCMA(Optimizer):
             When called before initializing the population with \
             `insert_initial`.
         """
+        # Information we need to persist between calls to ask and tell:
+        # * Reference to parent
+        # * Offspring covariance matrix
+        # * Offspring search point
         sigma_min = self._parameters.sigma_min
         p_extreme = self._parameters.p_extreme
         c_r = self._parameters.c_r
         c_r_h = 0.5 * c_r
         p = self._rng.uniform(size=2)
         if p[0] < p_extreme or self._population.size <= 2:
-            self._parent = self._population.sample_exterior(p[1])
+            self._parent = self._population.sample_extreme(p[1])
             if self._parent.step_size < sigma_min:
                 self._parent = self._population.sample_interior(p[1])
         else:
             self._parent = self._population.sample_interior(p[1])
         nearest = self._population.nearest(self._parent)
-        z1 = (nearest[0].point - self._parent.point) / self._parent.step_size
-        z2 = (nearest[1].point - self._parent.point) / self._parent.step_size
-        # Information we need to persist between calls to ask and tell
-        self._offspring_cov = (
-            (1.0 - c_r) * self._parent.cov
-            + c_r_h * np.outer(z1, z1)
-            + c_r_h * np.outer(z2, z2)
-        )
+        self._offspring_cov = (1.0 - c_r) * self._parent.cov
+        if nearest[0] is not None:
+            z = (
+                nearest[0].point - self._parent.point
+            ) / self._parent.step_size
+            self._offspring_cov += c_r_h * np.outer(z, z)
+        if nearest[1] is not None:
+            z = (
+                nearest[1].point - self._parent.point
+            ) / self._parent.step_size
+            self._offspring_cov += c_r_h * np.outer(z, z)
+
         self._offspring_point = self._rng.multivariate_normal(
             self._parent.point,
             (self._parent.step_size * self._parent.step_size)
-            * self._parent.cov,
+            * self._offspring_cov,
         )
 
         self._ask_called = True
@@ -292,6 +317,13 @@ class UPMOCMA(Optimizer):
         """
         if not self._ask_called:
             raise RuntimeError("Tell called before ask")
+        z = (
+            self._offspring_point - self._parent.point
+        ) / self._parent.step_size
+        # If the offspring dominates the parent, the last will be
+        # deleted when inserting the first
+        if dominates(fitness, self._parent.fitness):
+            self._parent = None
         # We attempt to insert the point into the archive
         offspring = self._population.insert(self._offspring_point, fitness)
         # If the offspring was not inserted it is because it was dominated
@@ -312,35 +344,31 @@ class UPMOCMA(Optimizer):
             d_inv = 1.0 / self._parameters.d
             p_target_succ = self._parameters.p_target_succ
             p_target_succ_comp = 1.0 - p_target_succ
-            z = (
-                self._offspring_point - self._parent.point
-            ) / self._parent.step_size
             zz = np.outer(z, z)
-            # Update offspring
-            # Update step size
+            # Adapt offspring
             offspring.p_succ *= 1.0 - c_p
             offspring.p_succ += c_p * success_indicator
             offspring.step_size *= math.exp(
                 d_inv
                 * ((offspring.p_succ - p_target_succ) / p_target_succ_comp)
             )
-            # Update covariance matrix
             offspring.cov[:, :] = (
                 1.0 - c_cov
             ) * self._offspring_cov + c_cov * zz
-            # Update parent
-            self._parent.p_succ *= 1.0 - c_p
-            self._parent.p_succ += c_p * success_indicator
-            self._parent.step_size *= math.exp(
-                d_inv
-                * ((self._parent.p_succ - p_target_succ) / p_target_succ_comp)
-            )
-            # Update covariance matrix
-            self._parent.cov[:, :] = (
-                1.0 - c_cov
-            ) * self._parent.cov + c_cov * zz
-
-        self._parent = None
+            # Adapt parent if it was not deleted
+            if self._parent is not None:
+                self._parent.p_succ *= 1.0 - c_p
+                self._parent.p_succ += c_p * success_indicator
+                self._parent.step_size *= math.exp(
+                    d_inv
+                    * (
+                        (self._parent.p_succ - p_target_succ)
+                        / p_target_succ_comp
+                    )
+                )
+                self._parent.cov[:, :] = (
+                    1.0 - c_cov
+                ) * self._parent.cov + c_cov * zz
         self._offspring_cov = None
         self._offspring_point = None
         self._generation_count += 1
@@ -365,17 +393,17 @@ class UPMOCMA(Optimizer):
             result.triggered = True
             result.max_evaluations = self._evaluation_count
         if (
-            conditions.size is not None
-            and self._population.size >= conditions.size
+            conditions.max_size is not None
+            and self._population.size >= conditions.max_size
         ):
             result.triggered = True
-            result.size = self._population.size
+            result.max_size = self._population.size
         if (
-            conditions.nbytes is not None
-            and self._population.nbytes >= conditions.nbytes
+            conditions.max_nbytes is not None
+            and self._population.max_nbytes >= conditions.max_nbytes
         ):
             result.triggered = True
-            result.nbytes = self._population.nbytes
+            result.max_nbytes = self._population.max_nbytes
         return result
 
     def best(self):
