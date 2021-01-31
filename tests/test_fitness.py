@@ -2,7 +2,7 @@
 import dataclasses
 import pathlib
 import unittest
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -41,7 +41,7 @@ def get_samples(rows: np.ndarray) -> Samples:
 
 
 class BaseTestFunction:
-    """Base test case for benchmark functions.
+    """Base class to test benchmark objective functions.
 
     Notes
     -----
@@ -50,23 +50,18 @@ class BaseTestFunction:
     """
 
     fn: ObjectiveFunction
-    filename: str
-
     assertTrue: Any
-
-    def setUp(self):
-        path = (
-            pathlib.Path(__file__)
-            .parent.joinpath("data/fitness")
-            .joinpath(self.filename)
-            .absolute()
-        )
-        self.data = np.genfromtxt(str(path), delimiter=",")
+    seed: Optional[int] = None
 
     def get_fn(self):
         raise NotImplementedError()
 
+    def test_creation(self):
+        """Test that the function object is created without errors"""
+        fn = self.get_fn()
+
     def test_scale_dimensions(self):
+        """Test that the dimensions can be scaled."""
         fn = self.get_fn()
         start = fn.n_dimensions
         fn.n_dimensions = start + 1
@@ -77,6 +72,7 @@ class BaseTestFunction:
             self.assertTrue(start == end, "== operator")
 
     def test_scale_objectives(self):
+        """Test that the objectives can be scaled."""
         fn = self.get_fn()
         start = fn.n_objectives
         fn.n_objectives = start + 1
@@ -85,6 +81,57 @@ class BaseTestFunction:
             self.assertTrue(start != end, "!= operator")
         else:
             self.assertTrue(start == end, "== operator")
+
+    def test_evaluation_count(self):
+        """Test that the evaluation counter is updated correctly."""
+        fn = self.get_fn()
+        fn.n_dimensions = 5
+        self.assertTrue(
+            fn.evaluation_count == 0, "Initial evaluation count failed."
+        )
+        fn(fn.random_points(1))
+        self.assertTrue(
+            fn.evaluation_count == 1,
+            "Evaluation count after single call failed, got {}.".format(
+                fn.evaluation_count
+            ),
+        )
+        fn(fn.random_points(11))
+        self.assertTrue(
+            fn.evaluation_count == 12,
+            "Evaluation count after multiple call failed, got {}.".format(
+                fn.evaluation_count
+            ),
+        )
+
+
+class BaseTestFunctionSimple(BaseTestFunction):
+    """Test additional properties of the function implementation."""
+
+    def test_call_single_multiple(self):
+        fn = self.get_fn()
+        n_points = 10
+        xs = fn.random_points(n_points)
+        single_ys = np.empty((n_points, fn.n_objectives))
+        for i in range(n_points):
+            single_ys[i] = fn(xs[i])
+        multiple_ys = fn(xs)
+        self.assertTrue(np.allclose(single_ys, multiple_ys))
+
+
+class BaseTestFunctionWithSamples(BaseTestFunction):
+    """Test evaluation results against pre-computed samples."""
+
+    filename: str
+
+    def setUp(self):
+        path = (
+            pathlib.Path(__file__)
+            .parent.joinpath("data/fitness")
+            .joinpath(self.filename)
+            .absolute()
+        )
+        self.data = np.genfromtxt(str(path), delimiter=",")
 
     def test_single(self):
         fn = self.get_fn()
@@ -131,25 +178,8 @@ class BaseTestFunction:
                 np.allclose(fn(point), fitness), "Call with single failed."
             )
 
-    def test_evaluation_count(self):
-        fn = self.get_fn()
-        fn.n_dimensions = 5
-        self.assertTrue(
-            fn.evaluation_count == 0, "Initial evaluation count failed."
-        )
-        fn(fn.random_points(1))
-        self.assertTrue(
-            fn.evaluation_count == 1,
-            f"Evaluation count after single call failed, got {fn.evaluation_count}.",
-        )
-        fn(fn.random_points(11))
-        self.assertTrue(
-            fn.evaluation_count == 12,
-            f"Evaluation count after multiple call failed, got {fn.evaluation_count}.",
-        )
 
-
-class TestSphere(BaseTestFunction, unittest.TestCase):
+class TestSphere(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the Sphere function."""
 
     filename = "Sphere.csv"
@@ -158,7 +188,7 @@ class TestSphere(BaseTestFunction, unittest.TestCase):
         return benchmark.Sphere()
 
 
-class TestRastrigin(BaseTestFunction, unittest.TestCase):
+class TestRastrigin(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the Rastrigin function."""
 
     filename = "Rastrigin.csv"
@@ -167,7 +197,7 @@ class TestRastrigin(BaseTestFunction, unittest.TestCase):
         return benchmark.Rastrigin(rotate=False)
 
 
-class TestEllipsoid(BaseTestFunction, unittest.TestCase):
+class TestEllipsoid(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the Ellipsoid function."""
 
     filename = "Ellipsoid.csv"
@@ -176,7 +206,7 @@ class TestEllipsoid(BaseTestFunction, unittest.TestCase):
         return benchmark.Ellipsoid(rotate=False)
 
 
-class TestZDT1(BaseTestFunction, unittest.TestCase):
+class TestZDT1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT1 function."""
 
     filename = "ZDT1.csv"
@@ -185,7 +215,7 @@ class TestZDT1(BaseTestFunction, unittest.TestCase):
         return benchmark.ZDT1()
 
 
-class TestZDT2(BaseTestFunction, unittest.TestCase):
+class TestZDT2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT2 function."""
 
     filename = "ZDT2.csv"
@@ -194,7 +224,7 @@ class TestZDT2(BaseTestFunction, unittest.TestCase):
         return benchmark.ZDT2()
 
 
-class TestZDT3(BaseTestFunction, unittest.TestCase):
+class TestZDT3(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT3 function."""
 
     filename = "ZDT3.csv"
@@ -203,7 +233,7 @@ class TestZDT3(BaseTestFunction, unittest.TestCase):
         return benchmark.ZDT3()
 
 
-class TestZDT4(BaseTestFunction, unittest.TestCase):
+class TestZDT4(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT4 function."""
 
     filename = "ZDT4.csv"
@@ -212,7 +242,7 @@ class TestZDT4(BaseTestFunction, unittest.TestCase):
         return benchmark.ZDT4()
 
 
-class TestZDT6(BaseTestFunction, unittest.TestCase):
+class TestZDT6(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT6 function."""
 
     filename = "ZDT6.csv"
@@ -221,7 +251,7 @@ class TestZDT6(BaseTestFunction, unittest.TestCase):
         return benchmark.ZDT6()
 
 
-class TestIHR1(BaseTestFunction, unittest.TestCase):
+class TestIHR1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR1 function."""
 
     filename = "IHR1.csv"
@@ -230,7 +260,7 @@ class TestIHR1(BaseTestFunction, unittest.TestCase):
         return benchmark.IHR1(rotate=False)
 
 
-class TestIHR2(BaseTestFunction, unittest.TestCase):
+class TestIHR2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR2 function."""
 
     filename = "IHR2.csv"
@@ -239,7 +269,7 @@ class TestIHR2(BaseTestFunction, unittest.TestCase):
         return benchmark.IHR2(rotate=False)
 
 
-class TestELLI1(BaseTestFunction, unittest.TestCase):
+class TestELLI1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ELLI1 function."""
 
     filename = "ELLI1.csv"
@@ -248,7 +278,7 @@ class TestELLI1(BaseTestFunction, unittest.TestCase):
         return benchmark.ELLI1(rotate=False)
 
 
-class TestELLI2(BaseTestFunction, unittest.TestCase):
+class TestELLI2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ELLI2 function."""
 
     filename = "ELLI2.csv"
@@ -257,7 +287,26 @@ class TestELLI2(BaseTestFunction, unittest.TestCase):
         return benchmark.ELLI2(rotate=False)
 
 
-class TestCIGTAB1(BaseTestFunction, unittest.TestCase):
+class TestGELLI(BaseTestFunctionSimple, unittest.TestCase):
+    def get_fn(self) -> benchmark.GELLI:
+        return benchmark.GELLI()
+
+    def test_scale_objectives(self):
+        """Test that the objectives can be scaled."""
+        # We need to override the test case for this function
+        # Since m <= n must be ensured
+        fn = self.get_fn()
+        start = fn.n_objectives
+        fn.n_dimensions = fn.n_objectives + 3
+        fn.n_objectives = start + 1
+        end = fn.n_objectives
+        if fn.has_scalable_objectives:
+            self.assertTrue(start != end, "!= operator")
+        else:
+            self.assertTrue(start == end, "== operator")
+
+
+class TestCIGTAB1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the CIGTAB1 function."""
 
     filename = "CIGTAB1.csv"
@@ -266,7 +315,7 @@ class TestCIGTAB1(BaseTestFunction, unittest.TestCase):
         return benchmark.CIGTAB1(rotate=False)
 
 
-class TestCIGTAB2(BaseTestFunction, unittest.TestCase):
+class TestCIGTAB2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the CIGTAB2 function."""
 
     filename = "CIGTAB2.csv"
@@ -275,7 +324,7 @@ class TestCIGTAB2(BaseTestFunction, unittest.TestCase):
         return benchmark.CIGTAB2(rotate=False)
 
 
-class TestDTLZ1(BaseTestFunction, unittest.TestCase):
+class TestDTLZ1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ1 function."""
 
     filename = "DTLZ1.csv"
@@ -284,7 +333,7 @@ class TestDTLZ1(BaseTestFunction, unittest.TestCase):
         return benchmark.DTLZ1(5)
 
 
-class TestDTLZ2(BaseTestFunction, unittest.TestCase):
+class TestDTLZ2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ2 function."""
 
     filename = "DTLZ2.csv"
@@ -293,7 +342,7 @@ class TestDTLZ2(BaseTestFunction, unittest.TestCase):
         return benchmark.DTLZ2(5)
 
 
-class TestDTLZ3(BaseTestFunction, unittest.TestCase):
+class TestDTLZ3(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ3 function."""
 
     filename = "DTLZ3.csv"
@@ -302,7 +351,7 @@ class TestDTLZ3(BaseTestFunction, unittest.TestCase):
         return benchmark.DTLZ3(5)
 
 
-class TestDTLZ4(BaseTestFunction, unittest.TestCase):
+class TestDTLZ4(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ4 function."""
 
     filename = "DTLZ4.csv"
@@ -311,7 +360,7 @@ class TestDTLZ4(BaseTestFunction, unittest.TestCase):
         return benchmark.DTLZ4(5)
 
 
-class TestDTLZ5(BaseTestFunction, unittest.TestCase):
+class TestDTLZ5(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ5 function."""
 
     filename = "DTLZ5.csv"
@@ -320,7 +369,7 @@ class TestDTLZ5(BaseTestFunction, unittest.TestCase):
         return benchmark.DTLZ5(5)
 
 
-class TestDTLZ6(BaseTestFunction, unittest.TestCase):
+class TestDTLZ6(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ6 function."""
 
     filename = "DTLZ6.csv"
@@ -329,10 +378,40 @@ class TestDTLZ6(BaseTestFunction, unittest.TestCase):
         return benchmark.DTLZ6(5)
 
 
-class TestDTLZ7(BaseTestFunction, unittest.TestCase):
+class TestDTLZ7(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ7 function."""
 
     filename = "DTLZ7.csv"
 
     def get_fn(self) -> benchmark.DTLZ7:
         return benchmark.DTLZ7(5)
+
+
+class TestMOQ1AC(BaseTestFunctionSimple, unittest.TestCase):
+    def get_fn(self) -> benchmark.MOQ:
+        return benchmark.MOQ("1|C")
+
+
+class TestMOQ1NAC(BaseTestFunctionSimple, unittest.TestCase):
+    def get_fn(self) -> benchmark.MOQ:
+        return benchmark.MOQ("1/C")
+
+
+class TestMOQ1AJ(BaseTestFunctionSimple, unittest.TestCase):
+    def get_fn(self) -> benchmark.MOQ:
+        return benchmark.MOQ("1|J")
+
+
+class TestMOQ1NAJ(BaseTestFunctionSimple, unittest.TestCase):
+    def get_fn(self) -> benchmark.MOQ:
+        return benchmark.MOQ("1/J")
+
+
+class TestMOQ1AI(BaseTestFunctionSimple, unittest.TestCase):
+    def get_fn(self) -> benchmark.MOQ:
+        return benchmark.MOQ("1|I")
+
+
+class TestMOQ1NAI(BaseTestFunctionSimple, unittest.TestCase):
+    def get_fn(self) -> benchmark.MOQ:
+        return benchmark.MOQ("1/I")

@@ -2,8 +2,8 @@
 # For example, that from the provided devcontainer for VS Code.
 
 # For development, prefer the C++20 toolchain, as it has template support for the nodiscard attribute.
-#TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libstdcxx.cmake
-TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libcxx.cmake
+TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libstdcxx.cmake
+#TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libcxx.cmake
 
 COMMON_CMAKE_OPTS=-DWITH_SHARK_BINDINGS=ON -DCMAKE_TOOLCHAIN_FILE=$(TOOLCHAIN_FILE)
 
@@ -37,16 +37,19 @@ test:
 	python -m unittest
 
 test_debug:
-	LD_PRELOAD="libasan.so libubsan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 python -m unittest
+	#LD_PRELOAD="libasan.so libubsan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 python -m unittest
+	LD_PRELOAD="libasan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 python -m unittest
 
 jupyter:
 	jupyter-lab --allow-root
 
 jupyter_debug:
-	LD_PRELOAD="libasan.so libubsan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 jupyter-lab --allow-root
+	#LD_PRELOAD="libasan.so libubsan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 jupyter-lab --allow-root
+	LD_PRELOAD="libasan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 jupyter-lab --allow-root
 
 python_debug:
-	LD_PRELOAD="libasan.so libubsan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 python $(SCRIPT)
+	#LD_PRELOAD="libasan.so libubsan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 python $(SCRIPT)
+	LD_PRELOAD="libasan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 python $(SCRIPT)
 
 update_submodules:
 	git submodule update --init --recursive

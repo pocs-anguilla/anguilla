@@ -337,12 +337,14 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         feasible_xs = self.closest_feasible(xs)
         tmp = xs - feasible_xs
         ys = self.__call__(feasible_xs)
-        size = len(xs)
-        if size == 1:
-            ys = np.reshape(ys, (1, self._n_objectives))
-        penalized_ys = np.empty_like(ys)
-        for i in range(size):
-            penalized_ys[i] = ys[i] + penalty * np.sum(tmp[i] * tmp[i])
+        if len(tmp.shape) != len(ys.shape):
+            raise RuntimeError("Shapes mismatch")
+        if len(tmp.shape) > 1:
+            penalized_ys = np.empty_like(ys)
+            for i in range(len(tmp)):
+                penalized_ys[i] = ys[i] + penalty * np.sum(tmp[i] * tmp[i])
+            return ys, penalized_ys
+        penalized_ys = ys + penalty * np.sum(tmp * tmp)
         return ys, penalized_ys
 
     def pareto_front(self, num: int = 50) -> np.ndarray:

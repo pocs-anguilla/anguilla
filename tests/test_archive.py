@@ -1,5 +1,6 @@
 """Testsuite for the :py:mod:`archive` package."""
 import math
+import gc
 import unittest
 
 import numpy as np
@@ -56,12 +57,25 @@ class TestArchive(unittest.TestCase):
         parameters = UPMOParameters(10, 1.0)
         archive = UPMOArchive(parameters)
         self.assertTrue(archive.empty, "Empty")
-        self.assertTrue(archive.left_exterior is None, "Left exterior")
-        self.assertTrue(archive.right_exterior is None, "Right exterior")
+        self.assertTrue(archive.left_extreme is None, "Left extreme")
+        self.assertTrue(archive.right_extreme is None, "Right extreme")
         self.assertTrue(archive.size == 0, "Size")
 
+    def test_statistics(self) -> None:
+        """Test statistics."""
+        parameters = UPMOParameters(10, 1.0)
+        archive = UPMOArchive(parameters)
+        isr = archive.get_statistics().insert_success_ratio
+        self.assertTrue(isr == 0.0)
+        archive.insert(np.array([1.3, 1.3]), np.array([4.0, 5.0]))
+        isr = archive.get_statistics().insert_success_ratio
+        self.assertTrue(isr == 1.0)
+        archive.insert(np.array([1.4, 1.4]), np.array([5.0, 6.0]))
+        isr = archive.get_statistics().insert_success_ratio
+        self.assertTrue(isr == 0.5)
+
     def test_sampling(self) -> None:
-        """Test sampling exterior and interior points."""
+        """Test sampling extreme and interior points."""
         # m: number of samples used to determine the empirical probabilities
         m = 100000
         # n: number of points
@@ -80,15 +94,13 @@ class TestArchive(unittest.TestCase):
 
         self.assertTrue(
             np.all(
-                np.allclose(
-                    archive.left_exterior.fitness, np.array([1.0, n_f])
-                )
+                np.allclose(archive.left_extreme.fitness, np.array([1.0, n_f]))
             ),
-            "Left exterior: {}".format(archive.left_exterior.fitness),
+            "Left extreme: {}".format(archive.left_extreme.fitness),
         )
         self.assertTrue(
-            np.allclose(archive.right_exterior.fitness, np.array([n_f, 1.0])),
-            "Right exterior {}".format(archive.right_exterior.fitness),
+            np.allclose(archive.right_extreme.fitness, np.array([n_f, 1.0])),
+            "Right extreme {}".format(archive.right_extreme.fitness),
         )
         sorted_contributions = np.ones(n)
         sorted_contributions[-1] = np.finfo(float).max
@@ -113,10 +125,10 @@ class TestArchive(unittest.TestCase):
             ),
         )
 
-        # Exterior empirical probabilities
+        # Extreme empirical probabilities
         counts = np.zeros(n)
         for p in np.random.default_rng().uniform(size=m):
-            sample = archive.sample_exterior(p)
+            sample = archive.sample_extreme(p)
             i = int(sample.coord(0)) - 1
             counts[i] += 1.0
         empirical_ps = np.round(counts / float(m), decimals=1)
@@ -125,7 +137,7 @@ class TestArchive(unittest.TestCase):
         ps[-1] = 0.5
         self.assertTrue(
             np.allclose(ps, empirical_ps, atol=1e-1),
-            "Exterior empiricals, got: {}, expected: {}".format(
+            "extreme empiricals, got: {}, expected: {}".format(
                 empirical_ps, ps
             ),
         )
@@ -259,10 +271,12 @@ class TestArchive(unittest.TestCase):
         size1 = archive1.size
         archive1.merge(archive2)
         del archive2
+        gc.collect()
         self.assertTrue(archive1.size > size1)
         size1 = archive1.size
         archive1.merge(archive3)
         del archive3
+        gc.collect()
         self.assertTrue(archive1.size > size1)
         for x0, x1 in zip(archive0, archive1):
             p0 = x0.fitness

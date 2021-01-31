@@ -5,7 +5,7 @@ import typing
 
 import numpy as np
 
-from anguilla.dominance import non_dominated_sort
+from anguilla.dominance import non_dominated_sort, dominates
 
 
 def line(m, b):
@@ -30,8 +30,8 @@ def get_objective_points(domain, *fns):
     return points
 
 
-class TestDominanceOperators(unittest.TestCase):
-    """Unit tests for dominance operators."""
+class TestNonDominatedSort(unittest.TestCase):
+    """Test non-dominated sort."""
 
     def setUp(self) -> None:
         """Initialize state."""
@@ -115,3 +115,22 @@ class TestDominanceOperators(unittest.TestCase):
         )
         self.assertTrue(max_rank == max_rank_shuffled, "Max. rank")
         self.assertTrue(np.all(ranks[shuffled_idx] == ranks_shuffled), "Ranks")
+
+
+class TestDominates(unittest.TestCase):
+    """Test dominates."""
+
+    def test_dominated(self):
+        self.assertTrue(
+            dominates(np.array([1.0, 0.0, 1.5]), np.array([1.0, 0.0, 2.0]))
+        )
+
+    def test_notdominated(self):
+        self.assertFalse(
+            dominates(np.array([1.0, 0.1, 1.5]), np.array([1.0, 0.0, 2.0]))
+        )
+
+    def test_random(self):
+        rng = np.random.default_rng()
+        point1 = rng.uniform(size=32)
+        self.assertFalse(dominates(point1, point1))

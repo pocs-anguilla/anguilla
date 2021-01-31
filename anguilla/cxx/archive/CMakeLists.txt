@@ -5,6 +5,7 @@ set(MODULE_SRC
     include/anguilla/archive/archive.hpp
     include/anguilla/archive/archive_kd.hpp
     include/anguilla/archive/individual.hpp
+    include/anguilla/archive/statistics.hpp
     include/anguilla/archive/parameters.hpp
     "src/${INTERNAL_MODULE_NAME}.cpp"
 )
