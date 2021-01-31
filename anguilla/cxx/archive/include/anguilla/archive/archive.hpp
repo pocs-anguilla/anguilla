@@ -291,54 +291,6 @@ class Archive {
     }
 
     // p ~ Uniform[0, 1]
-    [[nodiscard]] Individual<T> *sampleInteriorOld(T p) {
-        if (p > 1.0 || p < 0.0) {
-            throw std::invalid_argument("p must be between zero and one");
-        }
-        if (size() < 3U) {
-            return nullptr;
-        }
-        auto currentPtr = m_archive.root().pointed_node();
-        NodePointer result = nullptr;
-        T accContribution = static_cast<Node<T> *>(currentPtr)->individual.accContribution;
-        T currentBound, leftBound;
-        while ((result == nullptr) && (currentPtr != nullptr)) {
-            currentBound = 0.0;
-            leftBound = 0.0;
-            if (isInteriorNode(currentPtr)) {
-                currentBound = static_cast<Node<T> *>(currentPtr)->individual.contribution / accContribution;
-            }
-            auto leftNode = NodeTraits::get_left(currentPtr);
-            if (leftNode != nullptr) {
-                leftBound = static_cast<Node<T> *>(leftNode)->individual.accContribution / accContribution;
-                leftBound += currentBound;
-            }
-            auto rightNode = NodeTraits::get_right(currentPtr);
-            if (p < currentBound) {
-                result = currentPtr;
-            } else {
-                if (p < leftBound) {
-                    if (leftNode) {
-                        currentPtr = leftNode;
-                        p -= currentBound;
-                    } else {
-                        result = currentPtr;
-                    }
-                } else {
-                    if (rightNode) {
-                        currentPtr = rightNode;
-                        p -= leftBound;
-                    } else {
-                        result = currentPtr;
-                    }
-                }
-            }
-        }
-        assert(result != nullptr);
-        return &(static_cast<Node<T> *>(result)->individual);
-    }
-
-    // p ~ Uniform[0, 1]
     [[nodiscard]] Individual<T> *sampleInterior(T p) {
         if (p > 1.0 || p < 0.0) {
             throw std::invalid_argument("p must be between zero and one");
