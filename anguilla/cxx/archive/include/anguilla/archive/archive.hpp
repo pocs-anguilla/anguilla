@@ -57,11 +57,8 @@ struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optim
     }
 
     friend bool operator<(const Node &l, const Node &r) { return l.individual < r.individual; }
-    friend bool operator>(const Node &l, const Node &r) { return l.individual > r.individual; }
-    friend bool operator==(const Node &l, const Node &r) { return l.individual == r.individual; }
 
     Individual<T> individual;
-    boost::intrusive::avl_set_member_hook<> member_hook_;
 };
 
 template <typename T>
