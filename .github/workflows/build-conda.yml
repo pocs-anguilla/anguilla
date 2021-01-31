@@ -46,7 +46,7 @@ jobs:
       - name: Test
         run: |
           conda install pytest
-          pytest tests --import-mode append
+          pytest tests --import-mode=append --color=yes
 
       - name: Upload
         if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
