@@ -4,9 +4,9 @@ name: Conda
 on:
   workflow_dispatch:
   pull_request:
-  #push:
-  #  branches:
-  #    - develop
+  push:
+    branches:
+      - develop
 
 jobs:
   build:
@@ -46,10 +46,10 @@ jobs:
       - name: Test
         run: |
           conda install pytest
-          pytest tests --import-mode append
+          pytest tests --import-mode=append --color=yes
 
       - name: Upload
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
         run: |
           anaconda login
-          anaconda upload anguilla --label develop
+          anaconda upload anguilla

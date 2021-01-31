@@ -1,14 +1,14 @@
 Anguilla
 ========
-|conda| |pip| |docs| |deepsource| |deepcode| |sonarcloud|
+|conda| |wheels| |docs| |deepsource| |deepcode| |sonarcloud|
 
-.. |conda| image:: https://github.com/pocs-anguilla/anguilla/workflows/Conda/badge.svg?branch=main)
+.. |conda| image:: https://github.com/pocs-anguilla/anguilla/workflows/Conda/badge.svg?branch=develop)
            :target: https://github.com/pocs-anguilla/anguilla
            :alt: Conda build
 
-.. |pip| image:: https://github.com/pocs-anguilla/anguilla/workflows/Pip/badge.svg?branch=main)
+.. |wheels| image:: https://github.com/pocs-anguilla/anguilla/workflows/Wheels/badge.svg?branch=develop)
            :target: https://github.com/pocs-anguilla/anguilla
-           :alt: Pip build
+           :alt: Wheels build
 
 .. |docs| image:: https://readthedocs.org/projects/anguilla/badge/?version=latest
           :target: https://anguilla.readthedocs.io/en/latest/?badge=latest
@@ -40,4 +40,4 @@ Please see the `documentation <https://anguilla.readthedocs.io/en/latest/>`_ for
 References
 ----------
 
-Please see `REFERENCES <REFERENCES>`_ or the `documentation's bibtext file <docs/references.bib>`_.
+Please see the file `REFERENCES <REFERENCES>`_ or the `documentation <https://anguilla.readthedocs.io/en/latest/>`_.

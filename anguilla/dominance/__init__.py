@@ -35,4 +35,7 @@ def dominates(a: np.ndarray, b: np.ndarray) -> bool:
     return all and any
 
 
-__all__ = ["non_dominated_sort"]
+__all__ = [
+    "non_dominated_sort",
+    "dominates",
+]

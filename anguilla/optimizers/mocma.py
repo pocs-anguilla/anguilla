@@ -3,7 +3,7 @@
 import enum
 import dataclasses
 import math
-from typing import Any, Iterable, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -12,8 +12,6 @@ from anguilla.optimizers.base import (
     OptimizerParameters,
     OptimizerSolution,
     OptimizerStoppingConditions,
-    OptimizerResult,
-    OptimizableFunction,
 )
 
 from anguilla.selection import indicator_selection
@@ -545,45 +543,6 @@ class MOCMA(Optimizer):
         self._generation_count += 1
         self._ask_called = False
 
-    def fmin(
-        self,
-        fn: OptimizableFunction,
-        fn_args: Optional[Iterable[Any]] = None,
-        fn_kwargs: Optional[dict] = None,
-    ) -> OptimizerResult:
-        """Optimize a function.
-
-        Parameters
-        ----------
-        fn
-            The function to optimize.
-        fn_args: optional
-            Positional arguments to pass when calling the function.
-        fn_kwargs: optional
-            Keyword arguments to pass when calling the function.
-
-        Returns
-        -------
-        OptimizerResult
-            The result of the optimization.
-        """
-        if fn_args is None:
-            fn_args = ()
-        if fn_kwargs is None:
-            fn_kwargs = {}
-
-        while not self.stop.triggered:
-            points = self.ask()
-            result = fn(points, *fn_args, **fn_kwargs)
-            # Decide which type of OptimizableFunction we're given
-            if not isinstance(result, tuple):
-                self.tell(*result)
-            elif isinstance(result[1], dict):
-                self.tell(result[0], **result[1])
-            else:
-                self.tell(*result)
-        return OptimizerResult(self.best, self.stop)
-
     def _mutate(self, pidx: int, oidx: int) -> None:
         self._population.parents[oidx] = pidx
         # [2007:mo-cma-es] Algorithm 4, lines 3-6
@@ -654,3 +613,11 @@ class MOCMA(Optimizer):
             # [2010:mo-cma-es] Section 3.2, p. 489
             success = selected[oidx]
         return float(success)
+
+
+__all__ = [
+    "MOCMA",
+    "MOParameters",
+    "MOStoppingConditions",
+    "MOSolution",
+]

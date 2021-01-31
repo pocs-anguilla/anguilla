@@ -51,17 +51,14 @@ T. Glasmachers (2016). A Fast Incremental Archive for Multi-objective Optimizati
 namespace archive {
 
 template <typename T>
-struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optimize_size<false>> {
+struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optimize_size<true>> {
     explicit Node(const py::array_t<T> &point, const py::array_t<T> &fitness, T step_size = 1.0, T p_succ = 0.5) : individual(point, fitness, step_size, p_succ) {
         individual.containerPtr = this;
     }
 
     friend bool operator<(const Node &l, const Node &r) { return l.individual < r.individual; }
-    friend bool operator>(const Node &l, const Node &r) { return l.individual > r.individual; }
-    friend bool operator==(const Node &l, const Node &r) { return l.individual == r.individual; }
 
     Individual<T> individual;
-    boost::intrusive::avl_set_member_hook<> member_hook_;
 };
 
 template <typename T>
@@ -121,16 +118,18 @@ class Archive {
     }
 
     [[nodiscard]] Individual<T> *insertInternal(Node<T> *newNode) {
+        // Based on the algorithm presented in [2013:2d-archive].
+
         m_statistics.insertAttempts++;
-        // Based on the algorithm described in [2013:2d-archive].
         const auto pX = newNode->individual.coord(0);
         const auto pY = newNode->individual.coord(1);
         // We seek the greatest 'qX' s.t. 'qX' =< 'pX'.
-        // The interface of lower_bound is s.t. it returns an iterator that
+        // The interface of lower_bound returns an iterator that
         // points to the first 'qX' s.t. 'qX' >= 'pX'.
         // Otherwise, the iterator points to the end.
-        // Sentinels guarantee that the following call succeds.
+        // Sentinels guarantee that the following call succeds:
         auto nodeLeft = m_archive.lower_bound(*newNode);
+
         assert(nodeLeft != m_archive.end());
         assert(!(nodeLeft->individual.coord(0) < pX));
         if (nodeLeft->individual.coord(0) > pX) {
@@ -145,6 +144,7 @@ class Archive {
         if (!(nodeLeft->individual.coord(0) < pX)) {  // qX == pX
             --nodeLeft;
         }
+
         // Find points dominated by p and delete them:
         auto nodeRight = nodeLeft;
         ++nodeRight;
@@ -154,6 +154,7 @@ class Archive {
         }
         assert(nodeRight != m_archive.end());
         auto hintNode = m_archive.erase_and_dispose(std::next(nodeLeft), nodeRight, m_disposer);
+
         // Insert point
         const auto pContribution = (nodeRight->individual.coord(0) - pX) * (nodeLeft->individual.coord(1) - pY);
         newNode->individual.contribution = pContribution;

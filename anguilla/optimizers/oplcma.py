@@ -2,7 +2,7 @@
     algorithm for real-valued single-objective optimization (MOO)."""
 import dataclasses
 import math
-from typing import Any, Iterable, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 
@@ -11,8 +11,6 @@ from anguilla.optimizers.base import (
     OptimizerParameters,
     OptimizerSolution,
     OptimizerStoppingConditions,
-    OptimizerResult,
-    OptimizableFunction,
 )
 
 
@@ -138,7 +136,7 @@ class OnePlusLambdaCMA(Optimizer):
     n_offspring
         Number of offspring.
     initial_step_size: optional
-        Initial step size.
+        Initial step size. Ignored if `parameters` is provided.
     max_generations: optional
         Maximum number of generations to trigger stop.
     max_evaluations: optional
@@ -156,10 +154,12 @@ class OnePlusLambdaCMA(Optimizer):
     Implements the algorithm defined in Algorithm 1, p. 4 :cite:`2007:mo-cma-es`.
     """
 
+    _tell_points = True
+
     def __init__(
         self,
         parent_point: np.ndarray,
-        parent_fitness: np.ndarray,
+        parent_fitness: float,
         n_offspring: int,
         initial_step_size: float = 1e-4,
         max_generations: Optional[int] = None,
@@ -168,6 +168,8 @@ class OnePlusLambdaCMA(Optimizer):
         parameters: Optional[OPLParameters] = None,
         rng: Optional[np.random.Generator] = None,
     ) -> None:
+        if not isinstance(parent_point, np.ndarray):
+            raise ValueError("parent_point is not an array")
         self._n_dimensions = len(parent_point)
 
         if parameters is None:
@@ -194,13 +196,13 @@ class OnePlusLambdaCMA(Optimizer):
         else:
             self._rng = rng
 
-        self.point = parent_point
-        self.fitness = parent_fitness
-        self.penalized_fitness = parent_fitness
-        self.step_size = self._parameters.initial_step_size
-        self.p_succ = self._parameters.p_target_succ
-        self.path = np.zeros(self._n_dimensions)
-        self.cov = np.eye(self._n_dimensions)
+        self._point = parent_point
+        self._fitness = parent_fitness
+        self._penalized_fitness = parent_fitness
+        self._step_size = self._parameters.initial_step_size
+        self._p_succ = self._parameters.p_target_succ
+        self._path = np.zeros(self._n_dimensions)
+        self._cov = np.eye(self._n_dimensions)
 
         self._evaluation_count = 0
         self._generation_count = 0
@@ -247,15 +249,15 @@ class OnePlusLambdaCMA(Optimizer):
             result.max_evaluations = self._evaluation_count
         if (
             conditions.target_fitness_value is not None
-            and self.fitness < conditions.target_fitness_value
+            and self._fitness < conditions.target_fitness_value
         ):
             result.triggered = True
-            result.target_fitness_value = self.fitness
+            result.target_fitness_value = self._fitness
         return result
 
     @property
     def best(self) -> OPLSolution:
-        return OPLSolution(np.copy(self.point), self.fitness)
+        return OPLSolution(np.copy(self._point), self._fitness)
 
     def ask(self):
         """Generate new search points.
@@ -266,8 +268,8 @@ class OnePlusLambdaCMA(Optimizer):
             A reference to the new search points.
         """
         return self._rng.multivariate_normal(
-            self.point,
-            (self.step_size * self.step_size) * self.cov,
+            self._point,
+            (self._step_size * self._step_size) * self._cov,
             size=self._parameters.n_offspring,
         )
 
@@ -318,53 +320,38 @@ class OnePlusLambdaCMA(Optimizer):
         if penalized_fitness is None:
             penalized_fitness = fitness
         p_succ = np.mean(
-            np.logical_not(penalized_fitness > self.penalized_fitness)
+            np.logical_not(penalized_fitness > self._penalized_fitness)
         )
 
-        old_step_size = self.step_size
-        old_point = self.point.copy()
+        old_step_size = self._step_size
+        old_point = self._point.copy()
 
-        self.p_succ = (1.0 - c_p) * self.p_succ + c_p * p_succ
-        self.step_size = self.step_size * math.exp(
-            d_inv * ((self.p_succ - p_target_succ) / (1.0 - p_target_succ))
+        self._p_succ = (1.0 - c_p) * self._p_succ + c_p * p_succ
+        self._step_size = self._step_size * math.exp(
+            d_inv * ((self._p_succ - p_target_succ) / (1.0 - p_target_succ))
         )
 
         best_idx = np.argsort(penalized_fitness)[0]
-        if not penalized_fitness[best_idx] > self.penalized_fitness:
-            self.point[:] = points[best_idx]
-            self.penalized_fitness = penalized_fitness[best_idx]
-            self.fitness = fitness[best_idx]
-            self.path *= 1.0 - c_c
-            if self.p_succ < p_threshold:
-                x_step = (self.point - old_point) / old_step_size
-                self.path += c_c_sqrt * x_step
-                self.cov *= 1.0 - c_cov
-                self.cov += c_cov * np.outer(self.path, self.path)
+        if not penalized_fitness[best_idx] > self._penalized_fitness:
+            self._point[:] = points[best_idx]
+            self._penalized_fitness = penalized_fitness[best_idx]
+            self._fitness = fitness[best_idx]
+            self._path *= 1.0 - c_c
+            if self._p_succ < p_threshold:
+                x_step = (self._point - old_point) / old_step_size
+                self._path += c_c_sqrt * x_step
+                self._cov *= 1.0 - c_cov
+                self._cov += c_cov * np.outer(self._path, self._path)
             else:
-                self.cov = (1.0 - c_cov) * self.cov + c_cov * (
-                    np.outer(self.path, self.path) + c_c_prod * self.cov
+                self._cov = (1.0 - c_cov) * self._cov + c_cov * (
+                    np.outer(self._path, self._path) + c_c_prod * self._cov
                 )
         self._generation_count += 1
 
-    def fmin(
-        self,
-        fn: OptimizableFunction,
-        fn_args: Optional[Iterable[Any]] = None,
-        fn_kwargs: Optional[dict] = None,
-    ) -> OptimizerResult:
-        if fn_args is None:
-            fn_args = ()
-        if fn_kwargs is None:
-            fn_kwargs = {}
 
-        while not self.stop.triggered:
-            points = self.ask()
-            result = fn(points, *fn_args, **fn_kwargs)
-            # Decide which type of OptimizableFunction we're given
-            if not isinstance(result, tuple):
-                self.tell(*result)
-            elif isinstance(result[1], dict):
-                self.tell(result[0], **result[1])
-            else:
-                self.tell(*result)
-        return OptimizerResult(self.best, self.stop)
+__all__ = [
+    "OnePlusLambdaCMA",
+    "OPLParameters",
+    "OPLStoppingConditions",
+    "OPLSolution",
+]

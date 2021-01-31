@@ -14,9 +14,9 @@ template <typename T>
 struct Individual {
     explicit Individual(py::array_t<T> const &point, py::array_t<T> const &fitness, T step_size = 1.0, T p_succ = 0.5) : containerPtr(nullptr), contribution(0.0), accContribution(0.0), step_size(step_size), p_succ(p_succ), point(py::array_t<T>::ensure(point)), fitness(py::array_t<T>::ensure(fitness)), fitnessR(this->fitness.template unchecked<1>()), cov(nullptr) {
         // cov is initialized to be the identity matrix
-        cov = new T[static_cast<std::size_t>(point.shape(0)) * static_cast<std::size_t>(point.shape(0))];
         const auto d = static_cast<std::size_t>(point.shape(0));
         const auto d_sq = d * d;
+        cov = new T[d_sq];
         for (auto i = 0U; i < d_sq; ++i) {
             cov[i] = 0.0;
         }
@@ -24,8 +24,8 @@ struct Individual {
             cov[i * d + i] = 1.0;
         }
     }
-    ~Individual(){
-        //delete[] cov;
+    ~Individual() {
+        delete[] cov;
     };
 
     friend bool operator<(const Individual &l, const Individual &r) {

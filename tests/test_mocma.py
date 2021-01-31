@@ -32,7 +32,8 @@ class VolumeBaseTestFunction:
             .absolute()
         )
         self.data = np.genfromtxt(str(path), delimiter=",")
-        self.rng = np.random.default_rng()
+        # FIXME: avoid some tests failing sporadically in CI:
+        self.rng = np.random.default_rng(seed=0)
 
     def get_fn(self) -> ObjectiveFunction:
         raise NotImplementedError()
@@ -52,6 +53,13 @@ class VolumeBaseTestFunction:
                 fn = self.fn_cls(rng=self.rng)
                 fn.n_dimensions = n_dimensions
                 fn.n_objectives = n_objectives
+
+                # We will call fmin with evaluate
+                def evaluate(points):
+                    if fn.has_constraints:
+                        return fn.evaluate_with_penalty(points)
+                    return fn(points)
+
                 for trial in range(VOLUME_TEST_N_TRIALS):
                     parent_points = fn.random_points(n_parents)
                     parent_fitness = fn(parent_points)
@@ -64,14 +72,11 @@ class VolumeBaseTestFunction:
                         rng=self.rng,
                     )
                     optimizer.indicator.reference = reference
-                    while not optimizer.stop.triggered:
-                        points = optimizer.ask()
-                        if fn.has_constraints:
-                            optimizer.tell(*fn.evaluate_with_penalty(points))
-                        else:
-                            optimizer.tell(fn(points))
+
+                    result = optimizer.fmin(evaluate)
+
                     volumes[trial] = optimizer.indicator(
-                        optimizer.best.fitness
+                        result.solution.fitness
                     )
 
                 reference_volume = np.median(volumes)
