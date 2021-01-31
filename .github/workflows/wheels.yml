@@ -24,8 +24,6 @@ jobs:
           submodules: recursive
 
       - uses: joerick/cibuildwheel@v1.8.0
-        name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
         env:
           # Skip: unsupported Python versions, PyPy and 32-bit versions
           CIBW_SKIP: "cp27-* cp35-* pp* *-win32 *-manylinux_i686"
