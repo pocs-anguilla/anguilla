@@ -41,7 +41,8 @@ else()
 endif()
 
 set(Python3_FIND_IMPLEMENTATIONS CPython PyPy)
-find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development)
+#find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 
 # Add site-packages to the search path
 execute_process(
