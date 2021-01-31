@@ -96,7 +96,7 @@ class Archive {
         Node<T> *xSentinel;
         const py::array_t<T> empty(0);
         if (reference.has_value()) {
-            auto referenceR = reference.value().template unchecked<1>();
+            auto referenceR = reference->template unchecked<1>();
             const std::array<T, 2> xS = {referenceR(0), lowest};
             const std::array<T, 2> yS = {lowest, referenceR(1)};
             const py::array_t<T> xSA(2, xS.data());
