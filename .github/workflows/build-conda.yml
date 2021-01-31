@@ -35,7 +35,7 @@ jobs:
           channels: conda-forge
 
       - name: Prepare
-        run: conda install conda-build conda-verify
+        run: conda install conda-build conda-verify anaconda-client
 
       - name: Build
         run: conda build conda-recipes/anguilla
@@ -47,3 +47,9 @@ jobs:
         run: |
           conda install pytest
           pytest tests --import-mode append
+
+      - name: Upload
+        if: github.event_name == 'push'
+        run: |
+          anaconda login
+          anaconda upload anguilla --label develop
