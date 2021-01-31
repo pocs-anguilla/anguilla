@@ -1,0 +1,71 @@
+# Based on: https://github.com/joerick/cibuildwheel/blob/master/examples/github-deploy.yml
+
+name: Wheels
+
+on: [push, pull_request]
+  branches:
+    - develop
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macOS-10.15]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==1.8.0
+
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BUILD: {cp,pp}3*-*  # only Python 3+
+          CIBW_SKIP: "*-win32 *-manylinux_i686"  # skip 32-bit
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
+    build_sdist:
+      name: Build source distribution
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+          with:
+          submodules: recursive
+
+        - uses: actions/setup-python@v2
+          name: Install Python
+          with:
+            python-version: '3.7'
+
+        - name: Build sdist
+          run: python setup.py sdist
+
+        - uses: actions/upload-artifact@v2
+          with:
+            path: dist/*.tar.gz
+
+  #upload_conda:
+  #  needs: [build_wheels]
+  #  runs-on: ubuntu-latest
+  #  if: github.event_name == 'push'
+  #  steps:
+  #    - uses: actions/download-artifact@v2
+  #      with:
+  #        name: artifact
+  #        path: dist
+  #    - uses: pypa/gh-action-pypi-publish@master
+  #      with:
+  #        user: __token__
+  #        password: ${{ secrets.pypi_password }}
+  #        repository_url: https://test.pypi.org/legacy/
