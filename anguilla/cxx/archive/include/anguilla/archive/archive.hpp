@@ -51,7 +51,7 @@ T. Glasmachers (2016). A Fast Incremental Archive for Multi-objective Optimizati
 namespace archive {
 
 template <typename T>
-struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optimize_size<false>> {
+struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optimize_size<true>> {
     explicit Node(const py::array_t<T> &point, const py::array_t<T> &fitness, T step_size = 1.0, T p_succ = 0.5) : individual(point, fitness, step_size, p_succ) {
         individual.containerPtr = this;
     }
