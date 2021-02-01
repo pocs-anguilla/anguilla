@@ -78,8 +78,8 @@ class VolumeBaseTestFunction:
                     volumes[trial] = optimizer.indicator(
                         result.solution.fitness
                     )
-
-                reference_volume = np.median(volumes)
+                # Should check this
+                reference_volume = np.max(volumes)
                 self.assertTrue(
                     np.allclose(
                         reference_volume,
