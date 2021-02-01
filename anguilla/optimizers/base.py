@@ -4,7 +4,7 @@ import dataclasses
 
 import numpy as np
 
-from typing import Any, Callable, Iterable, Optional, Union, Tuple
+from typing import Any, Callable, Iterable, Optional, Union, Tuple, TypedDict
 
 try:
     from typing import final, TypedDict
