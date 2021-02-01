@@ -201,7 +201,7 @@ class UPMOCMA(Optimizer):
         -------
         The optimizer's name.
         """
-        return "UP-MO-CMA-ES-{}".format(self._success_notion)
+        return "UP-MO-CMA-ES-{}".format(str(self._success_notion))
 
     @property
     def qualified_name(self):
