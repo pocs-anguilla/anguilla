@@ -323,3 +323,14 @@ class DTLZ7(DTLZ):
             y2 = 4.0 - y1 * (1.0 + np.sin(3.0 * np.pi * y1))
             return np.vstack((y1, y2))
         raise NotImplementedError()
+
+
+__all__ = [
+    "DTLZ1",
+    "DTLZ2",
+    "DTLZ3",
+    "DTLZ4",
+    "DTLZ5",
+    "DTLZ6",
+    "DTLZ7",
+]

@@ -82,3 +82,8 @@ class BoxConstraintsHandler(ConstraintsHandler):
         return np.minimum(
             np.maximum(x, self._lower_bounds), self._upper_bounds
         )
+
+
+__all__ = [
+    "BoxConstraintsHandler",
+]

@@ -95,7 +95,7 @@ def random_orthogonal_matrix(n: int, rng: np.random.Generator) -> np.ndarray:
     measure. The algorithm is described in :cite:`2007:random-matrices`.
 
     Our implementation of the alternative used in :cite:`2008:shark` does \
-    not perform better (as measured by process time). Future work could be \
+    not perform better (as measured by wall-clock time). Future work could be \
     to fix the implementation from the `prototype notebook \
     <https://git.io/JItU4>`_ to make it perform faster.
     """

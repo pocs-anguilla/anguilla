@@ -45,7 +45,7 @@ class MOQ(ObjectiveFunction):
       `I` for linear, `C` for convex or `J` for concave)
 
     Implements the convex quadratic benchmark functions defined in \
-    [2019:mo-quadratic-benchmark] and is based on the code from the \
+    :cite:`2019:mo-quadratic-benchmark` and is based on the code from the \
     supplementary material of the paper.
     """
 

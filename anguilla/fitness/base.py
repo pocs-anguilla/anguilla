@@ -475,3 +475,9 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
     def __repr__(self) -> str:
         """Return the name of the function."""
         return self.name
+
+
+__all__ = [
+    "ConstraintsHandler",
+    "ObjectiveFunction",
+]
