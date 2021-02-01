@@ -363,7 +363,7 @@ class MOCMA(Optimizer):
         return "({}+{})-MO-CMA-ES-{}".format(
             self._n_parents,
             self._n_offspring,
-            self._success_notion,
+            str(self._success_notion),
         )
 
     @property
