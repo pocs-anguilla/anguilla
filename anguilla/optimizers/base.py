@@ -4,12 +4,12 @@ import dataclasses
 
 import numpy as np
 
-from typing import Any, Callable, Iterable, Optional, Union, Tuple, TypedDict
+from typing import Any, Callable, Iterable, Optional, Union, Tuple
 
 try:
-    from typing import final
+    from typing import final, TypedDict
 except ImportError:
-    from typing_extensions import final
+    from typing_extensions import final, TypedDict
 
 # The following type definitions specify
 # the functions that the optimizers can handle with their fmin method
