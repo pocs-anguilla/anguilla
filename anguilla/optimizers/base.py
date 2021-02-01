@@ -4,19 +4,49 @@ import dataclasses
 
 import numpy as np
 
-from typing import Any, Callable, Iterable, Optional, Union, Tuple
+from typing import Any, Callable, Iterable, Optional, Union, Tuple, TypedDict
 
 try:
     from typing import final
 except ImportError:
     from typing_extensions import final
 
+# The following type definitions specify
+# the functions that the optimizers can handle with their fmin method
+FitnessValue = Union[float, np.ndarray]
+
+
+# There is no support for typing optional keys, so we define an union of the
+# possible dictionaries
+class FitnessKwgArgs1(TypedDict):
+    penalized_fitness: FitnessValue
+    evaluation_count: int
+
+
+class FitnessKwgArgs2(TypedDict):
+    penalized_fitness: FitnessValue
+
+
+class FitnessKwgArgs3(TypedDict):
+    evaluation_count: int
+
+
+FitnessKwgArgs = Union[FitnessKwgArgs1, FitnessKwgArgs2, FitnessKwgArgs3]
+
+# Supported return values of an optimizable function when using
+# the fmin method of an optimizer
 OptimizableFunctionResult = Union[
-    float,
-    np.ndarray,
-    Tuple[np.ndarray, np.ndarray, int],
-    Tuple[np.ndarray, dict],
+    # Standard case
+    FitnessValue,
+    # Fitness and penalized fitness
+    Tuple[FitnessValue, FitnessValue],
+    # Fitness, penalized fitness, and evaluation count
+    Tuple[FitnessValue, FitnessValue, int],
+    # Fitness and evaluation count (the last one given in a dictionary)
+    Tuple[FitnessValue, FitnessKwgArgs],
 ]
+
+# A function that can be optimized using the fmin method of an optimizer
 OptimizableFunction = Callable[[np.ndarray, Any], OptimizableFunctionResult]
 
 
@@ -70,7 +100,7 @@ class Optimizer(metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
     def stop(self) -> OptimizerStoppingConditions:
-        """Return if any conditions trigger a stop."""
+        """Return True if any conditions trigger a stop."""
         raise NotImplementedError()
 
     @property
@@ -86,7 +116,7 @@ class Optimizer(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def tell(self, *args: Any, **kwargs: Any) -> None:
-        """Pass offspring information to the optimizer."""
+        """Pass offspring fitness information to the optimizer."""
         raise NotImplementedError()
 
     def fmin(
