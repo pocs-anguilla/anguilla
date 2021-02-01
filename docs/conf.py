@@ -37,7 +37,7 @@ extensions = [
 ]
 
 # sphinxcontrib-bibtex options
-# bibtex_bibfiles = ["references.bib"]
+bibtex_bibfiles = ["references.bib"]
 bibtex_default_style = "unsrt"
 
 # Add any paths that contain templates here, relative to this directory.
@@ -46,7 +46,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "tests"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "tests/*"]
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -66,8 +66,15 @@ html_extra_path = ["robots.txt"]
 autoapi_type = "python"
 autoapi_dirs = ["../anguilla"]
 
-autodoc_default_options = {
-    "members": True,
-    "undoc-members": True,
-    "private-members": False,
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "show-inheritance",
+    "show-module-summary",
+    "special-members",
+    "imported-members",
+]
+
+autoapi_modules = {
+    "fitness": {"prune": True, "override": False, "output": "auto"}
 }

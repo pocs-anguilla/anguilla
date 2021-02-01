@@ -72,7 +72,7 @@ class CIGTAB1(CIGTAB):
 
     Notes
     -----
-    Implements the function as described in p. 15 of :cite:`2008:mo-cma-es`.
+    Implements the function as described in p. 15 of :cite:`2007:mo-cma-es`.
     """
 
     @property
@@ -97,7 +97,7 @@ class CIGTAB2(CIGTAB):
 
     Notes
     -----
-    Implements the function as described in p. 15 of :cite:`2008:mo-cma-es`.
+    Implements the function as described in p. 15 of :cite:`2007:mo-cma-es`.
     """
 
     @property

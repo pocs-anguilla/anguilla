@@ -25,4 +25,5 @@
 [25] T. Glasmachers. A fast incremental archive for multi-objective optimization. CoRR, 2016. URL: http://arxiv.org/abs/1604.01169, arXiv:1604.01169.
 [26] W. Jakob, J. Rhinelander, and D. Moldovan. Pybind11 – seamless operability between c++11 and python. 2017. https://github.com/pybind/pybind11.
 [27] N. Hansen, Y. Akimoto, and P. Baudis. CMA-ES/pycma on Github. Zenodo, DOI:10.5281/zenodo.2559634, February 2019. URL: https://doi.org/10.5281/zenodo.2559634, doi:10.5281/zenodo.2559634.
-[28] A. P. Guerreiro, C. M. Fonseca, and L. Paquete. The hypervolume indicator: problems and algorithms. 2020. arXiv:2005.00515.
+[28] T. Glasmachers. Challenges of convex quadratic bi-objective benchmark problems. In Proceedings of the Genetic and Evolutionary Computation Conference, GECCO '19, 559–567. New York, NY, USA, 2019. Association for Computing Machinery. URL: https://doi.org/10.1145/3321707.3321708, doi:10.1145/3321707.3321708.
+[29] A. P. Guerreiro, C. M. Fonseca, and L. Paquete. The hypervolume indicator: problems and algorithms. 2020. arXiv:2005.00515.

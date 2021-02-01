@@ -65,7 +65,7 @@ static constexpr const char *docstring = R"_(
     Notes
     -----
     Implements the HVC3D algorithm (see p. 22 of :cite:`2020:hypervolume`) \
-    presented by :cite:`2011-hypervolume-3d` for computing AllContributions. \
+    presented by :cite:`2011:hypervolume-3d` for computing AllContributions. \
     The implementation differs from the presentation of the reference paper \
     in that it assumes a minimization problem (instead of maximization). \
     It also incorporates some implementation details taken from \
