@@ -32,8 +32,7 @@ class VolumeBaseTestFunction:
             .absolute()
         )
         self.data = np.genfromtxt(str(path), delimiter=",")
-        # FIXME: avoid some tests failing sporadically in CI:
-        self.rng = np.random.default_rng(seed=0)
+        self.rng = np.random.default_rng()
 
     def get_fn(self) -> ObjectiveFunction:
         raise NotImplementedError()

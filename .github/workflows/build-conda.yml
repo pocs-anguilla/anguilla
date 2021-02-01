@@ -48,10 +48,12 @@ jobs:
       - name: Test
         run: |
           conda install pytest
-          pytest tests --import-mode=append --color=yes
+          pytest tests --import-mode=append --color=yes --ignore-glob=test_mocma.py
 
+      # Upload to Anaconda.org (until recipe is submitted to Conda-Forge).
       - name: Upload
         if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
-          anaconda login
           anaconda upload anguilla
