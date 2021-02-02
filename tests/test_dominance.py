@@ -116,6 +116,17 @@ class TestNonDominatedSort(unittest.TestCase):
         self.assertTrue(max_rank == max_rank_shuffled, "Max. rank")
         self.assertTrue(np.all(ranks[shuffled_idx] == ranks_shuffled), "Ranks")
 
+    def test_max_rank_parameter(self) -> None:
+        """Test the function with the max rank parameter."""
+        points = self._rng.normal(size=(151, 2))
+        ranks_nomax, _ = non_dominated_sort(points)
+        ranks_max, max_rank = non_dominated_sort(points, 2)
+        self.assertTrue(max_rank == 2, "Max. rank")
+        idx1 = ranks_nomax == 1
+        idx2 = ranks_nomax == 2
+        self.assertTrue(np.all(ranks_nomax[idx1] == ranks_max[idx1]), "Rank 1")
+        self.assertTrue(np.all(ranks_nomax[idx2] == ranks_max[idx2]), "Rank 2")
+
 
 class TestDominates(unittest.TestCase):
     """Test dominates."""
