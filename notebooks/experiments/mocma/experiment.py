@@ -1,8 +1,12 @@
 import os
+import csv
+import pathlib
 import dataclasses
 import time
 import multiprocessing
-from typing import Iterable, Optional, Any
+from typing import Iterable, Optional, Any, List, Union
+from functools import partial
+from itertools import product
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -114,7 +118,27 @@ class TrialParameters:
 
 
 @dataclasses.dataclass
+class LogParameters:
+    """Define parameters for a trial log.
+
+    Parameters
+    ----------
+    path
+        Base path to save the log file.
+    """
+
+    path: Union[str, pathlib.Path]
+    log_at: List[int]
+
+    def __post_init__(self):
+        if not isinstance(self.path, pathlib.Path):
+            self.path = pathlib.Path(self.path)
+
+
+@dataclasses.dataclass
 class TrialResult:
+    """Result of a trial run of the optimizer."""
+
     initial_fitness: np.ndarray
     final_fitness: np.ndarray
     volume: float
@@ -262,6 +286,159 @@ def run_trials(
         results = list(map(run_trial, params))
 
     return results
+
+
+def log_trial(
+    log_parameters: LogParameters, trial_parameters: TrialParameters
+) -> None:
+    """Run an independent trial of the optimizer and log to a CSV file.
+
+    Parameters
+    ----------
+    log_parameters
+        The paramters to configure the logging.
+    trial_parameters
+        The parameters to configure the trial run.
+    """
+    if trial_parameters.seed is None:
+        rng = np.random.default_rng()
+    else:
+        rng = np.random.default_rng(trial_parameters.seed)
+
+    if trial_parameters.fn_rng_seed is not None:
+        trial_parameters.fn_kwargs["rng"] = np.random.default_rng(
+            trial_parameters.fn_rng_seed
+        )
+    else:
+        trial_parameters.fn_kwargs["rng"] = rng
+
+    fn = trial_parameters.fn_cls(
+        *trial_parameters.fn_args, **trial_parameters.fn_kwargs
+    )
+
+    max_evaluations = max(*log_parameters.log_at)
+    if trial_parameters.max_evaluations is not None:
+        max_evaluations = max(
+            trial_parameters.max_evaluations,
+            max_evaluations,
+        )
+
+    parent_points = fn.random_points(
+        trial_parameters.n_parents,
+        region_bounds=trial_parameters.region_bounds,
+    )
+    parent_fitness = fn(parent_points)
+
+    optimizer = MOCMA(
+        parent_points,
+        parent_fitness,
+        n_offspring=trial_parameters.n_offspring,
+        rng=rng,
+        success_notion=trial_parameters.success_notion,
+        max_generations=trial_parameters.max_generations,
+        max_evaluations=max_evaluations,
+        target_indicator_value=trial_parameters.target_indicator_value,
+    )
+    if trial_parameters.reference is not None:
+        optimizer.indicator.reference = trial_parameters.reference
+    while not optimizer.stop.triggered:
+        points = optimizer.ask()
+        if fn.has_constraints:
+            fitness = fn.evaluate_with_penalty(points)
+            optimizer.tell(*fitness)
+        else:
+            fitness = fn(points)
+            optimizer.tell(fitness)
+        if optimizer.evaluation_count in log_parameters.log_at:
+            fname = log_parameters.path.joinpath(
+                "{}_{}_{}_{}.csv".format(
+                    optimizer.qualified_name,
+                    fn.name,
+                    trial_parameters.key,
+                    optimizer.evaluation_count,
+                )
+            )
+            np.savetxt(
+                str(fname.absolute()),
+                optimizer.best.fitness,
+                delimiter=",",
+            )
+
+
+def log_trials(
+    log_parameters: LogParameters,
+    trial_parameters: List[TrialParameters],
+    trial_slice: Optional[slice] = None,
+    seed: int = 0,
+    n_trials: int = 5,
+    n_processes: int = 5,
+) -> None:
+    """Run independent trials of MOCMA with a benchmark function and save \
+    fitness data to CSV files.
+
+    Parameters
+    ----------
+    log_parameters
+        Log parameters.
+    trial_parameters
+        Common parameters for the trials.
+    seed: optional
+        Base seed for the group of trials.
+    n_processes: optional
+        Number of CPUs to use.
+
+    Notes
+    -----
+    Generates seeds for each trial using `SeedSequence` from Numpy.
+    See ` this page for more information. <https://bit.ly/360PTDN>`_.
+    """
+    # Create seeds for independent trials
+    # See: https://numpy.org/doc/stable/reference/random/parallel.html
+    seed_sequence = np.random.SeedSequence(seed)
+    seeds = seed_sequence.spawn(n_trials * len(trial_parameters))
+
+    seeded_trial_parameters = list(
+        zip(product(trial_parameters, range(n_trials)), seeds)
+    )
+
+    if trial_slice is None:
+        trial_slice = slice(len(seeds))
+
+    params = list(
+        dataclasses.replace(data, seed=seed, key=trial_id + 1)
+        for (data, trial_id), seed in seeded_trial_parameters[trial_slice]
+    )
+
+    n_processes = min(n_processes, len(params))
+    cpu_count = os.cpu_count()
+    chunksize = 1
+    if n_processes > cpu_count:
+        print(
+            """Provided number of processes ({}) """
+            """exceeds available CPUs ({}).""".format(n_processes, cpu_count)
+        )
+        chunksize = (
+            n_processes // cpu_count + 1 if n_processes % cpu_count != 0 else 0
+        )
+        n_processes = cpu_count
+
+    if n_processes > 1:
+        print(
+            "Running {} trials using {} processes with chunk size of {}.".format(
+                n_trials,
+                n_processes,
+                chunksize,
+            )
+        )
+        with multiprocessing.Pool(processes=n_processes) as pool:
+            pool.map(
+                partial(log_trial, log_parameters), params, chunksize=chunksize
+            )
+    else:
+        print(
+            "Running {} trial(s) using sequential execution".format(n_trials)
+        )
+        map(partial(log_trial, log_parameters), params)
 
 
 def runtime_summary(results: Iterable[TrialResult]) -> None:
