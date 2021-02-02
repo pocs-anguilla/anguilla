@@ -267,4 +267,6 @@ def union_upper_bound(
 __all__ = [
     "log_mocma_trials",
     "union_upper_bound",
+    "MOCMATrialParameters",
+    "LogParameters",
 ]
