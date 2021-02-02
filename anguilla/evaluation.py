@@ -1,6 +1,7 @@
 """This module contains tools to conduct experiments for statistical \
 evaluation."""
 import os
+import time
 import pathlib
 import dataclasses
 import multiprocessing
@@ -13,6 +14,36 @@ import numpy as np
 from anguilla.fitness.base import ObjectiveFunction
 from anguilla.optimizers.mocma import MOCMA
 from anguilla.dominance import non_dominated_sort
+
+
+class StopWatch:
+    """Keep wall-clock time between operations."""
+
+    def __init__(self):
+        self._started_at = None
+        self._duration = 0
+
+    def start(self):
+        """Start the clock."""
+        self._started_at = time.perf_counter()
+
+    def stop(self):
+        """Stop the clock.
+
+        Raises
+        ------
+        ValueError
+            Stop was called before start.
+        """
+        if self._started_at is None:
+            raise ValueError("Stop called before start")
+        self._duration += time.perf_counter() - self._started_at
+        self._started_at = None
+
+    @property
+    def duration(self):
+        """Elapsed wall-clock time in seconds."""
+        return self._duration
 
 
 @dataclasses.dataclass
@@ -75,6 +106,9 @@ class LogParameters:
 
     path: Union[str, pathlib.Path]
     log_at: List[int]
+    log_fitness: bool = True
+    log_points: bool = False
+    log_step_sizes: bool = False
 
     def __post_init__(self):
         if not isinstance(self.path, pathlib.Path):
@@ -148,22 +182,36 @@ def log_mocma_trial(
             fitness = fn(points)
             optimizer.tell(fitness)
         if optimizer.evaluation_count in log_parameters.log_at:
-            fname = log_parameters.path.joinpath(
-                "{}_{}_{}_{}.csv".format(
-                    optimizer.qualified_name,
-                    fn.name,
-                    trial_parameters.key,
-                    optimizer.evaluation_count,
+            fname_base = "{}_{}_{}_{}".format(
+                fn.name,
+                optimizer.qualified_name,
+                trial_parameters.key,
+                optimizer.evaluation_count,
+            )
+            if log_parameters.log_fitness:
+                fname = f"{fname_base}.fitness.csv"
+                np.savetxt(
+                    str(log_parameters.path.joinpath(fname).absolute()),
+                    optimizer.best.fitness,
+                    delimiter=",",
                 )
-            )
-            np.savetxt(
-                str(fname.absolute()),
-                optimizer.best.fitness,
-                delimiter=",",
-            )
+            if log_parameters.log_points:
+                fname = f"{fname_base}.points.csv"
+                np.savetxt(
+                    str(log_parameters.path.joinpath(fname).absolute()),
+                    optimizer.best.points,
+                    delimiter=",",
+                )
+            if log_parameters.log_step_sizes:
+                fname = f"{fname_base}.step_sizes.csv"
+                np.savetxt(
+                    str(log_parameters.path.joinpath(fname).absolute()),
+                    optimizer.best.step_size,
+                    delimiter=",",
+                )
 
     return "{}-{}-{}".format(
-        optimizer.qualified_name, fn.qualified_name, trial_parameters.key
+        fn.name, optimizer.qualified_name, trial_parameters.key
     )
 
 
