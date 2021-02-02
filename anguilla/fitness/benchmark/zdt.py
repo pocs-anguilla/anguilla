@@ -365,3 +365,13 @@ class ZDT6(ObjectiveFunction):
         y1 = np.linspace(0.2807753191, 1.0, endpoint=True, num=num)
         y2 = 1.0 - y1 * y1
         return y1, y2
+
+
+__all__ = [
+    "ZDT1",
+    "ZDT2",
+    "ZDT3",
+    "ZDT4",
+    "ZDT4P",
+    "ZDT6",
+]

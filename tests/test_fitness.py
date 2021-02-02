@@ -206,6 +206,15 @@ class TestEllipsoid(BaseTestFunctionWithSamples, unittest.TestCase):
         return benchmark.Ellipsoid(rotate=False)
 
 
+class TestFON(BaseTestFunctionWithSamples, unittest.TestCase):
+    """Unit tests for the FON function."""
+
+    filename = "FON.csv"
+
+    def get_fn(self) -> benchmark.FON:
+        return benchmark.FON()
+
+
 class TestZDT1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT1 function."""
 

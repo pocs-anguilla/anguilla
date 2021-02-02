@@ -117,3 +117,9 @@ class CIGTAB2(CIGTAB):
             self._rotation_matrix_z = np.eye(self._n_dimensions)
 
         self._scaler_inv = self._a * self._a * self._n_dimensions
+
+
+__all__ = [
+    "CIGTAB1",
+    "CIGTAB2",
+]
