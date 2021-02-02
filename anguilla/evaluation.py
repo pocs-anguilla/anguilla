@@ -183,8 +183,8 @@ def log_mocma_trial(
             optimizer.tell(fitness)
         if optimizer.evaluation_count in log_parameters.log_at:
             fname_base = "{}_{}_{}_{}".format(
-                optimizer.qualified_name,
                 fn.name,
+                optimizer.qualified_name,
                 trial_parameters.key,
                 optimizer.evaluation_count,
             )
@@ -211,7 +211,7 @@ def log_mocma_trial(
                 )
 
     return "{}-{}-{}".format(
-        optimizer.qualified_name, fn.qualified_name, trial_parameters.key
+        fn.name, optimizer.qualified_name, trial_parameters.key
     )
 
 
