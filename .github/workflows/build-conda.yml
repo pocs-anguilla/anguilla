@@ -53,4 +53,4 @@ jobs:
       # Upload to Anaconda.org (until recipe is submitted to Conda-Forge).
       - name: Upload
         if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
-        run: anaconda -u anguilla -t ${{ secrets.ANACONDA_TOKEN }} upload ${CONDA_PREFIX}/conda-bld/ anguilla
+        run: anaconda -u anguilla -t ${{ secrets.ANACONDA_TOKEN }} upload ${CONDA_PREFIX}/conda-bld/
