@@ -337,8 +337,11 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         feasible_xs = self.closest_feasible(xs)
         tmp = xs - feasible_xs
         ys = self.__call__(feasible_xs)
+        if len(ys.shape) == 1:
+            ys = ys.reshape((1, len(ys)))
         if len(tmp.shape) != len(ys.shape):
-            raise RuntimeError("Shapes mismatch")
+            msg = "Shapes mismatch: {} and {}".format(tmp.shape, ys.shape)
+            raise RuntimeError(msg)
         if len(tmp.shape) > 1:
             penalized_ys = np.empty_like(ys)
             for i in range(len(tmp)):

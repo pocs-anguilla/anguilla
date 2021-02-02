@@ -35,8 +35,8 @@ class FON(ObjectiveFunction):
     def evaluate_single(self, x: np.ndarray) -> np.ndarray:
         self._pre_evaluate_single(x)
         value = np.zeros(self._n_objectives)
-        tmp1 = x - self._n_sqrt
-        tmp2 = x + self._n_sqrt
+        tmp1 = x - (1.0 / self._n_sqrt)
+        tmp2 = x + (1.0 / self._n_sqrt)
         value[0] = 1.0 - math.exp(-np.sum(tmp1 * tmp1))
         value[1] = 1.0 - math.exp(-np.sum(tmp2 * tmp2))
         return value
@@ -44,8 +44,8 @@ class FON(ObjectiveFunction):
     def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
         xs = self._pre_evaluate_multiple(xs)
         values = np.zeros((len(xs), self._n_objectives))
-        tmp1 = xs - self._n_sqrt
-        tmp2 = xs + self._n_sqrt
+        tmp1 = xs - (1.0 / self._n_sqrt)
+        tmp2 = xs + (1.0 / self._n_sqrt)
         values[:, 0] = 1.0 - np.exp(-np.sum(tmp1 * tmp1, axis=1))
         values[:, 1] = 1.0 - np.exp(-np.sum(tmp2 * tmp2, axis=1))
-        return values
+        return values if len(xs) > 1 else values[0]

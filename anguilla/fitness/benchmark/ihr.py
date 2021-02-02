@@ -227,3 +227,12 @@ class IHR6(IHR):
         tmp = value[0] / g
         value[1] = g * _h_f(1.0 - (tmp * tmp), abs(y[0]), self._y_max)
         return value
+
+
+__all__ = [
+    "IHR1",
+    "IHR2",
+    "IHR3",
+    "IHR4",
+    "IHR6",
+]

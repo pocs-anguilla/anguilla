@@ -115,6 +115,8 @@ class TrialParameters:
 
 @dataclasses.dataclass
 class TrialResult:
+    """Result of a trial run of the optimizer."""
+
     initial_fitness: np.ndarray
     final_fitness: np.ndarray
     volume: float

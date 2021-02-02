@@ -356,7 +356,7 @@ class MOCMA(Optimizer):
 
     @property
     def name(self) -> str:
-        return "MO-CMA-ES"
+        return "MO-CMA-ES-{}".format(str(self._success_notion))
 
     @property
     def qualified_name(self) -> str:
