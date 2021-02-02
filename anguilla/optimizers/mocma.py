@@ -126,10 +126,14 @@ class MOSolution(OptimizerSolution):
         The current Pareto set approximation.
     fitness
         The current Pareto front approximation.
+    step_size
+        The current Pareto set step sizes.
     """
 
     points: np.ndarray
     fitness: np.ndarray
+    # Useful for experimental studies
+    step_size: np.ndarray
 
 
 class SuccessNotion(enum.IntEnum):
@@ -391,6 +395,8 @@ class MOCMA(Optimizer):
         return MOSolution(
             points=np.copy(self._population.points[: self._n_parents]),
             fitness=np.copy(self._population.fitness[: self._n_parents]),
+            # Useful for experimental studies
+            step_size=np.copy(self._population.step_size[: self._n_parents]),
         )
 
     @property
