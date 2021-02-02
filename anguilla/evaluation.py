@@ -83,7 +83,7 @@ class LogParameters:
 
 def log_mocma_trial(
     log_parameters: LogParameters, trial_parameters: MOCMATrialParameters
-) -> None:
+) -> str:
     """Run an independent trial of the optimizer and log to a CSV file.
 
     Parameters
@@ -92,6 +92,11 @@ def log_mocma_trial(
         The paramters to configure the logging.
     trial_parameters
         The parameters to configure the trial run.
+
+    Returns
+    -------
+    str
+        A string identifying the job.
     """
     if trial_parameters.seed is None:
         rng = np.random.default_rng()
@@ -157,11 +162,16 @@ def log_mocma_trial(
                 delimiter=",",
             )
 
+    return "{}-{}-{}".format(
+        optimizer.qualified_name, fn.qualified_name, trial_parameters.key
+    )
+
 
 def log_mocma_trials(
     log_parameters: LogParameters,
     trial_parameters: List[MOCMATrialParameters],
     trial_slice: Optional[slice] = None,
+    *,
     seed: int = 0,
     n_trials: int = 5,
     n_processes: int = 5,
@@ -194,6 +204,8 @@ def log_mocma_trials(
         zip(product(trial_parameters, range(n_trials)), seeds)
     )
 
+    assert len(seeded_trial_parameters) == len(seeds)
+
     if trial_slice is None:
         trial_slice = slice(len(seeds))
 
@@ -202,38 +214,34 @@ def log_mocma_trials(
         for (data, trial_id), seed in seeded_trial_parameters[trial_slice]
     )
 
-    n_processes = min(n_processes, len(params))
-    cpu_count = os.cpu_count()
+    n_jobs = len(params)
+    n_processes = min(n_processes, n_jobs, os.cpu_count())
     chunksize = 1
-    if n_processes > cpu_count:
-        print(
-            """Provided number of processes ({}) """
-            """exceeds available CPUs ({}).""".format(n_processes, cpu_count)
+    if n_processes > 1:
+        chunksize = (n_jobs // n_processes) + (
+            1 if n_jobs % n_processes != 0 else 0
         )
-        chunksize = (
-            n_processes // cpu_count + 1 if n_processes % cpu_count != 0 else 0
-        )
-        n_processes = cpu_count
+
+    print("Number of jobs: {}\n".format(n_jobs))
+    print("Number of processes: {}\n".format(n_processes))
+    print("Chunksize: {}\n".format(chunksize))
+    print("First job: {}\n".format(params[0]))
+    print("Last job: {}\n".format(params[-1]))
 
     if n_processes > 1:
-        print(
-            "Running {} trials using {} processes with chunk size of {}.".format(
-                n_trials,
-                n_processes,
-                chunksize,
-            )
-        )
+        print("Running {} job(s) using parallel execution.".format(n_jobs))
         with multiprocessing.Pool(processes=n_processes) as pool:
-            pool.map(
+            results = pool.map(
                 partial(log_mocma_trial, log_parameters),
                 params,
                 chunksize=chunksize,
             )
     else:
-        print(
-            "Running {} trial(s) using sequential execution".format(n_trials)
-        )
-        map(partial(log_mocma_trial, log_parameters), params)
+        print("Running {} job(s) using sequential execution".format(n_jobs))
+        results = map(partial(log_mocma_trial, log_parameters), params)
+
+    for result in results:
+        print(result)
 
 
 def union_upper_bound(
