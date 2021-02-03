@@ -1,0 +1,27 @@
+# The contributions were generated using the reference implementation
+# by A.P. Guerreiro, available at (https://github.com/apguerreiro/HVC).
+# For example: ```./hvc -P 1 -f 0 -r "11. 11. 1."```
+# In the 2-D case, the z-component of the points is set to zero
+# and the z-component of the reference point is set to one.
+# The first element is the volume indicator, the rest are the contributions.
+120.196858
+1.863801385
+0.00168470095682849
+0.00170910832311055
+0.00172154028068039
+0.00172883026240789
+0.00173797586614988
+0.00173627161545464
+0.00173340027632202
+0.00172884111943028
+0.00172155345986402
+0.00173627444452862
+0.00173339448504461
+0.00173878102755942
+0.00173878157917406
+0.00173798094547239
+0.00170912130567619
+0.00168472138511169
+0.00161849124252081
+0.00161847033054507
+1.86380803500001
