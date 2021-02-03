@@ -59,7 +59,8 @@ class MOQ(ObjectiveFunction):
         rng: np.random.Generator = None,
     ) -> None:
         if PROBLEM_NAME_FORMAT.match(name) is None:
-            raise ValueError("Invalid value for name")
+            msg = 'Invalid value for name: "{}"'.format(name)
+            raise ValueError(msg)
         self._name = name
         self._category = int(name[0])
         self._aligned = name[1] == "|"
