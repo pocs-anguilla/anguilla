@@ -146,7 +146,7 @@ def log_mocma_trial(
         A string identifying the job.
     """
     if not log_parameters.path.exists():
-        os.mkdir(log_parameters.path)
+        os.makedirs(log_parameters.path.resolve(), exist_ok=True)
     if trial_parameters.seed is None:
         rng = np.random.default_rng()
     else:
