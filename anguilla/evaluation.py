@@ -132,6 +132,8 @@ def log_mocma_trial(
     str
         A string identifying the job.
     """
+    if not log_parameters.path.exists():
+        os.mkdir(log_parameters.path)
     if trial_parameters.seed is None:
         rng = np.random.default_rng()
     else:
@@ -223,6 +225,7 @@ def log_mocma_trials(
     seed: int = 0,
     n_trials: int = 5,
     n_processes: int = 5,
+    chunksize: Optional[int] = None,
 ) -> None:
     """Run independent trials of MOCMA with a benchmark function and save \
     fitness data to CSV files.
@@ -237,6 +240,8 @@ def log_mocma_trials(
         Base seed for the group of trials.
     n_processes: optional
         Number of CPUs to use.
+    chunksize: optional
+        Chunksize to use.
 
     Notes
     -----
@@ -252,41 +257,41 @@ def log_mocma_trials(
         zip(product(trial_parameters, range(n_trials)), seeds)
     )
 
-    assert len(seeded_trial_parameters) == len(seeds)
-
     if trial_slice is None:
         trial_slice = slice(len(seeds))
 
-    params = list(
+    jobs = list(
         dataclasses.replace(data, seed=seed, key=trial_id + 1)
         for (data, trial_id), seed in seeded_trial_parameters[trial_slice]
     )
 
-    n_jobs = len(params)
+    n_jobs = len(jobs)
     n_processes = min(n_processes, n_jobs, os.cpu_count())
-    chunksize = 1
-    if n_processes > 1:
-        chunksize = (n_jobs // n_processes) + (
-            1 if n_jobs % n_processes != 0 else 0
-        )
-
+    if chunksize is None:
+        chunksize = 1
+        if n_processes > 1:
+            chunksize = (n_jobs // n_processes) + (
+                1 if n_jobs % n_processes != 0 else 0
+            )
+    if chunksize > n_jobs:
+        chunksize = 1
     print("Number of jobs: {}\n".format(n_jobs))
     print("Number of processes: {}\n".format(n_processes))
     print("Chunksize: {}\n".format(chunksize))
-    print("First job: {}\n".format(params[0]))
-    print("Last job: {}\n".format(params[-1]))
+    print("First job: {}\n".format(jobs[0]))
+    print("Last job: {}\n".format(jobs[-1]))
 
     if n_processes > 1:
         print("Running {} job(s) using parallel execution.".format(n_jobs))
         with multiprocessing.Pool(processes=n_processes) as pool:
             results = pool.map(
                 partial(log_mocma_trial, log_parameters),
-                params,
+                jobs,
                 chunksize=chunksize,
             )
     else:
         print("Running {} job(s) using sequential execution".format(n_jobs))
-        results = map(partial(log_mocma_trial, log_parameters), params)
+        results = map(partial(log_mocma_trial, log_parameters), jobs)
 
     for result in results:
         print(result)
@@ -325,4 +330,5 @@ __all__ = [
     "union_upper_bound",
     "MOCMATrialParameters",
     "LogParameters",
+    "StopWatch",
 ]
