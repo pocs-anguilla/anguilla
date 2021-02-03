@@ -70,7 +70,7 @@ class TestCliff3D1(HVBaseTestFunction, unittest.TestCase):
     out_filename = "CLIFF3D_1_OUT.csv"
 
 
-class TestOther:
+class TestOther(unittest.TestCase):
     """Other HV unit tests."""
 
     def test_2d_3d(self) -> None:
