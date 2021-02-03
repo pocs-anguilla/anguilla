@@ -31,17 +31,17 @@ except ImportError:
 
 
 def calculate(
-    ps: np.ndarray,
-    ref_p: Optional[np.ndarray] = None,
+    points: np.ndarray,
+    reference: Optional[np.ndarray] = None,
     use_btree: bool = True,
 ) -> float:
     """Compute the exact hypervolume indicator for a set of k-D points.
 
     Parameters
     ----------
-    ps
+    points
         The point set of mutually non-dominated points.
-    ref_p: optional
+    reference: optional
         The reference point. Otherwise assumed to be the origin.
     ds: optional
         The data structure to use for implementing the sweeping structure.
@@ -58,16 +58,16 @@ def calculate(
     dimensionality of the points, as done in :cite:`2008:shark`.
 
     """
-    if len(ps.shape) == 1:
-        ps = np.array([ps])
-    d = len(ps[0])
+    if len(points.shape) == 1:
+        points = np.array([points])
+    d = len(points[0])
     if d == 2:
-        return hv2d_f8(ps, ref_p)
+        return hv2d_f8(points, reference)
     elif d == 3:
-        return hv3d_f8(ps, ref_p, use_btree)
+        return hv3d_f8(points, reference, use_btree)
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
-            shark_calculate(ps, ref_p)
+            shark_calculate(points, reference)
         else:
             raise NotImplementedError()
     else:
@@ -76,8 +76,8 @@ def calculate(
 
 
 def contributions(
-    ps: np.ndarray,
-    ref_p: Optional[np.ndarray] = None,
+    points: np.ndarray,
+    reference: Optional[np.ndarray] = None,
     use_btree: bool = True,
     non_dominated: bool = True,
 ) -> np.ndarray:
@@ -85,9 +85,9 @@ def contributions(
 
     Parameters
     ----------
-    ps
+    points
         The set of points.
-    ref_p: optional
+    reference: optional
         The reference point.
     use_btree
         Only relevant for the 3-D implementation.
@@ -112,14 +112,14 @@ def contributions(
     Chooses which of the available implementations to use, based on the \
     dimensionality of the points, as done in :cite:`2008:shark`.
     """
-    d = len(ps[0])
+    d = len(points[0])
     if d == 2:
-        return hvc2d_f8(ps, ref_p, non_dominated)
+        return hvc2d_f8(points, reference, non_dominated)
     elif d == 3:
-        return hvc3d_f8(ps, ref_p, use_btree)
+        return hvc3d_f8(points, reference, use_btree)
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
-            shark_contributions(ps, ref_p)
+            shark_contributions(points, reference)
         else:
             raise NotImplementedError()
     else:
@@ -128,17 +128,17 @@ def contributions(
 
 
 def contributions_naive(
-    ps: np.ndarray,
-    ref_p: Optional[np.ndarray] = None,
+    points: np.ndarray,
+    reference: Optional[np.ndarray] = None,
     duplicates_possible: bool = True,
 ) -> np.ndarray:
     """Compute the hypervolume contribution for a set of points.
 
     Parameters
     ----------
-    ps
+    points
         The set of mutually non-dominated points.
-    ref_p: optional
+    reference: optional
         The reference point. Otherwise assumed to be the origin.
 
     Returns
@@ -159,29 +159,29 @@ def contributions_naive(
     Provided only for testing the other implementation, as done in \
     :cite:`2008:shark`.
     """
-    n = len(ps)
+    n = len(points)
 
     if n == 0:
         return np.empty(0)
 
-    if ref_p is None:
-        ref_p = np.zeros_like(ps[0])
+    if reference is None:
+        reference = np.zeros_like(points[0])
 
-    vol = calculate(ps, ref_p)
+    vol = calculate(points, reference)
 
     unique = []
     mappings = []
 
     sorted_idx = np.empty(0)
     if duplicates_possible:
-        sorted_idx = np.argsort(ps[:, 0])
-        ps = ps[sorted_idx, :]
+        sorted_idx = np.argsort(points[:, 0])
+        points = points[sorted_idx, :]
         prev_index = 0
-        prev_p = ps[prev_index]
+        prev_p = points[prev_index]
         unique.append(prev_index)
 
         for index in range(1, n):
-            p = ps[index]
+            p = points[index]
             if np.array_equiv(prev_p, p):
                 mappings.append((prev_index, index))
             else:
@@ -189,12 +189,12 @@ def contributions_naive(
             prev_index = index
             prev_p = p
 
-        ps = ps[unique]
+        points = points[unique]
 
-    tmp = np.zeros(len(ps))
-    for i in range(len(ps)):
-        qs = np.delete(ps, i, 0)
-        tmp[i] = vol - calculate(qs, ref_p)
+    tmp = np.zeros(len(points))
+    for i in range(len(points)):
+        qs = np.delete(points, i, 0)
+        tmp[i] = vol - calculate(qs, reference)
 
     if duplicates_possible:
         contribution = np.zeros(n)
