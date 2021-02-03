@@ -32,32 +32,6 @@ template <typename ObjectiveFunction, typename Optimizer, bool individualBased>
 class RunTrials {
    public:
     static void run(int mu, double initialSigma, int nObjectives, int nVariables, int nTrials, RealVector *reference = nullptr) {
-        std::cout.setf(std::ios_base::scientific);
-        std::cout.precision(10);
-        std::string nameSuffix = individualBased ? "I" : "P";
-        {
-            ObjectiveFunction fn;
-            Optimizer opt;
-            const auto optName = name(opt.name(), mu, individualBased);
-            const auto filename = boost::str(boost::format("%1%.meta.txt") % optName);
-            std::ofstream metaFile;
-            metaFile.open(filename);
-            metaFile << "mu=" << mu << "\n";
-            metaFile << "nVariables=" << nVariables << "\n";
-            metaFile << "nTrials=" << nTrials << "\n";
-            metaFile << "nObjectives" << nObjectives << "\n";
-            if (reference) {
-                metaFile << "reference=";
-                for (int i = 0; i < nObjectives; ++i) {
-                    metaFile << reference[i] << ",";
-                }
-                metaFile << "\n";
-            } else {
-                metaFile << "reference=None\n";
-            }
-            metaFile.close();
-        }
-
         for (auto t = 0; t < nTrials; ++t) {
             Optimizer opt;
             ObjectiveFunction fn(nVariables);
