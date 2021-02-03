@@ -180,7 +180,7 @@ template <typename T, class Map>
     }
 
     std::vector<__hvc3d::IndexedPoint3D<T>> points;
-    points.reserve(n + 1U);
+    points.reserve(n);
     for (std::size_t i = 0U; i < n; ++i) {
         const auto pX = pointsR(i, 0);
         const auto pY = pointsR(i, 1);
@@ -194,8 +194,6 @@ template <typename T, class Map>
     }
     std::sort(points.begin(), points.end(),
               [](auto const &l, auto const &r) { return l.pZ < r.pZ; });
-    // Add dummy point that will close the boxes, as in the paper.
-    points.emplace_back(lowest, lowest, refZ, n);
 
     return __hvc3d::contributions<T, Map>(points, refX, refY, refZ);
 }
@@ -218,10 +216,8 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
     // Here we allocate memory for the contributions, initialized to zero,
     // plus an additional element for both sentinel nodes.
     const std::size_t n = points.size();
-    auto contribution = new T[n + 2U]{0.0};
-    contribution[n - 1U] = NaN;
+    auto contribution = new T[n + 1U]{0.0};
     contribution[n] = NaN;
-    contribution[n + 1U] = NaN;
 
     py::capsule freeContributionsMemory(contribution, [](void *ptr) {
         std::unique_ptr<T[]>(static_cast<decltype(contribution)>(ptr));
@@ -230,7 +226,7 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
     // We work on a vector but will return a Numpy array.
     // It uses the vector's memory, which will be freed once the array
     // goes out of scope (handled by the py::capsule).
-    const auto output = py::array_t<T>({n - 1U},     // shape
+    const auto output = py::array_t<T>({n},          // shape
                                        {sizeof(T)},  // stride
                                        contribution,
                                        freeContributionsMemory);
@@ -245,7 +241,7 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
 #endif
 
     // Create the lists of boxes.
-    std::vector<std::deque<Box3D<T>>> boxLists(n + 2U);
+    std::vector<std::deque<Box3D<T>>> boxLists(n + 1U);
 
     // A working buffer for tracking dominated nodes.
     std::vector<DominatedData<T>> dominated;
@@ -254,11 +250,11 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
         const auto [pX, pY, pZ, index] = points[0U];
         boxLists[index].emplace_front(pX, pY, pZ, refX, refY, NaN);
         constexpr auto lowest = std::numeric_limits<T>::lowest();
-        // Add first point.
-        front.try_emplace(pX, pY, index);
         // Add the sentinels.
         front.try_emplace(lowest, refY, n);
-        front.try_emplace(refX, lowest, n + 1U);
+        front.try_emplace(refX, lowest, n);
+        // Add first point.
+        front.try_emplace(pX, pY, index);
     }
 
     // Process all the points.
@@ -336,7 +332,7 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
         }
 
         // (d) Process "right" region (symmetric to the paper).
-        if (nodeRight != front.end()) {
+        {
             T volume = 0.0;
             const T rightX_0 = nodeRight->first;
             T rightX = rightX_0;
@@ -383,6 +379,16 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
 
         // (e) insert point
         front.try_emplace(hintNode, pX, pY, index);
+    }
+
+    // Close boxes of remaining points, as in Shark.
+    for (auto it = front.begin(), end = front.end(); it != end; ++it) {
+        const auto index = it->second.index;
+        auto &boxes = boxLists[index];
+        for (auto &box : boxes) {
+            box.uZ = refZ;
+            contribution[index] += box.volume();
+        }
     }
 
     return output;

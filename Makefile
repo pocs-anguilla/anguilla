@@ -30,7 +30,7 @@ cxx_extension_debug: CMakeLists.txt
 cxx_experiments: notebooks/shark/exploration/CMakeLists.txt
 	mkdir -p _cxx_experiments_build
 	cd _cxx_experiments_build ;\
-	set -x; cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/clang-cxx14-libstdcxx.cmake -DCMAKE_BUILD_TYPE=Release ../notebooks/shark/exploration
+	set -x; cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/clang-cxx17-libstdcxx.cmake -DCMAKE_BUILD_TYPE=Release ../notebooks/shark/exploration
 	make -C _cxx_experiments_build -j $(nproc)
 
 test:

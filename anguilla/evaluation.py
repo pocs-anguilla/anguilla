@@ -1,6 +1,7 @@
 """This module contains tools to conduct experiments for statistical \
 evaluation."""
 import os
+import platform
 import time
 import pathlib
 import dataclasses
@@ -11,6 +12,7 @@ from typing import Iterable, Optional, List, Union
 
 import numpy as np
 
+import anguilla
 from anguilla.fitness.base import ObjectiveFunction
 from anguilla.optimizers.mocma import MOCMA
 from anguilla.dominance import non_dominated_sort
@@ -42,7 +44,7 @@ class StopWatch:
 
     @property
     def duration(self):
-        """Elapsed wall-clock time in seconds."""
+        """Cumulative elapsed wall-clock time in seconds between stops."""
         return self._duration
 
 
@@ -102,6 +104,16 @@ class LogParameters:
     ----------
     path
         Base path to save the log file.
+    log_at
+        Evaluation counts at which to log.
+    log_fitness: optional
+        True if objective points should be logged.
+    log_points: optional
+        True if search points should be logged.
+    log_step_sizes: optional
+        True if step sizes should be logged.
+    cpu_info: optional
+        String with CPU information metadata.
     """
 
     path: Union[str, pathlib.Path]
@@ -109,6 +121,7 @@ class LogParameters:
     log_fitness: bool = True
     log_points: bool = False
     log_step_sizes: bool = False
+    cpu_info: Optional[str] = None
 
     def __post_init__(self):
         if not isinstance(self.path, pathlib.Path):
@@ -132,6 +145,8 @@ def log_mocma_trial(
     str
         A string identifying the job.
     """
+    if not log_parameters.path.exists():
+        os.mkdir(log_parameters.path)
     if trial_parameters.seed is None:
         rng = np.random.default_rng()
     else:
@@ -173,6 +188,51 @@ def log_mocma_trial(
     )
     if trial_parameters.reference is not None:
         optimizer.indicator.reference = trial_parameters.reference
+
+    cpu_info = log_parameters.cpu_info
+    uname = platform.uname()
+    os_info = "{} {}".format(uname.system, uname.release)
+    machine_info = uname.machine
+    if cpu_info is not None:
+        machine_info = cpu_info
+    python_info = "{}.{}.{}".format(*platform.python_version_tuple())
+
+    header = (
+        """Generated with {} {}, {} {}\n"""
+        """Machine: {}\n"""
+        """OS: {}\n"""
+        """Python: {}\n"""
+        """Optimizer: {}\n"""
+        """Function: {}: {} -> {}\n"""
+        """Initial step size: {}\n"""
+        """Reference point: {}\n"""
+        """Trial seed: entropy={}, spawn_key={}\n"""
+        """Function-specific seed: {}\n"""
+        """Trial: {}\n"""
+        """Evaluations: {{}}\n"""
+        """Elapsed time (wall-clock): {{:.2f}}s\n"""
+        """Observation: {{}}\n""".format(
+            anguilla.__name__,
+            anguilla.__version__,
+            np.__name__,
+            np.__version__,
+            machine_info,
+            os_info,
+            python_info,
+            optimizer.qualified_name,
+            fn.qualified_name,
+            fn.n_dimensions,
+            fn.n_objectives,
+            trial_parameters.initial_step_size,
+            trial_parameters.reference,
+            trial_parameters.seed.entropy,
+            trial_parameters.seed.spawn_key,
+            trial_parameters.fn_rng_seed,
+            trial_parameters.key,
+        )
+    )
+    sw = StopWatch()
+    sw.start()
     while not optimizer.stop.triggered:
         points = optimizer.ask()
         if fn.has_constraints:
@@ -182,6 +242,7 @@ def log_mocma_trial(
             fitness = fn(points)
             optimizer.tell(fitness)
         if optimizer.evaluation_count in log_parameters.log_at:
+            sw.stop()
             fname_base = "{}_{}_{}_{}".format(
                 fn.name,
                 optimizer.qualified_name,
@@ -194,6 +255,11 @@ def log_mocma_trial(
                     str(log_parameters.path.joinpath(fname).absolute()),
                     optimizer.best.fitness,
                     delimiter=",",
+                    header=header.format(
+                        optimizer.evaluation_count,
+                        sw.duration,
+                        "fitness",
+                    ),
                 )
             if log_parameters.log_points:
                 fname = f"{fname_base}.points.csv"
@@ -201,6 +267,11 @@ def log_mocma_trial(
                     str(log_parameters.path.joinpath(fname).absolute()),
                     optimizer.best.points,
                     delimiter=",",
+                    header=header.format(
+                        optimizer.evaluation_count,
+                        sw.duration,
+                        "point",
+                    ),
                 )
             if log_parameters.log_step_sizes:
                 fname = f"{fname_base}.step_sizes.csv"
@@ -208,7 +279,13 @@ def log_mocma_trial(
                     str(log_parameters.path.joinpath(fname).absolute()),
                     optimizer.best.step_size,
                     delimiter=",",
+                    header=header.format(
+                        optimizer.evaluation_count,
+                        sw.duration,
+                        "step_size",
+                    ),
                 )
+            sw.start()
 
     return "{}-{}-{}".format(
         fn.name, optimizer.qualified_name, trial_parameters.key
@@ -223,6 +300,7 @@ def log_mocma_trials(
     seed: int = 0,
     n_trials: int = 5,
     n_processes: int = 5,
+    chunksize: Optional[int] = None,
 ) -> None:
     """Run independent trials of MOCMA with a benchmark function and save \
     fitness data to CSV files.
@@ -237,6 +315,8 @@ def log_mocma_trials(
         Base seed for the group of trials.
     n_processes: optional
         Number of CPUs to use.
+    chunksize: optional
+        Chunksize to use.
 
     Notes
     -----
@@ -252,41 +332,41 @@ def log_mocma_trials(
         zip(product(trial_parameters, range(n_trials)), seeds)
     )
 
-    assert len(seeded_trial_parameters) == len(seeds)
-
     if trial_slice is None:
         trial_slice = slice(len(seeds))
 
-    params = list(
+    jobs = list(
         dataclasses.replace(data, seed=seed, key=trial_id + 1)
         for (data, trial_id), seed in seeded_trial_parameters[trial_slice]
     )
 
-    n_jobs = len(params)
+    n_jobs = len(jobs)
     n_processes = min(n_processes, n_jobs, os.cpu_count())
-    chunksize = 1
-    if n_processes > 1:
-        chunksize = (n_jobs // n_processes) + (
-            1 if n_jobs % n_processes != 0 else 0
-        )
-
+    if chunksize is None:
+        chunksize = 1
+        if n_processes > 1:
+            chunksize = (n_jobs // n_processes) + (
+                1 if n_jobs % n_processes != 0 else 0
+            )
+    if chunksize > n_jobs:
+        chunksize = 1
     print("Number of jobs: {}\n".format(n_jobs))
     print("Number of processes: {}\n".format(n_processes))
     print("Chunksize: {}\n".format(chunksize))
-    print("First job: {}\n".format(params[0]))
-    print("Last job: {}\n".format(params[-1]))
+    print("First job: {}\n".format(jobs[0]))
+    print("Last job: {}\n".format(jobs[-1]))
 
     if n_processes > 1:
         print("Running {} job(s) using parallel execution.".format(n_jobs))
         with multiprocessing.Pool(processes=n_processes) as pool:
             results = pool.map(
                 partial(log_mocma_trial, log_parameters),
-                params,
+                jobs,
                 chunksize=chunksize,
             )
     else:
         print("Running {} job(s) using sequential execution".format(n_jobs))
-        results = map(partial(log_mocma_trial, log_parameters), params)
+        results = map(partial(log_mocma_trial, log_parameters), jobs)
 
     for result in results:
         print(result)
@@ -325,4 +405,5 @@ __all__ = [
     "union_upper_bound",
     "MOCMATrialParameters",
     "LogParameters",
+    "StopWatch",
 ]

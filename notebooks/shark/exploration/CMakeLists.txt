@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
 
 project(experiments)
 
@@ -21,15 +21,16 @@ find_package(Boost REQUIRED COMPONENTS
 set(EXP1_SRC
   src/experiment1.cpp
 )
+set(EXP2_SRC
+  src/experiment2.cpp
+)
 set(MOCMA_SRC
   src/mocma.cpp
   src/moq/benchmarks.cpp
 )
-
 set(FITNESS_SRC
   src/fitness.cpp
 )
-
 set(EXP_MQO_SRC
   src/moq/experiments.cpp
   src/moq/benchmarks.cpp
@@ -40,6 +41,11 @@ add_executable(experiment1 ${EXP1_SRC})
 target_link_libraries(experiment1 PRIVATE ${SHARK_LIBRARIES})
 target_link_libraries(experiment1 PRIVATE ${Boost_LIBRARIES})
 target_include_directories(experiment1 PRIVATE include)
+
+add_executable(experiment2 ${EXP2_SRC})
+target_link_libraries(experiment2 PRIVATE ${SHARK_LIBRARIES})
+target_link_libraries(experiment2 PRIVATE ${Boost_LIBRARIES})
+target_include_directories(experiment2 PRIVATE include)
 
 add_executable(experiment_moq ${EXP_MQO_SRC})
 target_link_libraries(experiment_moq PRIVATE ${SHARK_LIBRARIES})
