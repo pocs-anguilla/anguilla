@@ -1,6 +1,7 @@
 """This module contains tools to conduct experiments for statistical \
 evaluation."""
 import os
+import platform
 import time
 import pathlib
 import dataclasses
@@ -11,6 +12,7 @@ from typing import Iterable, Optional, List, Union
 
 import numpy as np
 
+import anguilla
 from anguilla.fitness.base import ObjectiveFunction
 from anguilla.optimizers.mocma import MOCMA
 from anguilla.dominance import non_dominated_sort
@@ -42,7 +44,7 @@ class StopWatch:
 
     @property
     def duration(self):
-        """Elapsed wall-clock time in seconds."""
+        """Cumulative elapsed wall-clock time in seconds between stops."""
         return self._duration
 
 
@@ -102,6 +104,16 @@ class LogParameters:
     ----------
     path
         Base path to save the log file.
+    log_at
+        Evaluation counts at which to log.
+    log_fitness: optional
+        True if objective points should be logged.
+    log_points: optional
+        True if search points should be logged.
+    log_step_sizes: optional
+        True if step sizes should be logged.
+    cpu_info: optional
+        String with CPU information metadata.
     """
 
     path: Union[str, pathlib.Path]
@@ -109,6 +121,7 @@ class LogParameters:
     log_fitness: bool = True
     log_points: bool = False
     log_step_sizes: bool = False
+    cpu_info: Optional[str] = None
 
     def __post_init__(self):
         if not isinstance(self.path, pathlib.Path):
@@ -175,6 +188,51 @@ def log_mocma_trial(
     )
     if trial_parameters.reference is not None:
         optimizer.indicator.reference = trial_parameters.reference
+
+    cpu_info = log_parameters.cpu_info
+    uname = platform.uname()
+    os_info = "{} {}".format(uname.system, uname.release)
+    machine_info = uname.machine
+    if cpu_info is not None:
+        machine_info = cpu_info
+    python_info = "{}.{}.{}".format(*platform.python_version_tuple())
+
+    header = (
+        """Generated with {} {}, {} {}\n"""
+        """Machine: {}\n"""
+        """OS: {}\n"""
+        """Python: {}\n"""
+        """Optimizer: {}\n"""
+        """Function: {}: {} -> {}\n"""
+        """Initial step size: {}\n"""
+        """Reference point: {}\n"""
+        """Trial seed: entropy={}, spawn_key={}\n"""
+        """Function-specific seed: {}\n"""
+        """Trial: {}\n"""
+        """Evaluations: {{}}\n"""
+        """Elapsed time (wall-clock): {{:.2f}}s\n"""
+        """Observation: {{}}\n""".format(
+            anguilla.__name__,
+            anguilla.__version__,
+            np.__name__,
+            np.__version__,
+            machine_info,
+            os_info,
+            python_info,
+            optimizer.qualified_name,
+            fn.qualified_name,
+            fn.n_dimensions,
+            fn.n_objectives,
+            trial_parameters.initial_step_size,
+            trial_parameters.reference,
+            trial_parameters.seed.entropy,
+            trial_parameters.seed.spawn_key,
+            trial_parameters.fn_rng_seed,
+            trial_parameters.key,
+        )
+    )
+    sw = StopWatch()
+    sw.start()
     while not optimizer.stop.triggered:
         points = optimizer.ask()
         if fn.has_constraints:
@@ -184,6 +242,7 @@ def log_mocma_trial(
             fitness = fn(points)
             optimizer.tell(fitness)
         if optimizer.evaluation_count in log_parameters.log_at:
+            sw.stop()
             fname_base = "{}_{}_{}_{}".format(
                 fn.name,
                 optimizer.qualified_name,
@@ -196,6 +255,11 @@ def log_mocma_trial(
                     str(log_parameters.path.joinpath(fname).absolute()),
                     optimizer.best.fitness,
                     delimiter=",",
+                    header=header.format(
+                        optimizer.evaluation_count,
+                        sw.duration,
+                        "fitness",
+                    ),
                 )
             if log_parameters.log_points:
                 fname = f"{fname_base}.points.csv"
@@ -203,6 +267,11 @@ def log_mocma_trial(
                     str(log_parameters.path.joinpath(fname).absolute()),
                     optimizer.best.points,
                     delimiter=",",
+                    header=header.format(
+                        optimizer.evaluation_count,
+                        sw.duration,
+                        "point",
+                    ),
                 )
             if log_parameters.log_step_sizes:
                 fname = f"{fname_base}.step_sizes.csv"
@@ -210,7 +279,13 @@ def log_mocma_trial(
                     str(log_parameters.path.joinpath(fname).absolute()),
                     optimizer.best.step_size,
                     delimiter=",",
+                    header=header.format(
+                        optimizer.evaluation_count,
+                        sw.duration,
+                        "step_size",
+                    ),
                 )
+            sw.start()
 
     return "{}-{}-{}".format(
         fn.name, optimizer.qualified_name, trial_parameters.key
