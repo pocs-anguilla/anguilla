@@ -63,6 +63,13 @@ class TestSharkTC3D(HVBaseTestFunction, unittest.TestCase):
     out_filename = "SHARK_3D_OUT.csv"
 
 
+class TestCliff3D1(HVBaseTestFunction, unittest.TestCase):
+    """Random points using Cliff3D."""
+
+    in_filename = "CLIFF3D_1_IN.csv"
+    out_filename = "CLIFF3D_1_OUT.csv"
+
+
 class TestOther:
     """Other HV unit tests."""
 
