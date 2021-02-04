@@ -1,3 +1,4 @@
+========
 Anguilla
 ========
 |conda| |wheels| |docs| |deepsource| |deepcode| |sonarcloud|
@@ -33,24 +34,40 @@ It is based on the reference implementations from
 For more details, please see the `documentation <https://anguilla.readthedocs.io/en/latest/>`_
 and the following example notebooks:
 
-* `MO-CMA-ES Walk-through <notebooks/experiments/mocma/walkthrough.ipynb>`_ |mo-cma-es-colab|
-* `UP-MO-CMA-ES Walk-through <notebooks/experiments/upmocma/walkthrough.ipynb>`_ |up-mo-cma-es-colab|
+* See `MO-CMA-ES Walk-through or <notebooks/experiments/mocma/walkthrough.ipynb>`_ |mo-cma-es-colab|
+* See `UP-MO-CMA-ES Walk-through or <notebooks/experiments/upmocma/walkthrough.ipynb>`_ |up-mo-cma-es-colab|
 
 .. |mo-cma-es-colab| image:: https://colab.research.google.com/assets/colab-badge.svg
-                     :target: https://colab.research.google.com/github/pocs-anguilla/anguilla/blob/develop/experiments/mocma/walkthrough.ipynb
+                     :target: https://colab.research.google.com/github/pocs-anguilla/anguilla/blob/develop/notebooks/experiments/mocma/walkthrough.ipynb
                      :alt: Open In Colab
 
 .. |up-mo-cma-es-colab| image:: https://colab.research.google.com/assets/colab-badge.svg
-                        :target: https://colab.research.google.com/github/pocs-anguilla/anguilla/blob/develop/experiments/upmocma/walkthrough.ipynb
+                        :target: https://colab.research.google.com/github/pocs-anguilla/anguilla/blob/develop/notebooks/experiments/upmocma/walkthrough.ipynb
                         :alt: Open In Colab
 
-Install from PyPI:
+Install
+=======
 
-.. code-block:: bash
+PyPI
+----
+
+.. code-block:: console
    pip install -i https://test.pypi.org/simple/ anguilla
 
+Conda
+-----
+
+Temporarily only (will move to Conda-Forge):
+
+.. code-block:: console
+   conda install -c anguilla anguilla
 
 References
-----------
+==========
 
-Please see the `REFERENCES <REFERENCES>`_ file or the `documentation <https://anguilla.readthedocs.io/en/latest/>`_.
+See `REFERENCES <REFERENCES>`_.
+
+License
+=======
+
+See `LICENSE <LICENSE>`_.
