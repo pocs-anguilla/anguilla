@@ -119,7 +119,7 @@ class ELLI2(ELLI):
         )
 
 
-class GELLI(ELLI):
+class GELLI(ObjectiveFunction):
     """
     The GELLI benchmark function.
 

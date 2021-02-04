@@ -32,14 +32,6 @@ struct Individual {
         return l.coord(0) < r.coord(0);
     }
 
-    friend bool operator>(const Individual &l, const Individual &r) {
-        return l.coord(0) > r.coord(0);
-    }
-
-    friend bool operator==(const Individual &l, const Individual &r) {
-        return l.coord(0) == r.coord(0);
-    }
-
     inline T operator()(std::size_t index) const {
         return fitnessR(index);
     }

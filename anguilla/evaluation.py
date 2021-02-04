@@ -145,8 +145,6 @@ def log_mocma_trial(
     str
         A string identifying the job.
     """
-    if not log_parameters.path.exists():
-        os.mkdir(log_parameters.path)
     if trial_parameters.seed is None:
         rng = np.random.default_rng()
     else:
@@ -301,6 +299,7 @@ def log_mocma_trials(
     n_trials: int = 5,
     n_processes: int = 5,
     chunksize: Optional[int] = None,
+    verbose: bool = True,
 ) -> None:
     """Run independent trials of MOCMA with a benchmark function and save \
     fitness data to CSV files.
@@ -317,6 +316,8 @@ def log_mocma_trials(
         Number of CPUs to use.
     chunksize: optional
         Chunksize to use.
+    verbose: optional
+        Print informative texts.
 
     Notes
     -----
@@ -350,14 +351,20 @@ def log_mocma_trials(
             )
     if chunksize > n_jobs:
         chunksize = 1
-    print("Number of jobs: {}\n".format(n_jobs))
-    print("Number of processes: {}\n".format(n_processes))
-    print("Chunksize: {}\n".format(chunksize))
-    print("First job: {}\n".format(jobs[0]))
-    print("Last job: {}\n".format(jobs[-1]))
+    if verbose:
+        print(f"Number of jobs: {n_jobs}\n")
+        print(f"Number of processes: {n_processes}\n")
+        print(f"Chunksize: {chunksize}\n")
+        print(f"First job: {jobs[0]}\n")
+        print(f"Last job: {jobs[-1]}\n")
 
+    if not log_parameters.path.exists():
+        if verbose:
+            print("Creating output directory.")
+        os.makedirs(log_parameters.path.resolve(), exist_ok=True)
     if n_processes > 1:
-        print("Running {} job(s) using parallel execution.".format(n_jobs))
+        if verbose:
+            print(f"Running {n_jobs} job(s) using parallel execution.")
         with multiprocessing.Pool(processes=n_processes) as pool:
             results = pool.map(
                 partial(log_mocma_trial, log_parameters),
@@ -365,11 +372,14 @@ def log_mocma_trials(
                 chunksize=chunksize,
             )
     else:
-        print("Running {} job(s) using sequential execution".format(n_jobs))
+        if verbose:
+            print(f"Running {n_jobs} job(s) using sequential execution")
         results = map(partial(log_mocma_trial, log_parameters), jobs)
 
-    for result in results:
-        print(result)
+    if verbose:
+        print(f"Completed {len(results)} jobs.")
+        for result in results:
+            print(f"\t{result}")
 
 
 def union_upper_bound(

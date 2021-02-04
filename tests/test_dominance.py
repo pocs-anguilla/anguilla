@@ -5,7 +5,7 @@ import typing
 
 import numpy as np
 
-from anguilla.dominance import non_dominated_sort, dominates
+from anguilla.dominance import non_dominated_sort, dominates, NonDominatedSet2D
 
 
 def line(m, b):
@@ -145,3 +145,24 @@ class TestDominates(unittest.TestCase):
         rng = np.random.default_rng()
         point1 = rng.uniform(size=32)
         self.assertFalse(dominates(point1, point1))
+
+
+class TestNonDominatedSet(unittest.TestCase):
+    """Test NonDominatedSet."""
+
+    def test_insert(self):
+        union = [
+            [1.0, 2.0],
+            [3.0, 4.0],
+            [5.0, 6.0],
+            [3.0, 1.0],
+            [0.5, 4.0],
+            [3.0, 3.0],
+            [0.5, 4.0],
+            [3.0, 3.0],
+        ]
+        set = NonDominatedSet2D()
+        k = set.insert(union)
+        self.assertTrue(k == 3)
+        self.assertTrue(np.allclose(set.upper_bound, np.array([3.0, 4.0])))
+        self.assertTrue(set.size == 3)

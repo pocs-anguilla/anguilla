@@ -12,6 +12,7 @@ dependencies:
 - black
 - pydocstyle
 - pycodestyle
+- pytest
 - mypy
 - make
 - cmake

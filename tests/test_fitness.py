@@ -2,7 +2,7 @@
 import dataclasses
 import pathlib
 import unittest
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 import numpy as np
 
@@ -49,16 +49,70 @@ class BaseTestFunction:
     `here <https://stackoverflow.com/a/52261358>`_.
     """
 
-    fn: ObjectiveFunction
+    # We include this property so that static analyzers don't complain.
+    # Concrete subclasses also inherit from unittest.TestCase
+    # which has an implementation of this method.
     assertTrue: Any
-    seed: Optional[int] = None
 
-    def get_fn(self):
-        raise NotImplementedError()
+    fn_cls: ObjectiveFunction
+    fn_args: Optional[Tuple[Any]] = None
+    fn_kwargs: Optional[dict] = None
+    # Some functions should start with these args always
+    # and cannot be overrided with custom values
+    fn_args_mandatory: Optional[Tuple[Any]] = None
 
-    def test_creation(self):
-        """Test that the function object is created without errors"""
+    def get_fn(
+        self,
+        custom_args: Optional[Tuple] = None,
+        custom_kwargs: Optional[dict] = None,
+    ) -> ObjectiveFunction:
+        args = ()
+        if self.fn_args is not None:
+            args = self.fn_args
+        if custom_args is not None:
+            args = custom_args
+
+        if self.fn_args_mandatory is not None:
+            args = self.fn_args_mandatory + args
+
+        kwargs = {}
+        if self.fn_kwargs is not None:
+            kwargs = self.fn_kwargs
+        if custom_kwargs is not None:
+            kwargs = custom_kwargs
+
+        return self.fn_cls(*args, **kwargs)
+
+    def test_initialization(self):
+        """Test that the function object is initialized without errors"""
         fn = self.get_fn()
+        rng = np.random.default_rng()
+        n_dimensions = None
+        n_objectives = None
+
+        if fn.has_scalable_dimensions:
+            n_dimensions = rng.integers(11, 15)
+
+        if fn.has_scalable_objectives:
+            n_objectives = rng.integers(5, 10)
+
+        if n_dimensions is not None:
+            fn1 = self.get_fn(custom_args=(n_dimensions,))
+            self.assertTrue(fn1.n_dimensions == n_dimensions, "n_dimensions")
+
+        if n_objectives is not None:
+            fn2 = self.get_fn(custom_kwargs={"n_objectives": n_objectives})
+            self.assertTrue(fn2.n_objectives == n_objectives, "n_objectives")
+
+        if n_dimensions is not None and n_objectives is not None:
+            fn3 = self.get_fn(custom_args=(n_dimensions, n_objectives))
+            self.assertTrue(
+                (
+                    fn3.n_dimensions == n_dimensions
+                    and fn3.n_objectives == n_objectives
+                ),
+                "n_dimensions and n_objectives",
+            )
 
     def test_scale_dimensions(self):
         """Test that the dimensions can be scaled."""
@@ -74,13 +128,26 @@ class BaseTestFunction:
     def test_scale_objectives(self):
         """Test that the objectives can be scaled."""
         fn = self.get_fn()
-        start = fn.n_objectives
-        fn.n_objectives = start + 1
-        end = fn.n_objectives
-        if fn.has_scalable_objectives:
-            self.assertTrue(start != end, "!= operator")
+        if fn.has_scalable_dimensions:
+            # Some functions with scalable objectives and dimensions
+            # require that n_objectives <= n_dimensions
+            fn = self.get_fn()
+            start = fn.n_objectives
+            fn.n_dimensions = fn.n_objectives + 3
+            fn.n_objectives = start + 1
+            end = fn.n_objectives
+            if fn.has_scalable_objectives:
+                self.assertTrue(start != end, "!= operator")
+            else:
+                self.assertTrue(start == end, "== operator")
         else:
-            self.assertTrue(start == end, "== operator")
+            start = fn.n_objectives
+            fn.n_objectives = start + 1
+            end = fn.n_objectives
+            if fn.has_scalable_objectives:
+                self.assertTrue(start != end, "!= operator")
+            else:
+                self.assertTrue(start == end, "== operator")
 
     def test_evaluation_count(self):
         """Test that the evaluation counter is updated correctly."""
@@ -183,244 +250,200 @@ class TestSphere(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the Sphere function."""
 
     filename = "Sphere.csv"
-
-    def get_fn(self) -> benchmark.Sphere:
-        return benchmark.Sphere()
+    fn_cls = benchmark.Sphere
 
 
 class TestRastrigin(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the Rastrigin function."""
 
     filename = "Rastrigin.csv"
-
-    def get_fn(self) -> benchmark.Rastrigin:
-        return benchmark.Rastrigin(rotate=False)
+    fn_cls = benchmark.Rastrigin
+    fn_kwargs = {"rotate": False}
 
 
 class TestEllipsoid(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the Ellipsoid function."""
 
     filename = "Ellipsoid.csv"
-
-    def get_fn(self) -> benchmark.Ellipsoid:
-        return benchmark.Ellipsoid(rotate=False)
+    fn_cls = benchmark.Ellipsoid
+    fn_kwargs = {"rotate": False}
 
 
 class TestFON(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the FON function."""
 
     filename = "FON.csv"
-
-    def get_fn(self) -> benchmark.FON:
-        return benchmark.FON()
+    fn_cls = benchmark.FON
 
 
 class TestZDT1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT1 function."""
 
     filename = "ZDT1.csv"
-
-    def get_fn(self) -> benchmark.ZDT1:
-        return benchmark.ZDT1()
+    fn_cls = benchmark.ZDT1
 
 
 class TestZDT2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT2 function."""
 
     filename = "ZDT2.csv"
-
-    def get_fn(self) -> benchmark.ZDT2:
-        return benchmark.ZDT2()
+    fn_cls = benchmark.ZDT2
 
 
 class TestZDT3(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT3 function."""
 
     filename = "ZDT3.csv"
-
-    def get_fn(self) -> benchmark.ZDT3:
-        return benchmark.ZDT3()
+    fn_cls = benchmark.ZDT3
 
 
 class TestZDT4(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT4 function."""
 
     filename = "ZDT4.csv"
-
-    def get_fn(self) -> benchmark.ZDT4:
-        return benchmark.ZDT4()
+    fn_cls = benchmark.ZDT4
 
 
 class TestZDT6(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ZDT6 function."""
 
     filename = "ZDT6.csv"
-
-    def get_fn(self) -> benchmark.ZDT6:
-        return benchmark.ZDT6()
+    fn_cls = benchmark.ZDT6
 
 
 class TestIHR1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR1 function."""
 
     filename = "IHR1.csv"
-
-    def get_fn(self) -> benchmark.IHR1:
-        return benchmark.IHR1(rotate=False)
+    fn_cls = benchmark.IHR1
+    fn_kwargs = {"rotate": False}
 
 
 class TestIHR2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR2 function."""
 
     filename = "IHR2.csv"
-
-    def get_fn(self) -> benchmark.IHR2:
-        return benchmark.IHR2(rotate=False)
+    fn_cls = benchmark.IHR2
+    fn_kwargs = {"rotate": False}
 
 
 class TestELLI1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ELLI1 function."""
 
     filename = "ELLI1.csv"
-
-    def get_fn(self) -> benchmark.ELLI1:
-        return benchmark.ELLI1(rotate=False)
+    fn_cls = benchmark.ELLI1
+    fn_kwargs = {"rotate": False}
 
 
 class TestELLI2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ELLI2 function."""
 
     filename = "ELLI2.csv"
-
-    def get_fn(self) -> benchmark.ELLI2:
-        return benchmark.ELLI2(rotate=False)
+    fn_cls = benchmark.ELLI2
+    fn_kwargs = {"rotate": False}
 
 
 class TestGELLI(BaseTestFunctionSimple, unittest.TestCase):
-    def get_fn(self) -> benchmark.GELLI:
-        return benchmark.GELLI()
-
-    def test_scale_objectives(self):
-        """Test that the objectives can be scaled."""
-        # We need to override the test case for this function
-        # Since m <= n must be ensured
-        fn = self.get_fn()
-        start = fn.n_objectives
-        fn.n_dimensions = fn.n_objectives + 3
-        fn.n_objectives = start + 1
-        end = fn.n_objectives
-        if fn.has_scalable_objectives:
-            self.assertTrue(start != end, "!= operator")
-        else:
-            self.assertTrue(start == end, "== operator")
+    fn_cls = benchmark.GELLI
 
 
 class TestCIGTAB1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the CIGTAB1 function."""
 
     filename = "CIGTAB1.csv"
-
-    def get_fn(self) -> benchmark.CIGTAB1:
-        return benchmark.CIGTAB1(rotate=False)
+    fn_cls = benchmark.CIGTAB1
+    fn_kwargs = {"rotate": False}
 
 
 class TestCIGTAB2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the CIGTAB2 function."""
 
     filename = "CIGTAB2.csv"
-
-    def get_fn(self) -> benchmark.CIGTAB2:
-        return benchmark.CIGTAB2(rotate=False)
+    fn_cls = benchmark.CIGTAB2
+    fn_kwargs = {"rotate": False}
 
 
 class TestDTLZ1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ1 function."""
 
     filename = "DTLZ1.csv"
-
-    def get_fn(self) -> benchmark.DTLZ1:
-        return benchmark.DTLZ1(5)
+    fn_cls = benchmark.DTLZ1
+    fn_args = (5,)
 
 
 class TestDTLZ2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ2 function."""
 
     filename = "DTLZ2.csv"
-
-    def get_fn(self) -> benchmark.DTLZ2:
-        return benchmark.DTLZ2(5)
+    fn_cls = benchmark.DTLZ2
+    fn_args = (5,)
 
 
 class TestDTLZ3(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ3 function."""
 
     filename = "DTLZ3.csv"
-
-    def get_fn(self) -> benchmark.DTLZ3:
-        return benchmark.DTLZ3(5)
+    fn_cls = benchmark.DTLZ3
+    fn_args = (5,)
 
 
 class TestDTLZ4(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ4 function."""
 
     filename = "DTLZ4.csv"
-
-    def get_fn(self) -> benchmark.DTLZ4:
-        return benchmark.DTLZ4(5)
+    fn_cls = benchmark.DTLZ4
+    fn_args = (5,)
 
 
 class TestDTLZ5(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ5 function."""
 
     filename = "DTLZ5.csv"
-
-    def get_fn(self) -> benchmark.DTLZ5:
-        return benchmark.DTLZ5(5)
+    fn_cls = benchmark.DTLZ5
+    fn_args = (5,)
 
 
 class TestDTLZ6(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ6 function."""
 
     filename = "DTLZ6.csv"
-
-    def get_fn(self) -> benchmark.DTLZ6:
-        return benchmark.DTLZ6(5)
+    fn_cls = benchmark.DTLZ6
+    fn_args = (5,)
 
 
 class TestDTLZ7(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ7 function."""
 
     filename = "DTLZ7.csv"
-
-    def get_fn(self) -> benchmark.DTLZ7:
-        return benchmark.DTLZ7(5)
+    fn_cls = benchmark.DTLZ7
+    fn_args = (5,)
 
 
 class TestMOQ1AC(BaseTestFunctionSimple, unittest.TestCase):
-    def get_fn(self) -> benchmark.MOQ:
-        return benchmark.MOQ("1|C")
+    fn_cls = benchmark.MOQ
+    fn_args_mandatory = ("1|C",)
 
 
 class TestMOQ1NAC(BaseTestFunctionSimple, unittest.TestCase):
-    def get_fn(self) -> benchmark.MOQ:
-        return benchmark.MOQ("1/C")
+    fn_cls = benchmark.MOQ
+    fn_args_mandatory = ("1/C",)
 
 
 class TestMOQ1AJ(BaseTestFunctionSimple, unittest.TestCase):
-    def get_fn(self) -> benchmark.MOQ:
-        return benchmark.MOQ("1|J")
+    fn_cls = benchmark.MOQ
+    fn_args_mandatory = ("1|J",)
 
 
 class TestMOQ1NAJ(BaseTestFunctionSimple, unittest.TestCase):
-    def get_fn(self) -> benchmark.MOQ:
-        return benchmark.MOQ("1/J")
+    fn_cls = benchmark.MOQ
+    fn_args_mandatory = ("1/J",)
 
 
 class TestMOQ1AI(BaseTestFunctionSimple, unittest.TestCase):
-    def get_fn(self) -> benchmark.MOQ:
-        return benchmark.MOQ("1|I")
+    fn_cls = benchmark.MOQ
+    fn_args_mandatory = ("1|I",)
 
 
 class TestMOQ1NAI(BaseTestFunctionSimple, unittest.TestCase):
-    def get_fn(self) -> benchmark.MOQ:
-        return benchmark.MOQ("1/I")
+    fn_cls = benchmark.MOQ
+    fn_args_mandatory = ("1/I",)

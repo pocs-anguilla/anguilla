@@ -8,7 +8,7 @@ import numpy as np
 from typing import Any, Optional
 
 from anguilla.hypervolume import calculate, contributions
-from anguilla.util import random_2d_3d_front
+from anguilla.util import random_2d_3d_front, random_cliff_3d
 
 
 class HVBaseTestFunction:
@@ -80,4 +80,11 @@ class TestOther(unittest.TestCase):
         )
         contrib_a = contributions(front_3d, nadir_3d)
         contrib_b = contributions(front_2d, nadir_2d, non_dominated=True)
+        self.assertTrue(np.allclose(contrib_a, contrib_b))
+
+    def test_auto_refpoint_computation(self) -> None:
+        points = random_cliff_3d(250)
+        reference = np.max(points, axis=0)
+        contrib_a = contributions(points, reference)
+        contrib_b = contributions(points)
         self.assertTrue(np.allclose(contrib_a, contrib_b))

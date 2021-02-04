@@ -9,6 +9,7 @@ namespace py = pybind11;
 
 // Anguilla
 #include <anguilla/dominance/dominance.hpp>
+#include <anguilla/dominance/nondominated_set_2d.hpp>
 
 typedef double f8;  // following Numba's convention
 
@@ -23,6 +24,22 @@ PYBIND11_MODULE(_dominance, m) {
           dominance::docstring,
           py::arg("points"),
           py::arg("max_rank") = std::nullopt);
+
+    py::class_<dominance::NonDominatedSet2D<f8>>(m, "NonDominatedSet2D")
+        .def(py::init<>())
+        .def_property("size",
+                      &dominance::NonDominatedSet2D<f8>::size,
+                      nullptr)
+        .def_property("empty",
+                      &dominance::NonDominatedSet2D<f8>::empty,
+                      nullptr)
+        .def_property("upper_bound",
+                      &dominance::NonDominatedSet2D<f8>::upperBound,
+                      nullptr)
+        .def("merge", &dominance::NonDominatedSet2D<f8>::merge, py::arg("other"))
+        .def("insert",
+             &dominance::NonDominatedSet2D<f8>::insert,
+             py::arg("points"));
 
 #ifdef VERSION_INFO
     m.attr("__version__") = Py_STRINGIFY(VERSION_INFO);
