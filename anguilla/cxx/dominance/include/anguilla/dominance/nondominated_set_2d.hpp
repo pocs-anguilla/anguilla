@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef ANGUILLA_NONDOMINATED_SET_HPP
-#define ANGUILLA_NONDOMINATED_SET_HPP
+#ifndef ANGUILLA_NONDOMINATED_SET_2D_HPP
+#define ANGUILLA_NONDOMINATED_SET_2D_HPP
 
 // PyBind11
 #include <pybind11/numpy.h>
@@ -26,38 +26,38 @@ Useful for merging independently generated non-dominated point sets.
 namespace dominance {
 
 template <typename T>
-struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optimize_size<true>> {
-    Node(T x, T y) : x(x), y(y) {}
+struct Node2D : public boost::intrusive::avl_set_base_hook<boost::intrusive::optimize_size<true>> {
+    Node2D(T x, T y) : x(x), y(y) {}
 
-    friend bool operator<(const Node &l, const Node &r) { return l.x < r.x; }
+    friend bool operator<(const Node2D &l, const Node2D &r) { return l.x < r.x; }
 
     T x;
     T y;
 };
 
 template <typename T>
-using BaseNonDominatedSet = boost::intrusive::avl_set<Node<T>, boost::intrusive::compare<std::less<Node<T>>>>;
+using BaseNonDominatedSet2D = boost::intrusive::avl_set<Node2D<T>, boost::intrusive::compare<std::less<Node2D<T>>>>;
 
 template <typename T>
-struct NodeDisposer {
-    void operator()(Node<T> *instancePtr) {
+struct Node2DDisposer {
+    void operator()(Node2D<T> *instancePtr) {
         delete instancePtr;
     }
 };
 
 template <typename T>
-class NonDominatedSet {
+class NonDominatedSet2D {
    public:
-    NonDominatedSet() {
+    NonDominatedSet2D() {
         constexpr auto max = std::numeric_limits<T>::max();
         constexpr auto lowest = std::numeric_limits<T>::lowest();
-        auto ySentinel = new Node<T>(max, lowest);
-        auto xSentinel = new Node<T>(lowest, max);
+        auto ySentinel = new Node2D<T>(max, lowest);
+        auto xSentinel = new Node2D<T>(lowest, max);
         m_set.insert(*ySentinel);
         m_set.insert(*xSentinel);
     }
 
-    ~NonDominatedSet() {
+    ~NonDominatedSet2D() {
         m_set.clear_and_dispose(m_disposer);
     }
 
@@ -69,7 +69,7 @@ class NonDominatedSet {
         for (std::size_t i = 0U; i < n; ++i) {
             const T x = pointsR(i, 0);
             const T y = pointsR(i, 1);
-            auto newNode = new Node<T>(x, y);
+            auto newNode = new Node2D<T>(x, y);
             if (insertInternal(newNode)) {
                 ++inserts;
             }
@@ -77,7 +77,7 @@ class NonDominatedSet {
         return inserts;
     }
 
-    [[nodiscard]] bool insertInternal(Node<T> *newNode) {
+    [[nodiscard]] bool insertInternal(Node2D<T> *newNode) {
         const auto pX = newNode->x;
         const auto pY = newNode->y;
         // We seek the greatest 'qX' s.t. 'qX' =< 'pX'.
@@ -144,20 +144,20 @@ class NonDominatedSet {
         return result;
     }
 
-    void merge(NonDominatedSet<T> &other) {
+    void merge(NonDominatedSet2D<T> &other) {
         auto current = std::next(other.m_set.begin());  // left extreme
         auto end = std::prev(other.m_set.end());        // right sentinel
         while (current != end) {
             auto nodePtr = current.pointed_node();
             auto tmp = current++;
             other.m_set.erase(tmp);
-            (void)insertInternal(static_cast<Node<T> *>(nodePtr));
+            (void)insertInternal(static_cast<Node2D<T> *>(nodePtr));
         }
     }
 
    private:
-    BaseNonDominatedSet<T> m_set;
-    NodeDisposer<T> m_disposer;
+    BaseNonDominatedSet2D<T> m_set;
+    Node2DDisposer<T> m_disposer;
 };
 
 }  // namespace dominance

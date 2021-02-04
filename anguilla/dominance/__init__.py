@@ -2,7 +2,7 @@
 import numpy as np
 
 from ._dominance import non_dominated_sort_f8 as non_dominated_sort
-from ._dominance import NonDominatedSet
+from ._dominance import NonDominatedSet2D
 
 
 def dominates(a: np.ndarray, b: np.ndarray) -> bool:
@@ -36,4 +36,4 @@ def dominates(a: np.ndarray, b: np.ndarray) -> bool:
     return all and any
 
 
-__all__ = ["non_dominated_sort", "dominates", "NonDominatedSet"]
+__all__ = ["non_dominated_sort", "dominates", "NonDominatedSet2D"]

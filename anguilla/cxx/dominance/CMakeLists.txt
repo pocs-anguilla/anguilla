@@ -3,7 +3,7 @@ set(DOMINANCE_INTERNAL_MODULE_NAME "_${DOMINANCE_MODULE_NAME}")
 
 set(DOMINANCE_MODULE_SRC
     include/anguilla/dominance/dominance.hpp
-    include/anguilla/dominance/nondominated_set.hpp
+    include/anguilla/dominance/nondominated_set_2d.hpp
     "src/${DOMINANCE_INTERNAL_MODULE_NAME}.cpp"
 )
 
