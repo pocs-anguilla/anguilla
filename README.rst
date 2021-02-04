@@ -39,18 +39,18 @@ Install
 PyPI
 ----
 
-```bash
+.. code-block:: bash
+
    pip install -i https://test.pypi.org/simple/ anguilla
-```
 
 Conda
 -----
 
 Temporarily only (will move to Conda-Forge):
 
-```bash
+.. code-block:: bash
+
    conda install -c anguilla anguilla
-```
 
 References
 ==========
