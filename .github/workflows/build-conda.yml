@@ -40,10 +40,10 @@ jobs:
         run: conda install conda-build conda-verify anaconda-client
 
       - name: Build
-        run: conda build conda-recipes/anguilla
+        run: conda build conda-recipes/anguilla --output-folder .
 
       - name: Install
-        run: conda install -c ${CONDA_PREFIX}/conda-bld/ anguilla
+        run: conda install -c . anguilla
 
       - name: Test
         run: |
@@ -53,7 +53,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          path: ${CONDA_PREFIX}/conda-bld/**/*.tar.bz2
+          path: ./**/*.tar.bz2
 
   # Upload to Anaconda.org (until recipe is submitted to Conda-Forge).
   upload_anaconda:
