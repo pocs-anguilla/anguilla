@@ -3,6 +3,7 @@ set(DOMINANCE_INTERNAL_MODULE_NAME "_${DOMINANCE_MODULE_NAME}")
 
 set(DOMINANCE_MODULE_SRC
     include/anguilla/dominance/dominance.hpp
+    include/anguilla/dominance/nondominated_set.hpp
     "src/${DOMINANCE_INTERNAL_MODULE_NAME}.cpp"
 )
 
@@ -18,7 +19,7 @@ else()
 endif()
 
 if(NOT MSVC)
-  target_compile_options(${DOMINANCE_INTERNAL_MODULE_NAME} BEFORE PRIVATE "-Wconversion" "-Werror")
+  target_compile_options(${DOMINANCE_INTERNAL_MODULE_NAME} BEFORE PRIVATE "-Werror")
 else()
   # TODO: enable and check warnings
   #target_compile_options(${DOMINANCE_INTERNAL_MODULE_NAME} BEFORE PRIVATE "/WX")
@@ -26,7 +27,7 @@ endif()
 
 target_compile_definitions(${DOMINANCE_INTERNAL_MODULE_NAME} PRIVATE VERSION_INFO=${PROJECT_VERSION})
 target_include_directories(${DOMINANCE_INTERNAL_MODULE_NAME} PRIVATE include)
-target_include_directories(${DOMINANCE_INTERNAL_MODULE_NAME} PRIVATE ${BTREE_INCLUDE_DIRS})
+target_include_directories(${DOMINANCE_INTERNAL_MODULE_NAME} PRIVATE ${BOOST_INCLUDE_DIRS})
 target_include_directories(${DOMINANCE_INTERNAL_MODULE_NAME} PRIVATE ${COMMON_INCLUDE_DIRS})
 
 install(TARGETS ${DOMINANCE_INTERNAL_MODULE_NAME} LIBRARY DESTINATION ${DOMINANCE_MODULE_NAME})
