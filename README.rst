@@ -39,6 +39,8 @@ Install
 PyPI
 ----
 
+Currently available in PyPI testing index:
+
 .. code-block:: bash
 
    pip install -i https://test.pypi.org/simple/ anguilla
@@ -46,7 +48,7 @@ PyPI
 Conda
 -----
 
-Temporarily only (will move to Conda-Forge):
+Only temporarily in Anaconda.org (will move to Conda-Forge):
 
 .. code-block:: bash
 
