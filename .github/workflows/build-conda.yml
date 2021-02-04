@@ -11,7 +11,7 @@ on:
       - v*
 
 jobs:
-  build:
+  build_packages:
     strategy:
       fail-fast: false
       matrix:
@@ -50,7 +50,21 @@ jobs:
           conda install pytest
           pytest tests --import-mode=append --color=yes --ignore-glob=test_mocma.py
 
-      # Upload to Anaconda.org (until recipe is submitted to Conda-Forge).
-      - name: Upload
-        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
-        run: anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload anguilla
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: ${CONDA_PREFIX}/conda-bld/**/*.tar.bz2
+
+  # Upload to Anaconda.org (until recipe is submitted to Conda-Forge).
+  upload_anaconda:
+    needs: [build_packages]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: dist
+      - name: Upload packages
+        run: anaconda -v -t ${{ secrets.ANACONDA_TOKEN }} upload dist/*.tar.bz2
