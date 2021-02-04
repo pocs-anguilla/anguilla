@@ -31,19 +31,7 @@ It is based on the reference implementations from
 `The Shark Machine Learning Library <https://www.shark-ml.org/>`_ and
 `PyCMA <https://github.com/CMA-ES/pycma>`_.
 
-For more details, please see the `documentation <https://anguilla.readthedocs.io/en/latest/>`_
-and the following example notebooks:
-
-* See `MO-CMA-ES Walk-through or <notebooks/experiments/mocma/walkthrough.ipynb>`_ |mo-cma-es-colab|
-* See `UP-MO-CMA-ES Walk-through or <notebooks/experiments/upmocma/walkthrough.ipynb>`_ |up-mo-cma-es-colab|
-
-.. |mo-cma-es-colab| image:: https://colab.research.google.com/assets/colab-badge.svg
-                     :target: https://colab.research.google.com/github/pocs-anguilla/anguilla/blob/develop/notebooks/experiments/mocma/walkthrough.ipynb
-                     :alt: Open In Colab
-
-.. |up-mo-cma-es-colab| image:: https://colab.research.google.com/assets/colab-badge.svg
-                        :target: https://colab.research.google.com/github/pocs-anguilla/anguilla/blob/develop/notebooks/experiments/upmocma/walkthrough.ipynb
-                        :alt: Open In Colab
+For more details, please see the `documentation <https://anguilla.readthedocs.io/en/latest/>`_.
 
 Install
 =======
@@ -51,7 +39,7 @@ Install
 PyPI
 ----
 
-.. code-block:: console
+.. code-block:: text
    pip install -i https://test.pypi.org/simple/ anguilla
 
 Conda
@@ -59,7 +47,7 @@ Conda
 
 Temporarily only (will move to Conda-Forge):
 
-.. code-block:: console
+.. code-block:: text
    conda install -c anguilla anguilla
 
 References
