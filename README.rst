@@ -52,7 +52,7 @@ Only temporarily in Anaconda.org (will move to Conda-Forge):
 
 .. code-block:: bash
 
-   conda install -c anguilla anguilla
+   conda install -c Anguilla anguilla
 
 References
 ==========
