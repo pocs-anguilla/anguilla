@@ -14,7 +14,7 @@
 [14] N. Hansen. The CMA evolution strategy: A tutorial. 2011. URL: http://www.cmap.polytechnique.fr/~nikolaus.hansen/cmatutorial110628.pdf.
 [15] A. Auger, J. Bader, D. Brockhoff, and E. Zitzler. Hypervolume-based Multiobjective Optimization: Theoretical Foundations and Practical Implications. Theoretical Computer Science, 425:75–103, March 2011. URL: https://hal.inria.fr/inria-00638989, doi:10.1016/j.tcs.2011.03.012.
 [16] I. Hupkens and M. Emmerich. Logarithmic-time updates in sms-emoa and hypervolume-based archiving. In EVOLVE - A Bridge between Probability, Set Oriented Numerics, and Evolutionary Computation IV, 155–169. Heidelberg, 2013. Springer International Publishing.
-[17] Iris Hupkens and Michael Emmerich. Logarithmic-time updates in sms-emoa and hypervolume-based archiving. In EVOLVE-A Bridge between Probability, Set Oriented Numerics, and Evolutionary Computation IV, pages 155–169. Springer, 2013.
+[17] I. Hupkens and M. Emmerich. Logarithmic-time updates in sms-emoa and hypervolume-based archiving. In EVOLVE-A Bridge between Probability, Set Oriented Numerics, and Evolutionary Computation IV, pages 155–169. Springer, 2013.
 [18] Y. Collette, N. Hansen, G. Pujol, D. Aponte, and R. L. Riche. Object‐oriented programming of optimizers – examples in scilab. In Multidisciplinary Design Optimization in Computational Mechanics. 2013.
 [19] S. Surjanovic and D. Bingham. Virtual library of simulation experiments: test functions and datasets. Retrieved November 24, 2020, from \url http://www.sfu.ca/ ssurjano.
 [20] O. Krause and C. Igel. A more efficient rank-one covariance matrix update for evolution strategies. In Proceedings of the 2015 ACM Conference on Foundations of Genetic Algorithms XIII, 129–136. 2015.
