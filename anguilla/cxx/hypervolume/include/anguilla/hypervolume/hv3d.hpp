@@ -104,7 +104,7 @@ using BTreeMap = btree::map<T, T>;
 #endif
 
 template <typename T, class Map = BTreeMap<T>>
-[[nodiscard]] auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference);
+[[nodiscard]] auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference, bool ignoreDominated = false);
 
 }  // namespace hv3d
 
@@ -117,7 +117,7 @@ template <typename T, class Map>
 /* Implementation of public interface. */
 namespace hv3d {
 template <typename T, class Map>
-auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference) {
+auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference, bool ignoreDominated) {
     static_assert(std::is_floating_point<T>::value,
                   "HV3D is not meant to be instantiated with a non floating point type.");
 
@@ -148,7 +148,15 @@ auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>
         const auto pX = pointsR(i, 0);
         const auto pY = pointsR(i, 1);
         const auto pZ = pointsR(i, 2);
-        points.emplace_back(pX, pY, pZ);
+
+        if (refGiven && ignoreDominated) {
+            if (pX < refX && pY < refY && pZ < refZ) {
+                points.emplace_back(pX, pY, pZ);
+            }
+        } else {
+            points.emplace_back(pX, pY, pZ);
+        }
+
         if (!refGiven) {
             refX = std::max(refX, pX);
             refY = std::max(refY, pY);

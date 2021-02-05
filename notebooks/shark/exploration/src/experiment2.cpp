@@ -39,6 +39,9 @@ class RunTrials {
             if (fn.hasScalableObjectives()) {
                 fn.setNumberOfObjectives(nObjectives);
             }
+            if (fn.numberOfObjectives() != nObjectives) {
+                throw std::runtime_error("Could not set target value for number of objectives.");
+            }
             if (fn.hasScalableDimensionality()) {
                 fn.setNumberOfVariables(nVariables);
             }
@@ -68,12 +71,25 @@ class RunTrials {
                 std::ofstream logfile;
                 logfile.open(filename);
                 logfile << std::setprecision(10);
+                logfile << "# Generated with Shark 4.1.x"
+                        << "\n";
+                logfile << "# Function: " << fn.name() << ": " << fn.numberOfVariables() << " -> " << fn.numberOfObjectives() << "\n";
+                logfile << "# Optimizer: " << optName << "\n";
+                logfile << "# Trial: " << (t + 1) % nextEvaluationsLimit << "\n";
+                logfile << "# Evaluations: " << fn.evaluationCounter() << "\n";
+                logfile << "# Observation: fitness\n";
+
                 const auto solution = opt.solution();
                 const auto size = solution.size();
                 for (auto i = 0; i < size; ++i) {
-                    const auto x = solution[i].value[0];
-                    const auto y = solution[i].value[1];
-                    logfile << x << "," << y << "\n";
+                    const auto &value = solution[i].value;
+                    for (auto j = 0; j < value.size(); ++j) {
+                        logfile << value[j];
+                        if (j != value.size() - 1) {
+                            logfile << ",";
+                        }
+                    }
+                    logfile << "\n";
                 }
                 logfile.close();
                 nextEvaluationsLimit += 5000;
@@ -95,7 +111,7 @@ int main() {
     constexpr int mu = 100;
 
     // Two objectives.
-    {
+    /*{
         constexpr auto initialSigma = 0.6;
         constexpr auto nVariables = nVariables_dConstrainedNonRotated;
         RunTrials<benchmarks::ZDT1, SteadyStateMOCMA, true> indOpt1;
@@ -263,6 +279,7 @@ int main() {
         indOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
+    */
     // Three objectives.
     {
         constexpr auto initialSigma = 0.1;

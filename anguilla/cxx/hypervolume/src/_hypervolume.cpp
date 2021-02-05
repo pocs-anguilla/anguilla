@@ -16,8 +16,9 @@ namespace py = pybind11;
 typedef double f8;  // following Numba's convention
 
 [[nodiscard]] auto hv2d_f8(const py::array_t<f8>& points,
-                           const std::optional<py::array_t<f8>>& reference = std::nullopt) {
-    return hv2d::calculate<f8>(points, reference);
+                           const std::optional<py::array_t<f8>>& reference = std::nullopt,
+                           const bool ignoreDominated = false) {
+    return hv2d::calculate<f8>(points, reference, ignoreDominated);
 }
 
 [[nodiscard]] auto hvc2d_f8(const py::array_t<f8>& points,
@@ -31,11 +32,12 @@ typedef double f8;  // following Numba's convention
 
 [[nodiscard]] auto hv3d_f8(const py::array_t<f8>& points,
                            const std::optional<py::array_t<f8>>& reference = std::nullopt,
+                           const bool ignoreDominated = false,
                            const bool useBtree = true) {
     if (useBtree) {
-        return hv3d::calculate<f8, hv3d::BTreeMap<f8>>(points, reference);
+        return hv3d::calculate<f8, hv3d::BTreeMap<f8>>(points, reference, ignoreDominated);
     }
-    return hv3d::calculate<f8, hv3d::RBTreeMap<f8>>(points, reference);
+    return hv3d::calculate<f8, hv3d::RBTreeMap<f8>>(points, reference, ignoreDominated);
 }
 
 [[nodiscard]] auto hvc3d_f8(const py::array_t<f8>& points,
@@ -53,12 +55,14 @@ PYBIND11_MODULE(_hypervolume, m) {
     m.def("hv2d_f8", &hv2d_f8,
           hv2d::docstring,
           py::arg("points"),
-          py::arg("reference") = std::nullopt);
+          py::arg("reference") = std::nullopt,
+          py::arg("ignoreDominated") = false);
 
     m.def("hv3d_f8", &hv3d_f8,
           hv3d::docstring,
           py::arg("points"),
           py::arg("reference") = std::nullopt,
+          py::arg("ignoreDominated") = false,
           py::arg("use_btree") = true);
 
     m.def("hvc2d_f8", &hvc2d_f8,
