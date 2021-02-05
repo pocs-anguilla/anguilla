@@ -23,6 +23,9 @@ jobs:
       run:
         shell: "bash -l {0}"
 
+    env:
+      CONDA_BUILD_PATH: "/tmp/conda-bld"
+
     steps:
       - uses: actions/checkout@v2
         with:
@@ -39,10 +42,14 @@ jobs:
       - name: Prepare
         run: conda install conda-build conda-verify anaconda-client
 
+      # See: https://git.io/Jtg1y
+      - name: Configure build path
+        run: echo ${CONDA_PREFIX}/conda-bld >> $CONDA_BUILD_PATH
+
       - name: Build
-        run: conda build conda-recipes/anguilla --output-folder ${{ env.CONDA_BUILD_PATH }}
-        env:
-          CONDA_BUILD_PATH: "${CONDA_PREFIX}/conda-bld"
+        run: |
+          echo "Build path: ${{ env.CONDA_BUILD_PATH }}"
+          conda build conda-recipes/anguilla --output-folder ${{ env.CONDA_BUILD_PATH }}
 
       - name: Install
         run: conda install -c ${{ env.CONDA_BUILD_PATH }} anguilla
