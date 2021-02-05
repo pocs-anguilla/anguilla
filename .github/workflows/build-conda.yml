@@ -39,12 +39,10 @@ jobs:
       - name: Prepare
         run: conda install conda-build conda-verify anaconda-client
 
-      # See: https://git.io/Jtg1y
-      - name: Configure build directory
-        run: echo "${CONDA_PREFIX}/conda-bld" >> $CONDA_BUILD_PATH
-
       - name: Build
         run: conda build conda-recipes/anguilla --output-folder ${{ env.CONDA_BUILD_PATH }}
+        env:
+          CONDA_BUILD_PATH: "${CONDA_PREFIX}/conda-bld"
 
       - name: Install
         run: conda install -c ${{ env.CONDA_BUILD_PATH }} anguilla
@@ -52,7 +50,7 @@ jobs:
       - name: Test
         run: |
           conda install pytest
-          pytest tests --import-mode=append --color=yes --ignore-glob=test_mocma.py
+          pytest tests --import-mode=append --color=yes
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
