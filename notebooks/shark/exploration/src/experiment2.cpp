@@ -39,6 +39,9 @@ class RunTrials {
             if (fn.hasScalableObjectives()) {
                 fn.setNumberOfObjectives(nObjectives);
             }
+            if (fn.numberOfObjectives() != nObjectives) {
+                throw std::runtime_error("Could not set target value for number of objectives.");
+            }
             if (fn.hasScalableDimensionality()) {
                 fn.setNumberOfVariables(nVariables);
             }
@@ -68,12 +71,25 @@ class RunTrials {
                 std::ofstream logfile;
                 logfile.open(filename);
                 logfile << std::setprecision(10);
+                logfile << "# Generated with Shark 4.1.x"
+                        << "\n";
+                logfile << "# Function: " << fn.name() << ": " << fn.numberOfVariables() << " -> " << fn.numberOfObjectives() << "\n";
+                logfile << "# Optimizer: " << optName << "\n";
+                logfile << "# Trial: " << (t + 1) % nextEvaluationsLimit << "\n";
+                logfile << "# Evaluations: " << fn.evaluationCounter() << "\n";
+                logfile << "# Observation: fitness\n";
+
                 const auto solution = opt.solution();
                 const auto size = solution.size();
                 for (auto i = 0; i < size; ++i) {
-                    const auto x = solution[i].value[0];
-                    const auto y = solution[i].value[1];
-                    logfile << x << "," << y << "\n";
+                    const auto &value = solution[i].value;
+                    for (auto j = 0; j < value.size(); ++j) {
+                        logfile << value[j];
+                        if (j != value.size() - 1) {
+                            logfile << ",";
+                        }
+                    }
+                    logfile << "\n";
                 }
                 logfile.close();
                 nextEvaluationsLimit += 5000;
@@ -95,7 +111,7 @@ int main() {
     constexpr int mu = 100;
 
     // Two objectives.
-    {
+    /*{
         constexpr auto initialSigma = 0.6;
         constexpr auto nVariables = nVariables_dConstrainedNonRotated;
         RunTrials<benchmarks::ZDT1, SteadyStateMOCMA, true> indOpt1;
@@ -183,11 +199,11 @@ int main() {
         constexpr auto initialSigma = 0.6 * (1.0 - -1.0);
         constexpr auto nVariables = nVariables_dRotated;
         RunTrials<benchmarks::IHR3, SteadyStateMOCMA, true> indOpt1;
-        RunTrials<benchmarks::IHR3, SteadyStateMOCMA, true> popOpt1;
+        RunTrials<benchmarks::IHR3, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::IHR3, MOCMA, true> indOpt2;
-        RunTrials<benchmarks::IHR3, MOCMA, true> popOpt2;
+        RunTrials<benchmarks::IHR3, MOCMA, false> popOpt2;
         indOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
@@ -195,11 +211,11 @@ int main() {
         constexpr auto initialSigma = 0.6 * (5.0 - -5.0);
         constexpr auto nVariables = nVariables_dRotated;
         RunTrials<benchmarks::IHR4, SteadyStateMOCMA, true> indOpt1;
-        RunTrials<benchmarks::IHR4, SteadyStateMOCMA, true> popOpt1;
+        RunTrials<benchmarks::IHR4, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::IHR4, MOCMA, true> indOpt2;
-        RunTrials<benchmarks::IHR4, MOCMA, true> popOpt2;
+        RunTrials<benchmarks::IHR4, MOCMA, false> popOpt2;
         indOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
@@ -207,11 +223,11 @@ int main() {
         constexpr auto initialSigma = 0.6 * (5.0 - -5.0);
         constexpr auto nVariables = nVariables_dRotated;
         RunTrials<benchmarks::IHR6, SteadyStateMOCMA, true> indOpt1;
-        RunTrials<benchmarks::IHR6, SteadyStateMOCMA, true> popOpt1;
+        RunTrials<benchmarks::IHR6, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::IHR6, MOCMA, true> indOpt2;
-        RunTrials<benchmarks::IHR6, MOCMA, true> popOpt2;
+        RunTrials<benchmarks::IHR6, MOCMA, false> popOpt2;
         indOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
@@ -263,6 +279,7 @@ int main() {
         indOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
+    */
     // Three objectives.
     {
         constexpr auto initialSigma = 0.1;

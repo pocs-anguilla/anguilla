@@ -36,4 +36,27 @@ def dominates(a: np.ndarray, b: np.ndarray) -> bool:
     return all and any
 
 
-__all__ = ["non_dominated_sort", "dominates", "NonDominatedSet2D"]
+class NonDominatedSetKD:
+    """Models a non-dominated set of k-D points."""
+
+    def __init__(self):
+        self.union = []
+
+    def insert(self, points):
+        self.union.append(points)
+
+    @property
+    def upper_bound(self):
+        points = np.vstack(self.union)
+        ranks, _ = non_dominated_sort(points, 1)
+        nondominated = points[ranks == 1]
+        reference = np.max(nondominated, axis=0)
+        return reference
+
+
+__all__ = [
+    "non_dominated_sort",
+    "dominates",
+    "NonDominatedSet2D",
+    "NonDominatedSetKD",
+]

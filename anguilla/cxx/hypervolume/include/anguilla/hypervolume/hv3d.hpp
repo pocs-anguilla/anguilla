@@ -104,7 +104,7 @@ using BTreeMap = btree::map<T, T>;
 #endif
 
 template <typename T, class Map = BTreeMap<T>>
-[[nodiscard]] auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference);
+[[nodiscard]] auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference, bool ignoreDominated = false);
 
 }  // namespace hv3d
 
@@ -117,7 +117,7 @@ template <typename T, class Map>
 /* Implementation of public interface. */
 namespace hv3d {
 template <typename T, class Map>
-auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference) {
+auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference, bool ignoreDominated) {
     static_assert(std::is_floating_point<T>::value,
                   "HV3D is not meant to be instantiated with a non floating point type.");
 
@@ -148,7 +148,15 @@ auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>
         const auto pX = pointsR(i, 0);
         const auto pY = pointsR(i, 1);
         const auto pZ = pointsR(i, 2);
-        points.emplace_back(pX, pY, pZ);
+
+        if (refGiven && ignoreDominated) {
+            if (pX < refX && pY < refY && pZ < refZ) {
+                points.emplace_back(pX, pY, pZ);
+            }
+        } else {
+            points.emplace_back(pX, pY, pZ);
+        }
+
         if (!refGiven) {
             refX = std::max(refX, pX);
             refY = std::max(refY, pY);
@@ -186,8 +194,8 @@ auto calculate(const std::vector<Point3D<T>> &points, const T refX, const T refY
     // to ease the handling of boundary cases by ensuring that succ(p_x)
     // and pred(p_x) are defined for any other p_x in the tree.
     constexpr auto lowest = std::numeric_limits<T>::lowest();
-    front.try_emplace(refX, lowest);
     front.try_emplace(lowest, refY);
+    front.try_emplace(refX, lowest);
 
     // The first point from the set is added.
     const auto [pX, pY, pZ] = points[0U];
@@ -203,32 +211,36 @@ auto calculate(const std::vector<Point3D<T>> &points, const T refX, const T refY
 
         // find greatest q_x, such that q_x <= p_x
         auto nodeQ = front.lower_bound(pX);
-        if (nodeQ->first > pX) {
+        assert(nodeQ != front.end());
+        assert(!(nodeQ->first < pX));
+        if ((nodeQ->first > pX) && nodeQ != front.begin()) {
             --nodeQ;
         }
-
-        const T qY = nodeQ->second;
-        if (!(qY > pY)) {  // p is by dominated q
-            continue;
+        assert(!(nodeQ->first > pX));
+        if (!(nodeQ->second > pY)) {
+            continue;  // 'p' is dominated by 'q'
+        }
+        if (!(nodeQ->first < pX) && nodeQ != front.begin()) {  // qX == pX
+            --nodeQ;
         }
 
         volume += area * (pZ - lastZ);
         lastZ = pZ;
 
-        auto nodeS = ++nodeQ;
+        // remove dominated points and their area contributions
+        auto nodeS = nodeQ;
+        ++nodeS;
         T sX = nodeS->first;
         T sY = nodeS->second;
-
-        // remove dominated points and their area contributions
         T prevX = pX;
-        T prevY = qY;
+        T prevY = nodeQ->second;
 
         area -= (sX - prevX) * (refY - prevY);
-        while (!(pY > sY)) {
+        while ((nodeS != front.end()) && !(pY > nodeS->second)) {
             prevX = sX;
             prevY = sY;
-            // 'nodeS' points to a dominated point before calling erase,
-            // and to that points successor afterwards.
+            // 'nodeS' points to a dominated point before calling erase
+            // and its successor afterwards.
             nodeS = front.erase(nodeS);
             sX = nodeS->first;
             sY = nodeS->second;
