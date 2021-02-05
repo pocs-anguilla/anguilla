@@ -39,11 +39,15 @@ jobs:
       - name: Prepare
         run: conda install conda-build conda-verify anaconda-client
 
+      # See: https://git.io/Jtg1y
+      - name: Configure build directory
+        run: echo "${CONDA_PREFIX}/conda-bld" >> $CONDA_BUILD_PATH
+
       - name: Build
-        run: conda build conda-recipes/anguilla --output-folder ${CONDA_PREFIX}/conda-bld/
+        run: conda build conda-recipes/anguilla --output-folder ${{ env.CONDA_BUILD_PATH }}
 
       - name: Install
-        run: conda install -c ${CONDA_PREFIX}/conda-bld/ anguilla
+        run: conda install -c ${{ env.CONDA_BUILD_PATH }} anguilla
 
       - name: Test
         run: |
@@ -53,7 +57,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          path: ${{ env.CONDA_PREFIX }}/conda-bld/**/*.tar.bz2
+          path: ${{ env.CONDA_BUILD_PATH }}/**/*.tar.bz2
 
   # Upload to Anaconda.org (until recipe is submitted to Conda-Forge).
   upload_anaconda:
