@@ -183,11 +183,11 @@ int main() {
         constexpr auto initialSigma = 0.6 * (1.0 - -1.0);
         constexpr auto nVariables = nVariables_dRotated;
         RunTrials<benchmarks::IHR3, SteadyStateMOCMA, true> indOpt1;
-        RunTrials<benchmarks::IHR3, SteadyStateMOCMA, true> popOpt1;
+        RunTrials<benchmarks::IHR3, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::IHR3, MOCMA, true> indOpt2;
-        RunTrials<benchmarks::IHR3, MOCMA, true> popOpt2;
+        RunTrials<benchmarks::IHR3, MOCMA, false> popOpt2;
         indOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
@@ -195,11 +195,11 @@ int main() {
         constexpr auto initialSigma = 0.6 * (5.0 - -5.0);
         constexpr auto nVariables = nVariables_dRotated;
         RunTrials<benchmarks::IHR4, SteadyStateMOCMA, true> indOpt1;
-        RunTrials<benchmarks::IHR4, SteadyStateMOCMA, true> popOpt1;
+        RunTrials<benchmarks::IHR4, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::IHR4, MOCMA, true> indOpt2;
-        RunTrials<benchmarks::IHR4, MOCMA, true> popOpt2;
+        RunTrials<benchmarks::IHR4, MOCMA, false> popOpt2;
         indOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
@@ -207,11 +207,11 @@ int main() {
         constexpr auto initialSigma = 0.6 * (5.0 - -5.0);
         constexpr auto nVariables = nVariables_dRotated;
         RunTrials<benchmarks::IHR6, SteadyStateMOCMA, true> indOpt1;
-        RunTrials<benchmarks::IHR6, SteadyStateMOCMA, true> popOpt1;
+        RunTrials<benchmarks::IHR6, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt1.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::IHR6, MOCMA, true> indOpt2;
-        RunTrials<benchmarks::IHR6, MOCMA, true> popOpt2;
+        RunTrials<benchmarks::IHR6, MOCMA, false> popOpt2;
         indOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
