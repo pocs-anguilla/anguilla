@@ -43,16 +43,14 @@ jobs:
         run: conda install conda-build conda-verify anaconda-client
 
       # See: https://git.io/Jtg1y
-      - name: Configure build path
-        run: echo ${CONDA_PREFIX}/conda-bld >> $CONDA_BUILD_PATH
+      - name: Set up build directory
+        run: mkdir -p ${CONDA_BUILD_PATH}
 
       - name: Build
-        run: |
-          echo "Build path: ${{ env.CONDA_BUILD_PATH }}"
-          conda build conda-recipes/anguilla --output-folder ${{ env.CONDA_BUILD_PATH }}
+        run: conda build conda-recipes/anguilla --output-folder ${CONDA_BUILD_PATH}
 
       - name: Install
-        run: conda install -c ${{ env.CONDA_BUILD_PATH }} anguilla
+        run: conda install -c ${CONDA_BUILD_PATH} anguilla
 
       - name: Test
         run: |
