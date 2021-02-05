@@ -53,7 +53,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          path: ${CONDA_PREFIX}/conda-bld/**/*.tar.bz2
+          path: ${{ env.CONDA_PREFIX }}/conda-bld/**/*.tar.bz2
 
   # Upload to Anaconda.org (until recipe is submitted to Conda-Forge).
   upload_anaconda:
