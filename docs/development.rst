@@ -62,6 +62,13 @@ Versioning
 * We use semantic versioning.
 * All releases should contain a changelog and be tagged in Git.
 
+When bumping the version number the following files should be updated (relative paths to the root of the project are shown):
+
+* `setup.py`
+* `CMakeLists.txt`
+* `anguilla/__init__.py`
+* `conda-recipes/anguilla/meta.yaml`
+
 File structure
 ##############
 
