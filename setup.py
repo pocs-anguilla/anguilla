@@ -8,7 +8,7 @@ from skbuild import setup
 
 def main():
     author = "Anguilla Development Team"
-    version = "0.0.12"
+    version = "0.0.13"
     with open("README.rst", encoding="utf-8") as f:
         long_description = f.read()
 
