@@ -57,5 +57,6 @@ class NonDominatedSetKD:
 __all__ = [
     "non_dominated_sort",
     "dominates",
-    "NonDominatedSet2D" "NonDominatedSetKD",
+    "NonDominatedSet2D",
+    "NonDominatedSetKD",
 ]
