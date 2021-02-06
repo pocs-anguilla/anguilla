@@ -87,7 +87,7 @@ class RunTrials {
                 logfile.open(filename);
                 logfile << std::setprecision(10);
                 logfile << "# Generated with Shark 4.1.x\n";
-                logfile << "# Global RNG seed: " << SEED << "\n";
+                logfile << "# Global seed: " << SEED << "\n";
                 logfile << "# Function: " << fn.name() << ": " << fn.numberOfVariables() << " -> " << fn.numberOfObjectives() << "\n";
                 logfile << "# Optimizer: " << optName << "\n";
                 logfile << "# Trial: " << (t + 1) % nextEvaluationsLimit << "\n";
@@ -269,7 +269,7 @@ int main() {
         nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
     {
-        constexpr auto initialSigma = 0.1;
+        constexpr auto initialSigma = 1.0;
         constexpr auto nVariables = nVariables_dRotated;
         RunTrials<benchmarks::ELLI1, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::ELLI1, SteadyStateMOCMA, false> popOpt1;
@@ -283,7 +283,7 @@ int main() {
         nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
     {
-        constexpr auto initialSigma = 0.1;
+        constexpr auto initialSigma = 1.0;
         constexpr auto nVariables = nVariables_dRotated;
         RunTrials<benchmarks::ELLI2, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::ELLI2, SteadyStateMOCMA, false> popOpt1;
@@ -297,7 +297,7 @@ int main() {
         nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
     {
-        constexpr auto initialSigma = 0.1;
+        constexpr auto initialSigma = 1.0;
         constexpr auto nVariables = nVariables_dRotated;
         RunTrials<benchmarks::CIGTAB1, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::CIGTAB1, SteadyStateMOCMA, false> popOpt1;
@@ -311,7 +311,7 @@ int main() {
         nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
     {
-        constexpr auto initialSigma = 0.1;
+        constexpr auto initialSigma = 1.0;
         constexpr auto nVariables = nVariables_dRotated;
         RunTrials<benchmarks::CIGTAB2, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::CIGTAB2, SteadyStateMOCMA, false> popOpt1;
@@ -326,8 +326,8 @@ int main() {
     }
     // Three objectives.
     {
-        constexpr auto initialSigma = 0.1;
-        constexpr auto nVariables = nVariables_dRotated;
+        constexpr auto initialSigma = 0.6;
+        constexpr auto nVariables = nVariables_dConstrainedNonRotated;
         RunTrials<benchmarks::DTLZ1, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::DTLZ1, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
@@ -340,8 +340,8 @@ int main() {
         nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
     {
-        constexpr auto initialSigma = 0.1;
-        constexpr auto nVariables = nVariables_dRotated;
+        constexpr auto initialSigma = 0.6;
+        constexpr auto nVariables = nVariables_dConstrainedNonRotated;
         RunTrials<benchmarks::DTLZ2, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::DTLZ2, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
@@ -354,8 +354,8 @@ int main() {
         nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
     {
-        constexpr auto initialSigma = 0.1;
-        constexpr auto nVariables = nVariables_dRotated;
+        constexpr auto initialSigma = 0.6;
+        constexpr auto nVariables = nVariables_dConstrainedNonRotated;
         RunTrials<benchmarks::DTLZ3, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::DTLZ3, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
@@ -368,8 +368,8 @@ int main() {
         nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
     {
-        constexpr auto initialSigma = 0.1;
-        constexpr auto nVariables = nVariables_dRotated;
+        constexpr auto initialSigma = 0.6;
+        constexpr auto nVariables = nVariables_dConstrainedNonRotated;
         RunTrials<benchmarks::DTLZ4, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::DTLZ4, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
@@ -382,8 +382,8 @@ int main() {
         nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
     {
-        constexpr auto initialSigma = 0.1;
-        constexpr auto nVariables = nVariables_dRotated;
+        constexpr auto initialSigma = 0.6;
+        constexpr auto nVariables = nVariables_dConstrainedNonRotated;
         RunTrials<benchmarks::DTLZ5, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::DTLZ5, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
@@ -396,8 +396,8 @@ int main() {
         nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
     {
-        constexpr auto initialSigma = 0.1;
-        constexpr auto nVariables = nVariables_dRotated;
+        constexpr auto initialSigma = 0.6;
+        constexpr auto nVariables = nVariables_dConstrainedNonRotated;
         RunTrials<benchmarks::DTLZ6, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::DTLZ6, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
@@ -410,8 +410,8 @@ int main() {
         nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
     }
     {
-        constexpr auto initialSigma = 0.1;
-        constexpr auto nVariables = nVariables_dRotated;
+        constexpr auto initialSigma = 0.6;
+        constexpr auto nVariables = nVariables_dConstrainedNonRotated;
         RunTrials<benchmarks::DTLZ7, SteadyStateMOCMA, true> indOpt1;
         RunTrials<benchmarks::DTLZ7, SteadyStateMOCMA, false> popOpt1;
         indOpt1.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
