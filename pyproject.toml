@@ -20,7 +20,6 @@ source = ['anguilla']
 branch = true
 relative_files = true
 
-
 # See: https://nbqa.readthedocs.io/en/latest/configuration.html
 [tool.nbqa.mutate]
 isort = true
