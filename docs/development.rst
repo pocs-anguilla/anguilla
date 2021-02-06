@@ -25,7 +25,7 @@ To run Jupyter Lab using the devcontainer:
 
   make jupyter
 
-  # Add environment some environment variables for debugging
+  # Or with the senvironment environment variables necessary for debugging
   make jupyter_debug
 
 The Jupyter setup supports both Python and C++ (through `cling <https://github.com/root-project/cling>`_). This allows you to run Shark from a notebook!
@@ -51,6 +51,11 @@ To run the test suite:
 
   make test
 
+  # Or with the senvironment environment variables necessary for debugging
+  make test_debug
+
+The debugging version of the C++ extensions are dynamically linked to `ASan/UBSan <https://github.com/google/sanitizers>`_.
+
 Supported Python versions
 #########################
 The implementation supports Python 3.6 to 3.9, so any new features can be
@@ -68,6 +73,7 @@ When bumping the version number the following files should be updated (relative 
 * `CMakeLists.txt`
 * `anguilla/__init__.py`
 * `conda-recipes/anguilla/meta.yaml`
+* `sonar-project.properties`
 
 File structure
 ##############
