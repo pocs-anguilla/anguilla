@@ -49,3 +49,4 @@ dependencies:
 - pip:
   - build
   - benchit
+  - coverage

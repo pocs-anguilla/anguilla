@@ -1,7 +1,11 @@
 ========
 Anguilla
 ========
-|conda| |wheels| |docs| |deepsource| |deepcode| |sonarcloud|
+|conda| |wheels| |docs| |coveralls| |deepsource| |deepcode| |sonarcloud|
+
+.. |coveralls| image:: https://coveralls.io/repos/github/pocs-anguilla/anguilla/badge.svg?branch=develop
+               :target: https://coveralls.io/github/pocs-anguilla/anguilla?branch=develop
+               :alt: Coverage Status
 
 .. |conda| image:: https://github.com/pocs-anguilla/anguilla/workflows/Conda/badge.svg?branch=develop
            :target: https://github.com/pocs-anguilla/anguilla
