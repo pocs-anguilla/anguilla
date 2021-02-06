@@ -314,7 +314,7 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         return self.__call__(self.closest_feasible(xs))
 
     def evaluate_with_penalty(
-        self, xs: np.ndarray, penalty: float = 10e-6
+        self, xs: np.ndarray, penalty: float = 1e-6
     ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
         """Compute the fitness projecting points to their closest feasible \
         and apply a penalty.
