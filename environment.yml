@@ -49,3 +49,5 @@ dependencies:
 - pip:
   - build
   - benchit
+  - coverage[toml]
+  - pytest-cov

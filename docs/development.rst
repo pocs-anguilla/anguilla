@@ -103,13 +103,22 @@ Continuous Integration
 Tests
 *****
 
-|appveyor|
+|conda| |wheels| |codecov|
 
-We run tests using AppVeyor as part of the CI pipeline.
+We run tests using GitHub Actions.
+In the case of Windows, tests can't run when using Python 3.8+ due to a change in how DLLs are loaded (which affects C extensions).
 
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/p3c8lge6hmsq4d4q?svg=true
-              :target: https://ci.appveyor.com/project/pocs-anguilla/anguilla
-              :alt: Build status (appveyor)
+.. |codecov| image:: https://codecov.io/gh/pocs-anguilla/anguilla/branch/develop/graph/badge.svg?token=Z29R3QIDY6
+             :target: https://codecov.io/gh/pocs-anguilla/anguilla
+             :alt: Coverage Status
+
+.. |conda| image:: https://github.com/pocs-anguilla/anguilla/workflows/Conda/badge.svg?branch=develop
+           :target: https://github.com/pocs-anguilla/anguilla
+           :alt: Conda build
+
+.. |wheels| image:: https://github.com/pocs-anguilla/anguilla/workflows/Wheels/badge.svg?branch=develop
+           :target: https://github.com/pocs-anguilla/anguilla
+           :alt: Wheels build
 
 Static Analysis
 ***************

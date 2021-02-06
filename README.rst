@@ -1,7 +1,12 @@
 ========
 Anguilla
 ========
-|conda| |wheels| |docs| |deepsource| |deepcode| |sonarcloud|
+|conda| |wheels| |docs| |codecov|
+|deepsource| |deepcode| |sonarcloud|
+
+.. |codecov| image:: https://codecov.io/gh/pocs-anguilla/anguilla/branch/develop/graph/badge.svg?token=Z29R3QIDY6
+             :target: https://codecov.io/gh/pocs-anguilla/anguilla
+             :alt: Coverage Status
 
 .. |conda| image:: https://github.com/pocs-anguilla/anguilla/workflows/Conda/badge.svg?branch=develop
            :target: https://github.com/pocs-anguilla/anguilla
