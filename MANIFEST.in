@@ -1,4 +1,3 @@
-include README.rst
 include LICENSE
 include LICENSE.Apache-2
 include LICENSE.BSL-1
@@ -6,9 +5,13 @@ include LICENSE.LGPL.3-or-later
 include LICENSE.MIT
 include LICENSE.PyBind11
 include REFERENCES
-include setup.py
-include anguilla
-include tests
-include vendor
 include CMakeLists.txt
+graft anguilla
+graft tests
+graft vendor
+prune notebooks
+prune conda-recipes
+prune cmake
+prune docs
+prune requirements
 global-exclude *.py[cod]
