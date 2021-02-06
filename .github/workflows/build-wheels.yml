@@ -31,7 +31,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: "10.15"
           CIBW_DEPENDENCY_VERSIONS: "latest"
           CIBW_TEST_REQUIRES: pytest coverage[toml] pytest-cov
-          CIBW_TEST_COMMAND_LINUX: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla --cov-report=xml && mv coverage.xml /tmp/coverage.xml"
+          CIBW_TEST_COMMAND_LINUX: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla --cov-report=xml && mv coverage.xml {project}"
           CIBW_TEST_COMMAND_WINDOWS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_TEST_COMMAND_MACOS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           # Skip testing in Windows + Python 3.8+ due to DLL loading issues.
@@ -46,7 +46,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         with:
           name: coverage_file
-          path: /tmp/coverage.xml
+          path: coverage.xml
 
   update_coverage:
     needs: [build_wheels]
