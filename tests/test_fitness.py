@@ -253,7 +253,7 @@ class BaseTestFunction:
         else:
             self.assertTrue(
                 isinstance(value, float),
-                "evaluate_single, expected a scalar with type float",
+                "evaluate_with_penalty, expected a scalar with type float",
             )
 
         _, value = fn.evaluate_with_penalty(points)
@@ -281,7 +281,7 @@ class BaseTestFunction:
         else:
             self.assertTrue(
                 isinstance(value, float),
-                "evaluate_single, expected a scalar with type float",
+                "evaluate_with_constraints, expected a scalar with type float",
             )
 
         value = fn.evaluate_with_constraints(points)
