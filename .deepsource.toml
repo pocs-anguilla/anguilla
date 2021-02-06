@@ -1,7 +1,7 @@
 version = 1
 
 test_patterns = ["tests/**", "test_*.py"]
-exclude_patterns = ["notebooks"]
+exclude_patterns = ["notebooks/**", "vendor/**"]
 
 [[analyzers]]
 name = "python"

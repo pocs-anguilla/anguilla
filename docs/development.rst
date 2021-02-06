@@ -25,7 +25,7 @@ To run Jupyter Lab using the devcontainer:
 
   make jupyter
 
-  # Add environment some environment variables for debugging
+  # Or with the senvironment environment variables necessary for debugging
   make jupyter_debug
 
 The Jupyter setup supports both Python and C++ (through `cling <https://github.com/root-project/cling>`_). This allows you to run Shark from a notebook!
@@ -51,6 +51,11 @@ To run the test suite:
 
   make test
 
+  # Or with the senvironment environment variables necessary for debugging
+  make test_debug
+
+The debugging version of the C++ extensions are dynamically linked to `ASan/UBSan <https://github.com/google/sanitizers>`_.
+
 Supported Python versions
 #########################
 The implementation supports Python 3.6 to 3.9, so any new features can be
@@ -68,6 +73,7 @@ When bumping the version number the following files should be updated (relative 
 * `CMakeLists.txt`
 * `anguilla/__init__.py`
 * `conda-recipes/anguilla/meta.yaml`
+* `sonar-project.properties`
 
 File structure
 ##############
@@ -100,12 +106,27 @@ We follow the `Numpy documentation <https://numpydoc.readthedocs.io/en/latest/fo
 Continuous Integration
 ######################
 
+We use `GitHub Actions <https://docs.github.com/en/actions/learn-github-actions>`_.
+You find the workflows in the `.github` directory.
+
+The following actions are used:
+
+* https://github.com/actions/checkout
+* https://github.com/actions/upload-artifact
+* https://github.com/actions/download-artifact
+* https://github.com/actions/setup-python
+* https://github.com/conda-incubator/setup-miniconda
+* https://github.com/joerick/cibuildwheel
+* https://github.com/pypa/gh-action-pypi-publish
+
+Binary wheels are built using `cibuildwheel <https://cibuildwheel.readthedocs.io/en/stable/>`.
+
 Tests
 *****
 
 |conda| |wheels| |codecov|
 
-We run tests using GitHub Actions.
+Tests are run against the built Conda packages / binary wheels.
 In the case of Windows, tests can't run when using Python 3.8+ due to a change in how DLLs are loaded (which affects C extensions).
 
 .. |codecov| image:: https://codecov.io/gh/pocs-anguilla/anguilla/branch/develop/graph/badge.svg?token=Z29R3QIDY6
@@ -141,3 +162,22 @@ code smells and other ways to improve the code base.
                 :width: 85
                 :target: https://sonarcloud.io/dashboard?id=pocs-anguilla_anguilla
                 :alt: sonarcloud badge
+
+Other
+*****
+
+We also use:
+
+* `Codecov <https://about.codecov.io/>`_
+* `Dependabot <https://dependabot.com>`_
+
+Secrets Inventory
+*****************
+
+The repository defines the following secrets:
+
+* ANACONDA_TOKEN
+* CODECOV_TOKEN
+* PYPI_TEST_TOKEN
+* PYPI_TOKEN
+* SONAR_TOKEN
