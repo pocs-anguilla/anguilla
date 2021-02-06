@@ -50,3 +50,4 @@ dependencies:
   - build
   - benchit
   - coverage[toml]
+  - pytest-cov

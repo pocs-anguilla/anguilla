@@ -35,13 +35,13 @@ cxx_experiments: notebooks/shark/exploration/CMakeLists.txt
 
 test:
 	#python -m unittest
-	pytest tests --color=yes
+	pytest tests --color=yes --cov=anguilla
 
 
 test_debug:
 	#LD_PRELOAD="libasan.so libubsan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 python -m unittest
 	#LD_PRELOAD="libasan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 python -m unittest
-	LD_PRELOAD="libasan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 pytest tests --color=yes
+	LD_PRELOAD="libasan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 pytest tests --color=yes --cov=anguilla
 
 jupyter:
 	jupyter-lab --allow-root
