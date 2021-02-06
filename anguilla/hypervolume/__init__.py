@@ -131,7 +131,7 @@ def contributions(
 def contributions_naive(
     points: np.ndarray,
     reference: Optional[np.ndarray] = None,
-    duplicates_possible: bool = True,
+    duplicates_possible: bool = False,
 ) -> np.ndarray:
     """Compute the hypervolume contribution for a set of points.
 
