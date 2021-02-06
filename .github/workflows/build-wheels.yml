@@ -55,12 +55,11 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: coverage_file
-          path: .
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
+          files: coverage.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: true
