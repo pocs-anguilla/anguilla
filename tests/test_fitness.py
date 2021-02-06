@@ -459,7 +459,7 @@ class TestIHR3(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_kwargs = {"rotate": False}
 
 
-class TestIHR3(BaseTestFunctionWithSamples, unittest.TestCase):
+class TestIHR4(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR4 function."""
 
     filename = "IHR4.csv"
@@ -467,11 +467,11 @@ class TestIHR3(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_kwargs = {"rotate": False}
 
 
-class TestIHR4(BaseTestFunctionWithSamples, unittest.TestCase):
-    """Unit tests for the IHR3 function."""
+class TestIHR6(BaseTestFunctionWithSamples, unittest.TestCase):
+    """Unit tests for the IHR6 function."""
 
-    filename = "IHR4.csv"
-    fn_cls = benchmark.IHR4
+    filename = "IHR6.csv"
+    fn_cls = benchmark.IHR6
     fn_kwargs = {"rotate": False}
 
 
