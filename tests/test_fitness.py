@@ -7,6 +7,7 @@ from typing import Any, Optional, Tuple
 import numpy as np
 
 from anguilla.fitness.base import ObjectiveFunction
+from anguilla.fitness.constraints import BoxConstraintsHandler
 import anguilla.fitness.benchmark as benchmark
 
 
@@ -447,3 +448,29 @@ class TestMOQ1AI(BaseTestFunctionSimple, unittest.TestCase):
 class TestMOQ1NAI(BaseTestFunctionSimple, unittest.TestCase):
     fn_cls = benchmark.MOQ
     fn_args_mandatory = ("1/I",)
+
+
+class TestPenalizedEvaluation(unittest.TestCase):
+    class ContrainedIdentity(ObjectiveFunction):
+        def name(self):
+            return "constrained identity"
+
+        def evaluate_single(self, x):
+            return x
+
+        def _post_update_n_dimensions(self) -> None:
+            upper_bound = np.array([5.0, 4.0, 3.0])
+            lower_bound = np.array([-3.0, -4.0, -5.0])
+            self._constraints_handler = BoxConstraintsHandler(
+                self._n_dimensions, (lower_bound, upper_bound)
+            )
+
+    def test_penalized(self):
+        fn = TestPenalizedEvaluation.ContrainedIdentity(3, 3)
+        x = np.array([6.0, 1.0, -6.0])
+        y_expected = np.array([6.0 - 1e-6, 1.0, -6.0 - 1e-6])
+        y_eval = fn.evaluate_with_penalty(x)
+        self.assertTrue(
+            np.allclose(y_expected, y_eval),
+            f"Got: {y_eval}, expected: {y_expected}",
+        )
