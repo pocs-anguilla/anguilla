@@ -16,32 +16,32 @@ class TestBoxConstraintsHandler(unittest.TestCase):
         upper = 10.0
         handler = BoxConstraintsHandler(n, (lower, upper))
         # All coordinates outside the lower bound
-        input = np.array([-11.0, -21.0, -30.0])
-        computed = handler.closest_feasible(input)
+        input_data = np.array([-11.0, -21.0, -30.0])
+        computed = handler.closest_feasible(input_data)
         expected = np.repeat(lower, n)
         self.assertTrue(
             np.all(computed == expected),
             "Lower bound, got: {}, expected: {}".format(computed, expected),
         )
         # All coordinates outside the upper bound
-        input = np.array([11.0, 21.0, 31.0])
-        computed = handler.closest_feasible(input)
+        input_data = np.array([11.0, 21.0, 31.0])
+        computed = handler.closest_feasible(input_data)
         expected = np.repeat(upper, n)
         self.assertTrue(
             np.all(computed == expected),
             "Upper bound, got: {}, expected: {}".format(computed, expected),
         )
         # All coordinates within the bounds
-        input = np.array([0.0, 1.0, -3.0])
-        computed = handler.closest_feasible(input)
-        expected = input
+        input_data = np.array([0.0, 1.0, -3.0])
+        computed = handler.closest_feasible(input_data)
+        expected = input_data
         self.assertTrue(
             np.all(computed == expected),
             "Within bounds, got: {}, expected: {}".format(computed, expected),
         )
         # Mixed: some within and some out of bounds
-        input = np.array([-12.0, -5.0, 5.0, 56.0])
-        computed = handler.closest_feasible(input)
+        input_data = np.array([-12.0, -5.0, 5.0, 56.0])
+        computed = handler.closest_feasible(input_data)
         expected = np.array([lower, -5.0, 5.0, upper])
         self.assertTrue(
             np.all(computed == expected),
@@ -54,32 +54,32 @@ class TestBoxConstraintsHandler(unittest.TestCase):
         upper = np.array([10.0, 20.0, 30.0, 40.0])
         handler = BoxConstraintsHandler(4, (lower, upper))
         # All coordinates outside the lower bound
-        input = np.array([-11.0, -21.0, -31.0, -5.0])
-        computed = handler.closest_feasible(input)
+        input_data = np.array([-11.0, -21.0, -31.0, -5.0])
+        computed = handler.closest_feasible(input_data)
         expected = lower
         self.assertTrue(
             np.all(computed == expected),
             "Lower bound, got: {}, expected: {}".format(computed, expected),
         )
         # All coordinates outside the upper bound
-        input = np.array([11.0, 21.0, 31.0, 454.0])
-        computed = handler.closest_feasible(input)
+        input_data = np.array([11.0, 21.0, 31.0, 454.0])
+        computed = handler.closest_feasible(input_data)
         expected = upper
         self.assertTrue(
             np.all(computed == expected),
             "Upper bound, got: {}, expected: {}".format(computed, expected),
         )
         # All coordinates within the bounds
-        input = np.array([0.0, 1.0, -3.0, 0.0])
-        computed = handler.closest_feasible(input)
-        expected = input
+        input_data = np.array([0.0, 1.0, -3.0, 0.0])
+        computed = handler.closest_feasible(input_data)
+        expected = input_data
         self.assertTrue(
             np.all(computed == expected),
             "Within bounds, got: {}, expected: {}".format(computed, expected),
         )
         # Mixed: some within and some out of bounds
-        input = np.array([-12.0, -5.0, 5.0, 56.0])
-        computed = handler.closest_feasible(input)
+        input_data = np.array([-12.0, -5.0, 5.0, 56.0])
+        computed = handler.closest_feasible(input_data)
         expected = np.array([-10.0, -5.0, 5.0, 40.0])
         self.assertTrue(
             np.all(computed == expected),

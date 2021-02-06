@@ -20,6 +20,7 @@ class DTLZ(ObjectiveFunction):
         n_objectives: int = 2,
         rng: np.random.Generator = None,
     ) -> None:
+        self._k = None
         super().__init__(n_dimensions, n_objectives, rng)
 
     @property

@@ -74,6 +74,7 @@ class MOQ(ObjectiveFunction):
             # Concave
             self._shape = 0.25
         self._k = k
+        self._delta = None
         # Note: The definition allows for scalable number of objectives.
         super().__init__(n_dimensions, 2, rng)
 
@@ -213,19 +214,19 @@ class MOQ(ObjectiveFunction):
             self._delta[j] = math.sin(angle)
         return False
 
-    def _post_update_n_dimensions_3(self) -> None:
+    def _post_update_n_dimensions_3(self) -> bool:
         # U1 = U2 = I
         for i in range(self._n_dimensions):
             self._U[:, i, i] = 1.0
         raise NotImplementedError()
 
-    def _post_update_n_dimensions_4(self) -> None:
+    def _post_update_n_dimensions_4(self) -> bool:
         # U1 = U2 = I
         for i in range(self._n_dimensions):
             self._U[:, i, i] = 1.0
         raise NotImplementedError()
 
-    def _post_update_n_dimensions_5(self) -> None:
+    def _post_update_n_dimensions_5(self) -> bool:
         # U1 = I, U2 != I, D2 != I
         for i in range(self._n_dimensions):
             self._U[0, i, i] = 1.0
@@ -233,7 +234,7 @@ class MOQ(ObjectiveFunction):
         self._d[1] = self._random_d()
         raise NotImplementedError()
 
-    def _post_update_n_dimensions_6(self) -> None:
+    def _post_update_n_dimensions_6(self) -> bool:
         # U1 = I, U2 != I, D2 != I
         for i in range(self._n_dimensions):
             self._U[0, i, i] = 1.0
@@ -241,7 +242,7 @@ class MOQ(ObjectiveFunction):
         self._d[1] = self._random_d()
         raise NotImplementedError()
 
-    def _post_update_n_dimensions_7(self) -> None:
+    def _post_update_n_dimensions_7(self) -> bool:
         # U1 = U2 != I, D1 != I != D2
         self._U[0] = random_orthogonal_matrix(self.n_dimensions, self._rng)
         self._U[1] = self._U[0]
@@ -249,7 +250,7 @@ class MOQ(ObjectiveFunction):
         self._d[1] = self._random_d()
         raise NotImplementedError()
 
-    def _post_update_n_dimensions_8(self) -> None:
+    def _post_update_n_dimensions_8(self) -> bool:
         # U1 = U2 != I, D1 != I != D2
         self._U[0] = random_orthogonal_matrix(self.n_dimensions, self._rng)
         self._U[1] = self._U[0]
@@ -257,7 +258,7 @@ class MOQ(ObjectiveFunction):
         self._d[1] = self._random_d()
         raise NotImplementedError()
 
-    def _post_update_n_dimensions_9(self) -> None:
+    def _post_update_n_dimensions_9(self) -> bool:
         # I != U1 != U2 != I, D1 != I != D2
         self._U[0] = random_orthogonal_matrix(self._n_dimensions, self._rng)
         self._U[1] = random_orthogonal_matrix(self._n_dimensions, self._rng)

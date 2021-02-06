@@ -602,6 +602,7 @@ class TestConstrainedEvaluation(unittest.TestCase):
         def __init__(self) -> None:
             super().__init__(n_dimensions=3, n_objectives=3)
 
+        @property
         def name(self):
             return "constrained identity"
 
