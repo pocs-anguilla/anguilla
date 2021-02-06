@@ -46,7 +46,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         with:
           name: coverage_file
-          path: /tmp/coverage.xml
+          path: /tmp/**/coverage.xml
 
   update_coverage:
     needs: [build_wheels]
