@@ -16,15 +16,16 @@ build-backend = "setuptools.build_meta"
 
 # See: https://coverage.readthedocs.io/en/latest/config.html
 [tool.coverage.run]
-branch = True
-relative_files = True
+source = ['anguilla']
+branch = true
+relative_files = true
 
 
 # See: https://nbqa.readthedocs.io/en/latest/configuration.html
 [tool.nbqa.mutate]
-isort = 1
-pylint = 1
-pyupgrade = 1
+isort = true
+pylint = true
+pyupgrade = true
 
 [tool.nbqa.addopts]
 pyupgrade = ["--py36-plus"]
