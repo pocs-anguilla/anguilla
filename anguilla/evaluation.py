@@ -160,7 +160,7 @@ class UPMOCMATrialParameters(TrialParameters):
     fn_args: Optional[Iterable] = None
     fn_kwargs: Optional[dict] = None
     fn_rng_seed: Optional[int] = None
-    n_parents: int = 20
+    n_starting_points: Optional[int] = None
     initial_step_size: float = 1.0
     success_notion: str = "population"
     reference: Optional[np.ndarray] = None
@@ -174,8 +174,6 @@ class UPMOCMATrialParameters(TrialParameters):
     seed: Optional[int] = None
 
     def __post_init__(self):
-        if self.n_offspring is None:
-            self.n_offspring = self.n_parents
         if self.fn_args is None:
             self.fn_args = ()
         if self.fn_kwargs is None:

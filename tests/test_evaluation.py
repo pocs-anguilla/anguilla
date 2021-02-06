@@ -3,7 +3,13 @@ import unittest
 import time
 import math
 
-from anguilla.evaluation import StopWatch
+from anguilla.fitness import benchmark
+from anguilla.evaluation import (
+    StopWatch,
+    MOCMATrialParameters,
+    UPMOCMATrialParameters,
+    LogParameters,
+)
 
 
 class TestStopWatch(unittest.TestCase):
@@ -19,3 +25,19 @@ class TestStopWatch(unittest.TestCase):
             math.isclose(sw.duration, 0.35, abs_tol=2),
             "Got: {}, Expected: {}".format(sw.duration, 0.35),
         )
+
+
+class TestParameters(unittest.TestCase):
+    """Test the parameter classes."""
+
+    def test_mocma_initialization(self):
+        """Test creating an instance."""
+        MOCMATrialParameters(benchmark.ZDT1)
+
+    def test_upmocma_initialization(self):
+        """Test creating an instance."""
+        UPMOCMATrialParameters(benchmark.ZDT1)
+
+    def test_log_initialization(self):
+        """Test creating an instance."""
+        LogParameters("./logs", [10, 50])
