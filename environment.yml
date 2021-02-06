@@ -49,4 +49,4 @@ dependencies:
 - pip:
   - build
   - benchit
-  - coverage
+  - coverage[toml]
