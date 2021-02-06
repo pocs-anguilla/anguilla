@@ -20,6 +20,9 @@ source = ['anguilla']
 branch = true
 relative_files = true
 
+[tool.coverage.xml]
+output = '/tmp/coverage.xml'
+
 # See: https://nbqa.readthedocs.io/en/latest/configuration.html
 [tool.nbqa.mutate]
 isort = true
