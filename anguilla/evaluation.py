@@ -1,5 +1,6 @@
 """This module contains tools to conduct experiments for statistical \
 evaluation."""
+import abc
 import os
 import platform
 import time
@@ -15,7 +16,6 @@ import numpy as np
 import anguilla
 from anguilla.fitness.base import ObjectiveFunction
 from anguilla.optimizers.mocma import MOCMA
-from anguilla.dominance import non_dominated_sort
 
 
 class StopWatch:
@@ -48,8 +48,12 @@ class StopWatch:
         return self._duration
 
 
+class TrialParameters(metaclass=abc.ABCMeta):
+    """Abstract trial parameters."""
+
+
 @dataclasses.dataclass
-class MOCMATrialParameters:
+class MOCMATrialParameters(TrialParameters):
     """Define parameters for an independent trial of the MOCMA optimizer.
 
     Parameters
@@ -68,6 +72,23 @@ class MOCMATrialParameters:
         The initial step size.
     success_notion: optional
         The notion of success (`population` or `individual`).
+    n_offspring: optional
+        The number of offspring per parent.
+    reference: optional
+        A reference point for the hypervolume operations.
+    region_bounds: optional
+        Region bounds for the initial search points.
+    max_generations: optional
+        Maximum number of generations to trigger stop.
+    max_evaluations: optional
+        Maximum number of function evaluations to trigger stop.
+    target_indicator_value: optional
+        Target value of the indicator to trigger stop.
+    key: optional
+        The trial identifier.
+    seed: optional
+        The trial random seed. Does not affect the objective function if \
+        `fn_rng_seed` is provided.
     """
 
     fn_cls: ObjectiveFunction
@@ -83,6 +104,71 @@ class MOCMATrialParameters:
     max_generations: Optional[int] = None
     max_evaluations: Optional[int] = None
     target_indicator_value: Optional[float] = None
+    # Override with dataclasses.replace
+    key: Optional[int] = None
+    seed: Optional[int] = None
+
+    def __post_init__(self):
+        if self.n_offspring is None:
+            self.n_offspring = self.n_parents
+        if self.fn_args is None:
+            self.fn_args = ()
+        if self.fn_kwargs is None:
+            self.fn_kwargs = {}
+
+
+@dataclasses.dataclass
+class UPMOCMATrialParameters(TrialParameters):
+    """Define parameters for an independent trial of the UPMOCMA optimizer.
+
+    Parameters
+    ----------
+    fn_cls
+        The objective function class.
+    fn_args: optional
+        The positional arguments to instantiate `fn_cls` with.
+    fn_kwargs: optional
+        The keyword arguments to instantiate `fn_cls` with.
+    fn_rng_seed: optional
+        Seed to generate a specific RNG for the benchmark function.
+    n_starting_points: optional
+        The number of starting points to generate.
+    initial_step_size: optional
+        The initial step size.
+    success_notion: optional
+        The notion of success (`population` or `individual`).
+    reference: optional
+        A reference point for the hypervolume operations.
+    region_bounds: optional
+        Region bounds for the initial search points.
+    max_generations: optional
+        Maximum number of generations to trigger stop.
+    max_evaluations: optional
+        Maximum number of function evaluations to trigger stop.
+    max_nbytes: optional
+        Maximum memory the archive can utilize (in bytes).
+    max_size: optional
+        Maximum number of individuals.
+    key: optional
+        The trial identifier.
+    seed: optional
+        The trial random seed. Does not affect the objective function if \
+        `fn_rng_seed` is provided.
+    """
+
+    fn_cls: ObjectiveFunction
+    fn_args: Optional[Iterable] = None
+    fn_kwargs: Optional[dict] = None
+    fn_rng_seed: Optional[int] = None
+    n_parents: int = 20
+    initial_step_size: float = 1.0
+    success_notion: str = "population"
+    reference: Optional[np.ndarray] = None
+    region_bounds: Optional[np.ndarray] = None
+    max_generations: Optional[int] = None
+    max_evaluations: Optional[int] = None
+    max_nbytes: Optional[int] = None
+    max_size: Optional[int] = None
     # Override with dataclasses.replace
     key: Optional[int] = None
     seed: Optional[int] = None
@@ -382,38 +468,10 @@ def log_mocma_trials(
             print(f"\t{result}")
 
 
-def union_upper_bound(
-    *populations: Iterable[np.ndarray], translate_by: float = 0.0
-):
-    """Compute the upper bound of the union of non-dominated individuals \
-    in a set of populations.
-
-    Parameters
-    ----------
-    populations
-        The populations of individuals to build the reference set with.
-    translate_by: optional
-        Number to translate the upper bound with.
-
-    Returns
-    -------
-        The translated upper bound of the union of non-nominated individuals.
-
-    Notes
-    -----
-    Based on the reference set described in Section 4.2, p. 490 \
-    :cite:`2010:mo-cma-es`.
-    """
-    reference_set = np.vstack(populations)
-    ranks, _ = non_dominated_sort(reference_set, 1)
-    reference_set = reference_set[ranks == 1]
-    return np.max(reference_set, axis=0) + translate_by
-
-
 __all__ = [
-    "log_mocma_trials",
-    "union_upper_bound",
-    "MOCMATrialParameters",
-    "LogParameters",
     "StopWatch",
+    "MOCMATrialParameters",
+    "UPMOCMATrialParameters",
+    "LogParameters",
+    "log_mocma_trials",
 ]
