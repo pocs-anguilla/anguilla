@@ -13,6 +13,33 @@ VOLUME_TEST_N_TRIALS = 3
 VOLUME_TEST_RTOL = 5e-3
 
 
+class BasicTests(unittest.TestCase):
+    """Test basic properties."""
+
+    def test_evaluation_count_steady(self):
+        fn = benchmark.GELLI(5, 3)
+        parent_points = fn.random_points(10)
+        parent_fitness = fn(parent_points)
+        optimizer = MOCMA(
+            parent_points, parent_fitness, n_offspring=1, max_evaluations=4
+        )
+        res = optimizer.fmin(fn)
+        self.assertTrue(
+            res.stopping_conditions.max_evaluations == 4,
+            "stopping condition count, got: {}, expected: {}".format(
+                res.stopping_conditions.max_evaluations, 4
+            ),
+        )
+        self.assertTrue(
+            fn.evaluation_count - len(parent_points)
+            == optimizer.evaluation_count,
+            "function count: {}, optimizer count: {}".format(
+                fn.evaluation_count - len(parent_points),
+                optimizer.evaluation_count,
+            ),
+        )
+
+
 class VolumeBaseTestFunction:
     """Test the MOCMA implementation against known volumes."""
 
