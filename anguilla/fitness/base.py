@@ -334,21 +334,29 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         Implements penalized evaluation as described in \
         p. 12 of :cite:`2007:mo-cma-es`.
         """
+        if len(xs.shape) == 1:
+            xs = xs.reshape((1, len(xs)))
+
         feasible_xs = self.closest_feasible(xs)
         tmp = xs - feasible_xs
+
         ys = self.__call__(feasible_xs)
-        if len(ys.shape) == 1:
+        if self._n_objectives > 1 and len(ys.shape) == 1:
             ys = ys.reshape((1, len(ys)))
-        if len(tmp.shape) != len(ys.shape):
+        elif isinstance(ys, float):
+            ys = np.array([ys])
+
+        if len(tmp) != len(ys):
             msg = "Shapes mismatch: {} and {}".format(tmp.shape, ys.shape)
             raise RuntimeError(msg)
-        if len(tmp.shape) > 1:
-            penalized_ys = np.empty_like(ys)
-            for i in range(len(tmp)):
-                penalized_ys[i] = ys[i] + penalty * np.sum(tmp[i] * tmp[i])
+
+        penalized_ys = np.empty_like(ys)
+        for i in range(len(tmp)):
+            penalized_ys[i] = ys[i] + penalty * np.sum(tmp[i] * tmp[i])
+
+        if len(ys) > 1:
             return ys, penalized_ys
-        penalized_ys = ys + penalty * np.sum(tmp * tmp)
-        return ys, penalized_ys
+        return ys[0], penalized_ys[0]
 
     def pareto_front(self, num: int = 50) -> np.ndarray:
         """Return the true Pareto front.
@@ -426,7 +434,10 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
             Point has invalid shape
         """
         if len(x.shape) > 1 or len(x) != self._n_dimensions:
-            raise ValueError("Point has invalid shape")
+            msg = "Point has invalid shape, got {}, expected {}".format(
+                len(x), self._n_dimensions
+            )
+            raise ValueError(msg)
         if count:
             self._evaluation_count += 1
 

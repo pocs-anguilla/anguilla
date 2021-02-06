@@ -172,6 +172,129 @@ class BaseTestFunction:
             ),
         )
 
+    def test_output_shape(self):
+        """Test output shape depending on the input."""
+        n_points = 7
+        n_dimensions = 3
+        fn = self.get_fn((n_dimensions,))
+        assert fn.n_dimensions == n_dimensions
+        point = fn.random_points(1)
+        points = fn.random_points(n_points)
+        expected_single = (fn.n_objectives,)
+        expected_multiple = (
+            (n_points, fn.n_objectives) if fn.n_objectives > 1 else (n_points,)
+        )
+
+        value = fn(point)
+        if fn.n_objectives > 1:
+            computed = value.shape
+            self.assertTrue(
+                computed == expected_single,
+                "__call__, got: {}, expected: {}".format(
+                    computed,
+                    expected_single,
+                ),
+            )
+        else:
+            self.assertTrue(
+                isinstance(value, float),
+                "__call__, expected a scalar with type float",
+            )
+
+        value = fn(points)
+        computed = value.shape
+        self.assertTrue(
+            computed == expected_multiple,
+            "__call__, multiple points, "
+            "got: {}, expected: {}".format(
+                computed,
+                expected_multiple,
+            ),
+        )
+
+        value = fn.evaluate_single(point)
+        if fn.n_objectives > 1:
+            computed = value.shape
+            self.assertTrue(
+                computed == expected_single,
+                "evaluate_single, got: {}, expected: {}".format(
+                    computed,
+                    expected_single,
+                ),
+            )
+        else:
+            self.assertTrue(
+                isinstance(value, float),
+                "evaluate_single, expected a scalar with type float",
+            )
+
+        value = fn.evaluate_multiple(points)
+        computed = value.shape
+        self.assertTrue(
+            computed == expected_multiple,
+            "evaluate_with_penalty, multiple points, "
+            "got: {}, expected: {}".format(
+                computed,
+                expected_multiple,
+            ),
+        )
+
+        _, value = fn.evaluate_with_penalty(point)
+        if fn.n_objectives > 1:
+            computed = value.shape
+            self.assertTrue(
+                computed == expected_single,
+                "evaluate_with_penalty, single point, "
+                "got: {}, expected: {}".format(
+                    computed,
+                    expected_single,
+                ),
+            )
+        else:
+            self.assertTrue(
+                isinstance(value, float),
+                "evaluate_single, expected a scalar with type float",
+            )
+
+        _, value = fn.evaluate_with_penalty(points)
+        computed = value.shape
+        self.assertTrue(
+            computed == expected_multiple,
+            "evaluate_with_penalty, multiple points, "
+            "got: {}, expected: {}".format(
+                computed,
+                expected_multiple,
+            ),
+        )
+
+        value = fn.evaluate_with_constraints(point)
+        if fn.n_objectives > 1:
+            computed = value.shape
+            self.assertTrue(
+                computed == expected_single,
+                "evaluate_with_constraints, single point, "
+                "got: {}, expected: {}".format(
+                    computed,
+                    expected_single,
+                ),
+            )
+        else:
+            self.assertTrue(
+                isinstance(value, float),
+                "evaluate_single, expected a scalar with type float",
+            )
+
+        value = fn.evaluate_with_constraints(points)
+        computed = value.shape
+        self.assertTrue(
+            computed == expected_multiple,
+            "evaluate_with_constraints, multiple points, "
+            "got: {}, expected: {}".format(
+                computed,
+                expected_multiple,
+            ),
+        )
+
 
 class BaseTestFunctionSimple(BaseTestFunction):
     """Test additional properties of the function implementation."""
@@ -450,8 +573,11 @@ class TestMOQ1NAI(BaseTestFunctionSimple, unittest.TestCase):
     fn_args_mandatory = ("1/I",)
 
 
-class TestPenalizedEvaluation(unittest.TestCase):
+class TestConstrainedEvaluation(unittest.TestCase):
     class ContrainedIdentity(ObjectiveFunction):
+        def __init__(self) -> None:
+            super().__init__(n_dimensions=3, n_objectives=3)
+
         def name(self):
             return "constrained identity"
 
@@ -459,18 +585,58 @@ class TestPenalizedEvaluation(unittest.TestCase):
             return x
 
         def _post_update_n_dimensions(self) -> None:
-            upper_bound = np.array([5.0, 4.0, 3.0])
             lower_bound = np.array([-3.0, -4.0, -5.0])
+            upper_bound = np.array([5.0, 4.0, 3.0])
             self._constraints_handler = BoxConstraintsHandler(
                 self._n_dimensions, (lower_bound, upper_bound)
             )
 
-    def test_penalized(self):
-        fn = TestPenalizedEvaluation.ContrainedIdentity(3, 3)
+    def test_nonzero_penalty(self):
+        """Test evaluation of point that should be penalized."""
+        penalty = 1e-6
+        fn = TestConstrainedEvaluation.ContrainedIdentity()
         x = np.array([6.0, 1.0, -6.0])
-        y_expected = np.array([6.0 - 1e-6, 1.0, -6.0 - 1e-6])
-        y_eval = fn.evaluate_with_penalty(x)
+        x_feasible = np.array([5.0, 1.0, -5.0])
+        y_expected = x_feasible + penalty
+        y_constrained, y_penalized = fn.evaluate_with_penalty(
+            x, penalty=penalty
+        )
         self.assertTrue(
-            np.allclose(y_expected, y_eval),
-            f"Got: {y_eval}, expected: {y_expected}",
+            np.allclose(y_constrained, x_feasible),
+            f"Constrained fitness, got: {y_constrained}, expected: {x_feasible}",
+        )
+        self.assertTrue(
+            np.allclose(y_expected, y_penalized),
+            f"Penalized fitness, got: {y_penalized}, expected: {y_expected}",
+        )
+        y_constrained_nopenalty = fn.evaluate_with_constraints(x)
+        self.assertTrue(
+            np.allclose(y_constrained_nopenalty, x_feasible),
+            "Constrained fitness (no penalty), got: {}, expected: {}".format(
+                y_constrained_nopenalty, x_feasible
+            ),
+        )
+
+    def test_zero_penalty(self):
+        """Test evaluation of point within constraints."""
+        penalty = 1e-6
+        fn = TestConstrainedEvaluation.ContrainedIdentity()
+        x = np.array([1.0, -2.0, 3.0])
+        y_constrained, y_penalized = fn.evaluate_with_penalty(
+            x, penalty=penalty
+        )
+        self.assertTrue(
+            np.allclose(y_constrained, x),
+            f"Constrained fitness, got: {y_constrained}, expected: {x}",
+        )
+        self.assertTrue(
+            np.allclose(y_penalized, x),
+            f"Penalized fitness, got: {y_penalized}, expected: {x}",
+        )
+        y_constrained_nopenalty = fn.evaluate_with_constraints(x)
+        self.assertTrue(
+            np.allclose(y_constrained_nopenalty, x),
+            "Constrained fitness (no penalty), got: {}, expected: {}".format(
+                y_constrained_nopenalty, x
+            ),
         )
