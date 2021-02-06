@@ -5,7 +5,12 @@ import typing
 
 import numpy as np
 
-from anguilla.dominance import non_dominated_sort, dominates, NonDominatedSet2D
+from anguilla.dominance import (
+    non_dominated_sort,
+    dominates,
+    NonDominatedSet2D,
+    NonDominatedSetKD,
+)
 
 
 def line(m, b):
@@ -162,7 +167,12 @@ class TestNonDominatedSet(unittest.TestCase):
             [3.0, 3.0],
         ]
         set = NonDominatedSet2D()
+        set_alternative = NonDominatedSetKD()
         k = set.insert(union)
+        set_alternative.insert(union)
         self.assertTrue(k == 3)
         self.assertTrue(np.allclose(set.upper_bound, np.array([3.0, 4.0])))
+        self.assertTrue(
+            np.allclose(set.upper_bound, set_alternative.upper_bound)
+        )
         self.assertTrue(set.size == 3)

@@ -33,6 +33,7 @@ except ImportError:
 def calculate(
     points: np.ndarray,
     reference: Optional[np.ndarray] = None,
+    ignore_dominated: bool = False,
     use_btree: bool = True,
 ) -> float:
     """Compute the exact hypervolume indicator for a set of k-D points.
@@ -62,9 +63,9 @@ def calculate(
         points = np.array([points])
     d = len(points[0])
     if d == 2:
-        return hv2d_f8(points, reference)
+        return hv2d_f8(points, reference, ignore_dominated)
     elif d == 3:
-        return hv3d_f8(points, reference, use_btree)
+        return hv3d_f8(points, reference, ignore_dominated, use_btree)
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
             shark_calculate(points, reference)

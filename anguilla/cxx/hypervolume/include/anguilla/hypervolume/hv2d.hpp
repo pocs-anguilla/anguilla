@@ -46,19 +46,19 @@ static constexpr const char *docstring = R"_(
     Ported from :cite:`2008:shark`.)_";
 
 template <typename T>
-[[nodiscard]] auto calculate(const py::array_t<T> &, const std::optional<py::array_t<T>> &);
+[[nodiscard]] auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference, bool ignoreDominated = false);
 }  // namespace hv2d
 
 /* Internal interface */
 namespace __hv2d {
 template <typename T>
-[[nodiscard]] auto calculate(std::vector<Point2D<T>> &, const T, const T);
+[[nodiscard]] auto calculate(std::vector<Point2D<T>> &points, const T refX, const T refY);
 }  // namespace __hv2d
 
 /* Public implementation */
 namespace hv2d {
 template <typename T>
-auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference) {
+auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference, bool ignoreDominated) {
     static_assert(std::is_floating_point<T>::value,
                   "HV2D is not meant to be instantiated with non floating point type.");
 
@@ -85,7 +85,15 @@ auto calculate(const py::array_t<T> &_points, const std::optional<py::array_t<T>
     for (auto i = 0U; i < n; ++i) {
         const auto pX = pointsR(i, 0);
         const auto pY = pointsR(i, 1);
-        points.emplace_back(pX, pY);
+
+        if (refGiven && ignoreDominated) {
+            if (pX < refX && pY < refY) {
+                points.emplace_back(pX, pY);
+            }
+        } else {
+            points.emplace_back(pX, pY);
+        }
+
         if (!refGiven) {
             refX = std::max(refX, pX);
             refY = std::max(refY, pY);

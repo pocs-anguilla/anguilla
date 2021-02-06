@@ -341,6 +341,7 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         tmp = xs - feasible_xs
 
         ys = self.__call__(feasible_xs)
+
         if self._n_objectives > 1 and len(ys.shape) == 1:
             ys = ys.reshape((1, len(ys)))
         elif isinstance(ys, float):
