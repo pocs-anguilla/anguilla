@@ -50,3 +50,6 @@ License: MIT
 Copyright: 2016, Wenzel Jakob
 License: LICENSE.PyBind11
 Comment: This project uses PyBind11 for its C extensions.
+
+License: REFERENCES
+Comment: Bibliographical references.
