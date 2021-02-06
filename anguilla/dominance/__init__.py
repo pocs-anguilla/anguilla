@@ -27,13 +27,13 @@ def dominates(a: np.ndarray, b: np.ndarray) -> bool:
     """
     if a.size != b.size:
         raise ValueError("Input arrays have different sizes.")
-    any = False
-    all = True
+    dominates_any = False
+    dominates_all = True
     size = len(a)
     for i in range(size):
-        any = any or a[i] < b[i]
-        all = all and not (a[i] > b[i])
-    return all and any
+        dominates_any = dominates_any or a[i] < b[i]
+        dominates_all = dominates_all and not (a[i] > b[i])
+    return dominates_all and dominates_any
 
 
 class NonDominatedSetKD:

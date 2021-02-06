@@ -37,12 +37,30 @@ void writeVector(std::ofstream &out, double fitness, int maxSize) {
     }
 }
 
-int main() {
-    benchmarks::Rastrigin fn;
+void writeHeader(std::ofstream &out, int seed, char *note = nullptr) {
+    if (!out.is_open()) {
+        throw std::runtime_error("Cannot write to stream.");
+    }
+    out << "# Generated with Shark 4.1.x\n";
+    out << "# Global seed: " << seed << "\n";
+    if (note != nullptr) {
+        out << "# Note: " << note << "\n";
+    }
+}
+
+int main(int argc, char *argv[]) {
     std::random_device rd;
-    std::mt19937 rng(rd());
+    std::mt19937 seedrng(rd());
+    std::uniform_int_distribution<> seedDist(1, std::numeric_limits<int>().max());
+
+    int seed = seedDist(seedrng);
+    std::mt19937 rng(seed);
     std::uniform_int_distribution<> nObjectivesDist(2, 4);
     std::uniform_int_distribution<> nDimensionsDist(2, 10);
+    random::globalRng().seed(seed);
+
+    benchmarks::IHR3 fn;
+
     // Indicate if the number of dimensions > number of objectives
     auto restrictedDimensions = true;
     RealVector point;
@@ -53,6 +71,8 @@ int main() {
         throw std::runtime_error("Failed to open file: " + outputFilename);
     }
     outputFile << std::setprecision(10) << std::scientific;
+    writeHeader(outputFile, seed, argc > 1 ? argv[1] : nullptr);
+
     int index;
     for (int i = 0; i < 10; i++) {
         int maxNObjectives = fn.numberOfObjectives();

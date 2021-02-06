@@ -451,6 +451,30 @@ class TestIHR2(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_kwargs = {"rotate": False}
 
 
+class TestIHR3(BaseTestFunctionWithSamples, unittest.TestCase):
+    """Unit tests for the IHR3 function."""
+
+    filename = "IHR3.csv"
+    fn_cls = benchmark.IHR3
+    fn_kwargs = {"rotate": False}
+
+
+class TestIHR4(BaseTestFunctionWithSamples, unittest.TestCase):
+    """Unit tests for the IHR4 function."""
+
+    filename = "IHR4.csv"
+    fn_cls = benchmark.IHR4
+    fn_kwargs = {"rotate": False}
+
+
+class TestIHR6(BaseTestFunctionWithSamples, unittest.TestCase):
+    """Unit tests for the IHR6 function."""
+
+    filename = "IHR6.csv"
+    fn_cls = benchmark.IHR6
+    fn_kwargs = {"rotate": False}
+
+
 class TestELLI1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ELLI1 function."""
 
@@ -578,6 +602,7 @@ class TestConstrainedEvaluation(unittest.TestCase):
         def __init__(self) -> None:
             super().__init__(n_dimensions=3, n_objectives=3)
 
+        @property
         def name(self):
             return "constrained identity"
 

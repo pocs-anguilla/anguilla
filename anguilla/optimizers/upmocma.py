@@ -406,6 +406,7 @@ class UPMOCMA(Optimizer):
             result.max_nbytes = self._population.max_nbytes
         return result
 
+    @property
     def best(self):
         raise NotImplementedError()
 

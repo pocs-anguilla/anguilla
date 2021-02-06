@@ -141,6 +141,7 @@ class GELLI(ObjectiveFunction):
     ) -> None:
         self._a = a
         self._d = d
+        self._centers_matrix = None
         super().__init__(n_dimensions, n_objectives, rng)
 
     @property
