@@ -505,11 +505,19 @@ class MOCMA(Optimizer):
         parents = self._population.parents[:]
 
         # Update using input data
+        if len(input_fitness.shape) == 1:
+            input_fitness = input_fitness.reshape(1, len(input_fitness))
         fitness[n_parents:] = input_fitness
+
         if input_penalized_fitness is None:
             penalized_fitness[n_parents:] = input_fitness
         else:
+            if len(input_penalized_fitness.shape) == 1:
+                input_penalized_fitness = input_penalized_fitness.reshape(
+                    1, len(input_penalized_fitness)
+                )
             penalized_fitness[n_parents:] = input_penalized_fitness
+
         if evaluation_count is None:
             self._evaluation_count += len(input_fitness)
         else:
