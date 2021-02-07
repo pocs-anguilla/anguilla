@@ -222,10 +222,10 @@ def random_kd_front(n: int, d: int, p: float, rng=np.random.default_rng()):
     points = np.zeros((n, d))
     for i in range(n):
         norm = 0.0
-        sum = 0.0
+        acc = 0.0
         for j in range(d):
-            points[i, j] = 1.0 - rng.uniform(0.0, 1.0 - sum)
-            sum += 1.0 - points[i, j]
+            points[i, j] = 1.0 - rng.uniform(0.0, 1.0 - acc)
+            acc += 1.0 - points[i, j]
             norm += points[i, j] ** p
         norm = norm ** (1.0 / p)
         points[i] /= norm
