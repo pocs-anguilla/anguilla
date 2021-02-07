@@ -40,17 +40,20 @@ class NonDominatedSetKD:
     """Models a non-dominated set of k-D points."""
 
     def __init__(self):
-        self.union = []
+        self.non_dominated_points = None
 
     def insert(self, points):
-        self.union.append(points)
+        if self.non_dominated_points is not None:
+            union = np.vstack((self.non_dominated_points, points))
+        else:
+            union = np.array(points)
+
+        ranks, _ = non_dominated_sort(union, 1)
+        self.non_dominated_points = union[ranks == 1]
 
     @property
     def upper_bound(self):
-        points = np.vstack(self.union)
-        ranks, _ = non_dominated_sort(points, 1)
-        nondominated = points[ranks == 1]
-        reference = np.max(nondominated, axis=0)
+        reference = np.max(self.non_dominated_points, axis=0)
         return reference
 
 

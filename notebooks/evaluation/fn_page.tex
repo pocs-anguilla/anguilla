@@ -1,0 +1,56 @@
+\subsection{\VAR{fn.name}}
+
+\subsubsection{Step size evolution}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\textwidth]{../plots/step_size/\VAR{fn}.pdf}
+    \caption{Evolution of the step size for \VAR{fn.qualified_name}: $\VAR{fn.n_dimensions} \mapsto \VAR{fn.n_objectives}$ using $\sigma_0 = \VAR{initial_step_size}$.}
+    \label{fig:step-size-\VAR{fn.name}}
+\end{figure}
+
+\subsubsection{Hypervolume indicator evolution}
+
+\begin{figure}[H]
+    \centering
+    \subcaptionbox{Anguilla}{\includegraphics[width=0.50\textwidth]{../plots/hypervolume/anguilla/\VAR{fn}.pdf}}%
+    \hfill
+    \subcaptionbox{Shark}{\includegraphics[width=0.50\textwidth]{plots/hypervolume/shark/\VAR{fn}.pdf}}%
+    \caption{Evolution of the hypervolume indicator value \VAR{fn.qualified_name}: $\VAR{fn.n_dimensions} \mapsto \VAR{fn.n_objectives}$ using $\sigma_0 = \VAR{initial_step_size}$.}
+    \label{fig:hvi-\VAR{fn.name}}
+\end{figure}
+
+\subsubsection{Population plots}
+
+\BLOCK{ for opt in opts }
+\begin{figure}[H]
+    \centering
+    \subcaptionbox{Anguilla}{\includegraphics[width=0.50\textwidth]{../plots/fronts/anguilla/\VAR{fn}-\VAR{opt}.\VAR{fig_ext}}}%
+    \hfill
+    \subcaptionbox{Shark}{\includegraphics[width=0.50\textwidth]{../plots/fronts/shark/\VAR{fn}-\VAR{opt}.\VAR{fig_ext}}}%
+    \caption{\VAR{opt} with \VAR{fn.qualified_name}: $\VAR{fn.n_dimensions} \mapsto \VAR{fn.n_objectives}$ using $\sigma_0 = \VAR{initial_step_size}$.}
+    \label{fig:population-\VAR{fn.name}-\VAR{opt}}
+\end{figure}
+\BLOCK{ endfor }
+
+\BLOCK{ if display_upmocma == True }
+
+\subsubsection{UP-MO-CMA-ES}
+
+\begin{figure}[H]
+    \centering
+    \subcaptionbox{1000 evaluations}{\includegraphics[width=0.50\textwidth]{../plots/upmocma/\VAR{fn.name}/1000.pdf}}%
+    \subcaptionbox{5000 evaluations}{\includegraphics[width=0.50\textwidth]{../plots/upmocma/\VAR{fn.name}/5000.pdf}}%
+    \hfill
+    \subcaptionbox{10000 evaluations}{\includegraphics[width=0.50\textwidth]{../plots/upmocma/\VAR{fn.name}/10000.pdf}}%
+    \subcaptionbox{25000 evaluations}{\includegraphics[width=0.50\textwidth]{../plots/upmocma/\VAR{fn.name}/25000.pdf}}%
+    \hfill
+    \subcaptionbox{50000 evaluations}{\includegraphics[width=0.50\textwidth]{../plots/upmocma/\VAR{fn.name}/50000.pdf}}%
+    \subcaptionbox{75000 evaluations}{\includegraphics[width=0.50\textwidth]{../plots/upmocma/\VAR{fn.name}/75000.pdf}}%
+
+    \caption{Evolution of an optimization run of UP-MO-CMA-ES with \VAR{fn.qualified_name}: $\VAR{fn.n_dimensions} \mapsto 2$}
+    \label{fig:upmocma-\VAR{fn.name}}
+\end{figure}
+
+
+\BLOCK{ endif }

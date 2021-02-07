@@ -3,6 +3,7 @@ evaluation."""
 import abc
 import os
 import platform
+import re
 import time
 import pathlib
 import dataclasses
@@ -466,10 +467,178 @@ def log_mocma_trials(
             print(f"\t{result}")
 
 
+LOG_FILENAME_REGEX = re.compile(
+    r"^([\w]+)[_]([\w\(\)\-\+]+)[_]([\d]+)[_]([\d]+)\.([\w]+)\.csv$"
+)
+
+
+class TrialLog:
+    """An object to load a CSV log file.
+
+    Parameters
+    ----------
+    path
+        Path of the log file.
+
+    Properties
+    ----------
+    path
+        Path of the log file.
+    fn
+        The objective function name.
+    optimizer
+        The optimizer name.
+    trial
+        The trial identifier.
+    n_evaluations
+        The number of evaluations.
+    observation_name
+        The observation name.
+
+    """
+
+    path: pathlib.Path
+    fn: str
+    optimizer: str
+    trial: int
+    n_evaluations: int
+    observation: str
+
+    def __init__(self, path: Union[str, pathlib.Path], *, lazy: bool = True):
+        if not isinstance(path, pathlib.Path):
+            self.path = pathlib.Path(path)
+        else:
+            self.path = path
+        # Parse metadata from the filename.
+        metadata = LOG_FILENAME_REGEX.match(self.path.name)
+        if not metadata:
+            raise ValueError("Invalid filename")
+        # Set properties from metadata tuple.
+        metadata = metadata.groups()
+        self.fn = metadata[0]
+        self.optimizer = metadata[1]
+        self.trial = int(metadata[2])
+        self.n_evaluations = int(metadata[3])
+        self.observation = metadata[4]
+        # Load log data into memory or defer loading until required.
+        self._data = None
+        if not lazy:
+            self._data = np.genfromtxt(self.path, delimiter=",")
+
+    @property
+    def data(self):
+        """The observed data."""
+        if self._data is None:
+            self._data = np.genfromtxt(self.path, delimiter=",")
+        return self._data
+
+    def __repr__(self):
+        return (
+            "TrialLog(fn={},optimizer={},trial={},"
+            "n_evaluations={},observation={})"
+        ).format(
+            self.fn,
+            self.optimizer,
+            self.trial,
+            self.n_evaluations,
+            self.observation,
+        )
+
+
+def get_options_pattern(options: Optional[List[Union[str, int]]]) -> str:
+    """Convert a list of options into a glob pattern."""
+
+    if options is None:
+        return ".+"
+
+    pattern = "{}".format(
+        r"|".join(
+            [
+                str(option)
+                .replace("(", r"\(")
+                .replace(")", r"\)")
+                .replace("-", r"\-")
+                .replace("+", r"\+")
+                for option in options
+            ]
+        )
+    )
+    if len(options) > 1:
+        return fr"({pattern})"
+    return pattern
+
+
+InputPath = Union[str, pathlib.Path]
+
+
+def load_logs(
+    paths: Union[List[InputPath], InputPath],
+    *,
+    fns: Optional[List[str]] = None,
+    opts: Optional[List[str]] = None,
+    trials: Optional[List[int]] = None,
+    n_evaluations: Optional[List[int]] = None,
+    observations: Optional[List[str]] = None,
+    lazy: bool = True,
+    search_subdirs: bool = True,
+) -> List[TrialLog]:
+    """Load CSV log files.
+
+    Parameters
+    ----------
+    paths
+        Base paths in which to search log files.
+    fns: optional
+        A list of function names. By default uses `*` greedy pattern.
+    opts: optional
+        A list of optimizer names. By default uses `*` greedy pattern.
+    trials: optional
+        A list of trial numbers. By default uses `*` greedy pattern.
+    n_evaluations: optional
+        A list of evaluations numbers. By default uses `*` greedy pattern.
+    observations: optional
+        A list of observation names. By default uses `*` greedy pattern.
+    lazy: optional
+        Lazily load observed data into memory.
+    search_subdirs: optional
+        Whether to search within subdirectories.
+
+    Returns
+    -------
+    List[TrialLog]
+        A list of log objects.
+    """
+    if not isinstance(paths, list):
+        paths = [paths]
+
+    processed_paths = []
+    for path in paths:
+        if not isinstance(path, pathlib.Path):
+            path = pathlib.Path(path)
+        processed_paths.append(path)
+
+    fns = get_options_pattern(fns)
+    opts = get_options_pattern(opts)
+    trials = get_options_pattern(trials)
+    n_evaluations = get_options_pattern(n_evaluations)
+    observations = get_options_pattern(observations)
+    filename_pattern = re.compile(
+        rf"^{fns}[_]{opts}[_]{trials}[_]{n_evaluations}\.{observations}\.csv$"
+    )
+    prefix = "**/" if search_subdirs else ""
+    logs = []
+    for path in processed_paths:
+        for file_path in path.glob(f"{prefix}*.csv"):
+            if filename_pattern.match(file_path.name):
+                logs.append(TrialLog(file_path, lazy=lazy))
+    return logs
+
+
 __all__ = [
     "StopWatch",
     "MOCMATrialParameters",
     "UPMOCMATrialParameters",
     "LogParameters",
     "log_mocma_trials",
+    "load_logs",
 ]

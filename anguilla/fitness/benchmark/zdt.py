@@ -364,7 +364,7 @@ class ZDT6(ObjectiveFunction):
     def pareto_front(self, num=50) -> np.ndarray:
         y1 = np.linspace(0.2807753191, 1.0, endpoint=True, num=num)
         y2 = 1.0 - y1 * y1
-        return y1, y2
+        return np.vstack((y1, y2))
 
 
 __all__ = [
