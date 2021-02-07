@@ -190,3 +190,71 @@ def random_2d_3d_front(n, dominated=False):
     nadir_2d[0] = nadir_3d[0]
     nadir_2d[1] = nadir_3d[1]
     return front_3d, nadir_3d, front_2d, nadir_2d
+
+
+# Ported from Shark.
+def random_kd_front(n: int, d: int, p: float, rng=np.random.default_rng()):
+    """Utility function to create a random front.
+
+    Parameters
+    ----------
+    n
+        Size of the front.
+    d
+        Dimensionality (number of objectives).
+    p
+        Exponent. Determines whether the front is linear (p=1.0), \
+        convex (p=2.0) or concave (p=0.5).
+    rng
+        A random number generator.
+
+    Returns
+    -------
+    np.ndarray
+        The random fronts and reference points.
+
+    Notes
+    -----
+    Assumes that the reference point is a d-dimensional 'ones vector', \
+    ie., [1,1..1].
+    Ported from :cite:`2008:shark`, URL: https://git.io/Jtaci
+    """
+    points = np.zeros((n, d))
+    for i in range(n):
+        norm = 0.0
+        sum = 0.0
+        for j in range(d):
+            points[i, j] = 1.0 - rng.uniform(0.0, 1.0 - sum)
+            sum += 1.0 - points[i, j]
+            norm += points[i, j] ** p
+        norm = norm ** (1.0 / p)
+        points[i] /= norm
+    return points
+
+
+def random_linear_front(n: int, d: int, rng=np.random.default_rng()):
+    """Create a random linear front."""
+    return random_kd_front(n, d, 1.0, rng)
+
+
+def random_concave_front(n: int, d: int, rng=np.random.default_rng()):
+    """Create a random linear front."""
+    return random_kd_front(n, d, 0.5, rng)
+
+
+def random_convex_front(n: int, d: int, rng=np.random.default_rng()):
+    """Create a random linear front."""
+    return random_kd_front(n, d, 2.0, rng)
+
+
+__all__ = [
+    "exp_norm_chi",
+    "random_orthogonal_matrix",
+    "random_cliff_3d",
+    "random_3d_front",
+    "random_2d_3d_front",
+    "random_kd_front",
+    "random_linear_front",
+    "random_concave_front",
+    "random_convex_front",
+]
