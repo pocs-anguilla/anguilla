@@ -119,7 +119,7 @@ The following actions are used:
 * https://github.com/joerick/cibuildwheel
 * https://github.com/pypa/gh-action-pypi-publish
 
-Binary wheels are built using `cibuildwheel <https://cibuildwheel.readthedocs.io/en/stable/>`.
+Binary wheels are built using `cibuildwheel <https://cibuildwheel.readthedocs.io/en/stable/>`_.
 
 Tests
 *****
