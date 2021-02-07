@@ -17,7 +17,7 @@ Anguilla
            :alt: Wheels build
 
 .. |docs| image:: https://readthedocs.org/projects/anguilla/badge/?version=latest
-          :target: https://anguilla.readthedocs.io/en/latest/?badge=latest
+          :target: https://anguilla.readthedocs.io/en/develop/?badge=develop
           :alt: Documentation status
 
 .. |deepsource| image:: https://deepsource.io/gh/pocs-anguilla/anguilla.svg/?label=active+issues&show_trend=true&token=CZElZ2ZetdLdyxuEWD6Y7NYo
