@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(anguilla_cxx VERSION "0.0.15" LANGUAGES CXX)
+project(anguilla_cxx VERSION "0.0.16" LANGUAGES CXX)
 
 include(CMakeToolsHelpers OPTIONAL)
 include(FeatureSummary)
