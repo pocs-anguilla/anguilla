@@ -337,7 +337,7 @@ int main() {
         indOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::DTLZ1, IndicatorBasedRealCodedNSGAII<HypervolumeIndicator>, false, false> nsga3Opt;
-        nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
+        nsga3Opt.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
     }
     {
         constexpr auto initialSigma = 0.6;
@@ -351,7 +351,7 @@ int main() {
         indOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::DTLZ2, IndicatorBasedRealCodedNSGAII<HypervolumeIndicator>, false, false> nsga3Opt;
-        nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
+        nsga3Opt.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
     }
     {
         constexpr auto initialSigma = 0.6;
@@ -365,7 +365,7 @@ int main() {
         indOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::DTLZ3, IndicatorBasedRealCodedNSGAII<HypervolumeIndicator>, false, false> nsga3Opt;
-        nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
+        nsga3Opt.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
     }
     {
         constexpr auto initialSigma = 0.6;
@@ -379,7 +379,7 @@ int main() {
         indOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::DTLZ4, IndicatorBasedRealCodedNSGAII<HypervolumeIndicator>, false, false> nsga3Opt;
-        nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
+        nsga3Opt.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
     }
     {
         constexpr auto initialSigma = 0.6;
@@ -393,7 +393,7 @@ int main() {
         indOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::DTLZ5, IndicatorBasedRealCodedNSGAII<HypervolumeIndicator>, false, false> nsga3Opt;
-        nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
+        nsga3Opt.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
     }
     {
         constexpr auto initialSigma = 0.6;
@@ -407,7 +407,7 @@ int main() {
         indOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::DTLZ6, IndicatorBasedRealCodedNSGAII<HypervolumeIndicator>, false, false> nsga3Opt;
-        nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
+        nsga3Opt.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
     }
     {
         constexpr auto initialSigma = 0.6;
@@ -421,6 +421,6 @@ int main() {
         indOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         popOpt2.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
         RunTrials<benchmarks::DTLZ7, IndicatorBasedRealCodedNSGAII<HypervolumeIndicator>, false, false> nsga3Opt;
-        nsga3Opt.run(mu, initialSigma, 2, nVariables, nTrials, referencePtr);
+        nsga3Opt.run(mu, initialSigma, 3, nVariables, nTrials, referencePtr);
     }
 }

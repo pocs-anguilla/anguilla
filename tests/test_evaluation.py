@@ -9,6 +9,7 @@ from anguilla.evaluation import (
     MOCMATrialParameters,
     UPMOCMATrialParameters,
     LogParameters,
+    TrialLog,
 )
 
 
@@ -41,3 +42,17 @@ class TestParameters(unittest.TestCase):
     def test_log_initialization(self):
         """Test creating an instance."""
         LogParameters("./logs", [10, 50])
+
+
+class TestTrialLog(unittest.TestCase):
+    """Test the trial log class."""
+
+    def test_initialization(self):
+        log = TrialLog(
+            "./logs/CIGTAB1_(100+1)-MO-CMA-ES-I_1_15000.fitness.csv"
+        )
+        _ = str(log)
+
+    def test_initialization_failure(self):
+        with self.assertRaises(ValueError):
+            TrialLog("./logs/foo.csv")
