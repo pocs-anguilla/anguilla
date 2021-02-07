@@ -1,14 +1,12 @@
 """Prototype implementations of different hypervolume algorithms."""
+
 import numpy as np
 from collections import deque
 from typing import Deque, List, Optional
 from anguilla.ds.rbtree import RBTree
+from anguilla.dominance import non_dominated_sort
 
-__all__ = [
-    "hv2d",
-    "hv3d",
-    "hvc3d",
-]
+__all__ = ["hv2d", "hv3d", "hvkd", "hvc2d", "hvc3d"]
 
 # A custom Numpy datatype for structured access to 3-D coordinate data.
 point3d_dt = np.dtype([("x", float), ("y", float), ("z", float)], align=True)
@@ -56,7 +54,8 @@ def hv2d(points: np.ndarray, reference: Optional[np.ndarray] = None) -> float:
     points
         The point set of mutually non-dominated points.
     reference: optional
-        The reference point. Otherwise assumed to be the origin.
+        The reference point. \
+        Otherwise assumed to be the component-wise maximum.
 
     Returns
     -------
@@ -71,7 +70,7 @@ def hv2d(points: np.ndarray, reference: Optional[np.ndarray] = None) -> float:
         return 0.0
 
     if reference is None:
-        ref_x, ref_y = 0.0, 0.0
+        ref_x, ref_y = np.max(points, axis=0)
     else:
         ref_x, ref_y = reference
 
@@ -102,7 +101,8 @@ def hvc2d(points: np.ndarray, reference: Optional[np.ndarray] = None) -> float:
     points
         The point set of mutually non-dominated points.
     reference: optional
-        The reference point. Otherwise assumed to be the origin.
+        The reference point. \
+        Otherwise assumed to be the component-wise maximum.
 
     Returns
     -------
@@ -117,7 +117,7 @@ def hvc2d(points: np.ndarray, reference: Optional[np.ndarray] = None) -> float:
         return 0.0
 
     if reference is None:
-        ref_x, ref_y = 0.0, 0.0
+        ref_x, ref_y = np.max(points, axis=0)
     else:
         ref_x, ref_y = reference
 
@@ -149,9 +149,10 @@ def hv3d(points: np.ndarray, reference: Optional[np.ndarray] = None) -> float:
     Parameters
     ----------
         points
-            The point set of points.
+            The point set of mutually non-dominated points.
         reference: optional
-            The reference point. Otherwise assumed to be the origin.
+            The reference point. \
+            Otherwise assumed to be the component-wise maximum.
 
     Returns
     -------
@@ -182,7 +183,7 @@ def hv3d(points: np.ndarray, reference: Optional[np.ndarray] = None) -> float:
         return 0.0
 
     if reference is None:
-        ref_x, ref_y, ref_z = 0.0, 0.0, 0.0
+        ref_x, ref_y, ref_z = np.max(points, axis=0)
     else:
         ref_x, ref_y, ref_z = reference
 
@@ -262,9 +263,10 @@ def hvc3d(
     Parameters
     ----------
     points
-        The set of points.
+        The set of mutually non-dominated points.
     reference: optional
-        The reference point. Otherwise assumed to be the origin.
+        The reference point. Otherwise assumed to be the component-wise \
+        maximum.
 
     Returns
     -------
@@ -286,8 +288,7 @@ def hvc3d(
         return np.empty()
 
     if reference is None:
-        zero = np.array([(0, 0, 0)], dtype=point3d_dt)[0]
-        _ref_p = zero
+        _ref_p = np.max(points, axis=0)
     else:
         _ref_p = reference
 
@@ -438,3 +439,63 @@ def hvc3d(
 
     reverse_idx = np.argsort(sorted_idx)
     return contribution[:-1][reverse_idx]
+
+
+def hvkd(
+    points: np.ndarray, reference: Optional[np.ndarray] = None
+) -> np.ndarray:
+    """Compute the hypervolume indicator for a set of k-D points.
+
+    Parameters
+    ----------
+    points
+        The set of mutually non-dominated points.
+    reference: optional
+        The reference point. Otherwise assumed to be the component-wise \
+        maximum.
+
+    Returns
+    -------
+    float
+        The hypervolume indicator.
+
+    Notes
+    -----
+    Implements the basic version of the WFG algorithm \
+    presented by :cite:`2012:hypervolume_wfg`. Incorporates aspects from \
+    the implementation by :cite:`2008:shark` (URL: https://git.io/JtaJK). \
+    It assumes minimization.
+    """
+
+    def limit_set(points, point):
+        out = np.maximum(points, point)
+        return out
+
+    def box_volume(point, reference):  # 'incluhv' in the WFG paper
+        return np.prod(reference - point)
+
+    def wfg(points, reference):
+        n = len(points)
+
+        # This base case is from Shark:
+        if n == 1:
+            return box_volume(points[0], reference)
+
+        # WFG recursive calls here:
+        vol = 0.0
+        for i in range(n):  # 'excluhv' in the WFG paper
+            lset = limit_set(points[i + 1 :], points[i])
+            ranks, _ = non_dominated_sort(lset, 1)
+            ndset = lset[ranks == 1]
+            vol += box_volume(points[i], reference) - wfg(ndset, reference)
+        return vol
+
+    n = len(points)
+    if n == 0:
+        return np.empty()
+
+    if reference is None:
+        reference = np.max(points, axis=0)
+
+    sorted_idx = np.argsort(points[:, -1])  # sort by last component
+    return wfg(points[sorted_idx], reference)

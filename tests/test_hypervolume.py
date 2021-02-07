@@ -10,9 +10,16 @@ from typing import Any, Optional
 from anguilla.hypervolume import calculate, contributions, contributions_naive
 from anguilla.hypervolume.exact import hv2d as hv2d_prototype
 from anguilla.hypervolume.exact import hv3d as hv3d_prototype
+from anguilla.hypervolume.exact import hvkd as hvkd_prototype
 from anguilla.hypervolume.exact import hvc2d as hvc2d_prototype
 from anguilla.hypervolume.exact import hvc3d as hvc3d_prototype
-from anguilla.util import random_2d_3d_front, random_cliff_3d
+from anguilla.util import (
+    random_2d_3d_front,
+    random_cliff_3d,
+    random_convex_front,
+    random_concave_front,
+    random_linear_front,
+)
 
 
 class HVBaseTestFunction:
@@ -72,6 +79,50 @@ class TestCliff3D1(HVBaseTestFunction, unittest.TestCase):
 
     in_filename = "CLIFF3D_1_IN.csv"
     out_filename = "CLIFF3D_1_OUT.csv"
+
+
+class TestHVKD(unittest.TestCase):
+    """Hypervolume calculation of k-D fronts."""
+
+    def test_random_cliff_3d(self):
+        front = random_cliff_3d(25)
+        nadir = np.max(front, axis=0)
+        vol_a = calculate(front, nadir)
+        vol_b = hvkd_prototype(front, nadir)
+        self.assertTrue(
+            math.isclose(vol_a, vol_b),
+            "expected: {}, got: {}".format(vol_a, vol_b),
+        )
+
+    def test_random_convex_3d(self):
+        front = random_convex_front(25, 3)
+        nadir = np.max(front, axis=0)
+        vol_a = calculate(front, nadir)
+        vol_b = hvkd_prototype(front, nadir)
+        self.assertTrue(
+            math.isclose(vol_a, vol_b),
+            "expected: {}, got: {}".format(vol_a, vol_b),
+        )
+
+    def test_random_concave_3d(self):
+        front = random_concave_front(25, 3)
+        nadir = np.max(front, axis=0)
+        vol_a = calculate(front, nadir)
+        vol_b = hvkd_prototype(front, nadir)
+        self.assertTrue(
+            math.isclose(vol_a, vol_b),
+            "expected: {}, got: {}".format(vol_a, vol_b),
+        )
+
+    def test_random_linear_3d(self):
+        front = random_linear_front(25, 3)
+        nadir = np.max(front, axis=0)
+        vol_a = calculate(front, nadir)
+        vol_b = hvkd_prototype(front, nadir)
+        self.assertTrue(
+            math.isclose(vol_a, vol_b),
+            "expected: {}, got: {}".format(vol_a, vol_b),
+        )
 
 
 class TestOther(unittest.TestCase):

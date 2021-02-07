@@ -13,7 +13,9 @@ from ._hypervolume import (
     hvc3d_f8,
 )
 
-__all__ = ["calculate", "contributions"]
+from .exact import hvkd as prototype_hvkd
+
+__all__ = ["calculate", "contributions", "contributions_naive"]
 
 # Optional
 try:
@@ -68,12 +70,11 @@ def calculate(
         return hv3d_f8(points, reference, ignore_dominated, use_btree)
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
-            shark_calculate(points, reference)
+            return shark_calculate(points, reference)
         else:
-            raise NotImplementedError()
+            return prototype_hvkd(points, reference)
     else:
         raise ValueError("Input dimensionality can't be one.")
-    return 0.0
 
 
 def contributions(
@@ -120,12 +121,11 @@ def contributions(
         return hvc3d_f8(points, reference, use_btree)
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
-            shark_contributions(points, reference)
+            return shark_contributions(points, reference)
         else:
-            raise NotImplementedError()
+            return NotImplementedError()
     else:
         raise ValueError("Input dimensionality can't be one.")
-    return np.empty(0)
 
 
 def contributions_naive(
@@ -138,9 +138,10 @@ def contributions_naive(
     Parameters
     ----------
     points
-        The set of mutually non-dominated points.
+        The set of points.
     reference: optional
-        The reference point. Otherwise assumed to be the origin.
+        The reference point. Otherwise assumed to be the component-wise \
+        maximum.
 
     Returns
     -------
@@ -166,7 +167,7 @@ def contributions_naive(
         return np.empty(0)
 
     if reference is None:
-        reference = np.zeros_like(points[0])
+        reference = np.max(points, axis=0)
 
     vol = calculate(points, reference)
 
