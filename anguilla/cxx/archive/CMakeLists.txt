@@ -2,11 +2,11 @@ set(MODULE_NAME "archive")
 set(INTERNAL_MODULE_NAME "_${MODULE_NAME}")
 
 set(MODULE_SRC
-    include/anguilla/archive/archive.hpp
-    include/anguilla/archive/archive_kd.hpp
-    include/anguilla/archive/individual.hpp
-    include/anguilla/archive/statistics.hpp
-    include/anguilla/archive/parameters.hpp
+    include/anguilla/upmo/archive.hpp
+    include/anguilla/upmo/archive_kd.hpp
+    include/anguilla/upmo/individual.hpp
+    include/anguilla/upmo/statistics.hpp
+    include/anguilla/upmo/parameters.hpp
     "src/${INTERNAL_MODULE_NAME}.cpp"
 )
 

@@ -8,9 +8,9 @@ namespace py = pybind11;
 #include <optional>
 
 // Anguilla
-#include <anguilla/archive/archive.hpp>
-#include <anguilla/archive/individual.hpp>
-#include <anguilla/archive/statistics.hpp>
+#include <anguilla/upmo/archive.hpp>
+#include <anguilla/upmo/individual.hpp>
+#include <anguilla/upmo/statistics.hpp>
 namespace ag = anguilla;
 
 typedef double f8;  // following Numba's convention

@@ -22,9 +22,9 @@ namespace py = pybind11;
 #include <optional>
 
 // Anguilla
-#include <anguilla/archive/individual.hpp>
-#include <anguilla/archive/parameters.hpp>
-#include <anguilla/archive/statistics.hpp>
+#include <anguilla/upmo/individual.hpp>
+#include <anguilla/upmo/parameters.hpp>
+#include <anguilla/upmo/statistics.hpp>
 
 /*
 DESCRIPTION
@@ -332,7 +332,7 @@ class Archive {
             // accumulated value of its subtree.
             self->individual.accContribution = std::pow(self->individual.contribution, m_parameters.alpha);
         } else {
-            // Don't consider the infinite contibution of extreme nodes.
+            // Don't consider the infinite contribution of extreme nodes.
             self->individual.accContribution = 0.0;
         }
         auto left = NodeTraits::get_left(ptr);

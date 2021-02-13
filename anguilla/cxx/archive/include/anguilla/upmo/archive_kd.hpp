@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef ANGUILLA_ARCHIVE_KD_HPP
-#define ANGUILLA_ARCHIVE_KD_HPP
+#ifndef ANGUILLA_UPMO_ARCHIVE_KD_HPP
+#define ANGUILLA_UPMO_ARCHIVE_KD_HPP
 
 // PyBind11
 #include <pybind11/numpy.h>
@@ -13,8 +13,8 @@ namespace py = pybind11;
 #include <spatial/point_multiset.hpp>
 
 // Anguilla
-#include <anguilla/archive/individual.hpp>
-#include <anguilla/archive/parameters.hpp>
+#include <anguilla/upmo/individual.hpp>
+#include <anguilla/upmo/parameters.hpp>
 
 /*
 DESCRIPTION
@@ -38,7 +38,8 @@ In GECCO'16 - Companion of Proceedings of the 2016 Genetic and Evolutionary Comp
 T. Glasmachers (2016). A Fast Incremental Archive for Multi-objective OptimizationCoRR, abs/1604.01169.
 */
 
-namespace archive {
+namespace anguilla {
+namespace upmo {
 
 template <typename T>
 using BaseArchiveKD = spatial::point_multiset<0, Individual<T>>;
@@ -95,6 +96,7 @@ class ArchiveKD {
     BaseArchiveKD<T> m_archive;
 };
 
-}  // namespace archive
+}  // namespace upmo
+}  // namespace anguilla
 
-#endif  // ANGUILLA_ARCHIVE_KD_HPP
+#endif  // ANGUILLA_UPMO_ARCHIVE_KD_HPP
