@@ -1,18 +1,19 @@
 #pragma once
 
-#ifndef ANGUILLA_INDIVIDUAL_HPP
-#define ANGUILLA_INDIVIDUAL_HPP
+#ifndef ANGUILLA_UPMO_INDIVIDUAL_HPP
+#define ANGUILLA_UPMO_INDIVIDUAL_HPP
 
 // Pybind11
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
-namespace archive {
+namespace anguilla {
+namespace upmo {
 
 template <typename T>
 struct Individual {
-    explicit Individual(py::array_t<T> const &point, py::array_t<T> const &fitness, T step_size = 1.0, T p_succ = 0.5) : containerPtr(nullptr), contribution(0.0), accContribution(0.0), step_size(step_size), p_succ(p_succ), point(py::array_t<T>::ensure(point)), fitness(py::array_t<T>::ensure(fitness)), fitnessR(this->fitness.template unchecked<1>()), cov(nullptr) {
+    Individual(py::array_t<T> const &point, py::array_t<T> const &fitness, T step_size = 1.0, T p_succ = 0.5) : containerPtr(nullptr), contribution(0.0), accContribution(0.0), step_size(step_size), p_succ(p_succ), point(py::array_t<T>::ensure(point)), fitness(py::array_t<T>::ensure(fitness)), fitnessR(this->fitness.template unchecked<1>()), cov(nullptr) {
         // cov is initialized to be the identity matrix
         const auto d = static_cast<std::size_t>(point.shape(0));
         const auto d_sq = d * d;
@@ -24,6 +25,7 @@ struct Individual {
             cov[i * d + i] = 1.0;
         }
     }
+
     ~Individual() {
         delete[] cov;
     };
@@ -69,6 +71,7 @@ struct Individual {
     T *cov;
 };
 
-}  // namespace archive
+}  // namespace upmo
+}  // namespace anguilla
 
-#endif  // ANGUILLA_INDIVIDUAL_HPP
+#endif  // ANGUILLA_UPMO_INDIVIDUAL_HPP

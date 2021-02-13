@@ -1,11 +1,12 @@
 #pragma once
 
-#ifndef ANGUILLA_ARCHIVE_STATISTICS_HPP
-#define ANGUILLA_ARCHIVE_STATISTICS_HPP
+#ifndef ANGUILLA_UPMO_STATISTICS_HPP
+#define ANGUILLA_UPMO_STATISTICS_HPP
 
 #include <cinttypes>
 
-namespace archive {
+namespace anguilla {
+namespace upmo {
 
 struct Statistics {
    public:
@@ -22,6 +23,7 @@ struct Statistics {
     double insertAttempts;
 };
 
-}  // namespace archive
+}  // namespace upmo
+}  // namespace anguilla
 
-#endif  // ANGUILLA_ARCHIVE_STATISTICS_HPP
+#endif  // ANGUILLA_UPMO_STATISTICS_HPP

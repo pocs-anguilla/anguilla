@@ -30,7 +30,7 @@ class TestParameters(unittest.TestCase):
             math.isclose(parameters.c_cov, 2.0 / (n_f ** 2.1 + 3.0)), "c_cov"
         )
         self.assertTrue(parameters.p_extreme == 1.0 / 5.0, "p_extreme")
-        self.assertTrue(parameters.sigma_min == 1e-15, "sigma_min")
+        self.assertTrue(parameters.sigma_min == 1e-20, "sigma_min")
         self.assertTrue(parameters.alpha == 3.0, "alpha")
         self.assertTrue(math.isclose(parameters.c_r, parameters.c_cov / 2.0))
 

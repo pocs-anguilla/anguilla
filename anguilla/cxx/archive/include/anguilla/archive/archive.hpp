@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef ANGUILLA_ARCHIVE_HPP
-#define ANGUILLA_ARCHIVE_HPP
+#ifndef ANGUILLA_UPMO_ARCHIVE_HPP
+#define ANGUILLA_UPMO_ARCHIVE_HPP
 
 // PyBind11
 #include <pybind11/numpy.h>
@@ -48,7 +48,8 @@ In GECCO'16 - Companion of Proceedings of the 2016 Genetic and Evolutionary Comp
 T. Glasmachers (2016). A Fast Incremental Archive for Multi-objective OptimizationCoRR, abs/1604.01169.
 */
 
-namespace archive {
+namespace anguilla {
+namespace upmo {
 
 template <typename T>
 struct Node : public boost::intrusive::avl_set_base_hook<boost::intrusive::optimize_size<true>> {
@@ -422,5 +423,6 @@ struct Archive<T>::ArchiveIterator {
     NodeIterator m_iterator;
 };
 
-}  // namespace archive
-#endif  // ANGUILLA_ARCHIVE_HPP
+}  // namespace upmo
+}  // namespace anguilla
+#endif  // ANGUILLA_UPMO_ARCHIVE_HPP
