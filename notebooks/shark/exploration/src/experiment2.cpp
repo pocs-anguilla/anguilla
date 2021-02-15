@@ -70,11 +70,9 @@ class RunTrials {
             fn.init();
             opt.init(fn);
 
-            int nextEvaluationsLimit = 5000;
+            int nextEvaluationsLimit = 0;
+            opt.step(fn);  // to avoid error
             while (nextEvaluationsLimit < 50001) {
-                while (fn.evaluationCounter() < nextEvaluationsLimit) {
-                    opt.step(fn);
-                }
                 std::string optName;
                 if constexpr (mocmaBased) {
                     optName = name(opt.name(), mu, individualBased);
@@ -108,6 +106,10 @@ class RunTrials {
                 }
                 logfile.close();
                 nextEvaluationsLimit += 5000;
+
+                while (fn.evaluationCounter() < nextEvaluationsLimit) {
+                    opt.step(fn);
+                }
             }
         }
     }
