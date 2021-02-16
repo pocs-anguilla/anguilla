@@ -71,7 +71,6 @@ class RunTrials {
             opt.init(fn);
 
             int nextEvaluationsLimit = 0;
-            opt.step(fn);  // to avoid error
             while (nextEvaluationsLimit < 50001) {
                 std::string optName;
                 if constexpr (mocmaBased) {
@@ -88,7 +87,7 @@ class RunTrials {
                 logfile << "# Global seed: " << SEED << "\n";
                 logfile << "# Function: " << fn.name() << ": " << fn.numberOfVariables() << " -> " << fn.numberOfObjectives() << "\n";
                 logfile << "# Optimizer: " << optName << "\n";
-                logfile << "# Trial: " << (t + 1) % nextEvaluationsLimit << "\n";
+                logfile << "# Trial: " << (t + 1) << "\n";
                 logfile << "# Evaluations: " << fn.evaluationCounter() << "\n";
                 logfile << "# Observation: fitness\n";
 
