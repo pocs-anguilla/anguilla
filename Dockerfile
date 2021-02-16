@@ -11,7 +11,7 @@ SHELL ["/bin/bash", "-c"]
 RUN . /opt/conda/etc/profile.d/conda.sh \
     && conda activate development \
     && cd /tmp \
-    && git clone -b 4.1 --depth 1 https://github.com/Shark-ML/Shark.git \
+    && git clone -b 4.1-patches --depth 1 https://github.com/pocs-anguilla/shark-patches.git Shark \
     && git clone --depth 1 https://github.com/ruslo/polly.git \
     && mkdir build \
     && cd build \
