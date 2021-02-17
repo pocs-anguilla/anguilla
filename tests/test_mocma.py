@@ -7,10 +7,104 @@ import numpy as np
 
 from anguilla.fitness import benchmark
 from anguilla.fitness.base import ObjectiveFunction
-from anguilla.optimizers.mocma import MOCMA
+from anguilla.optimizers.mocma import MOCMA, FixedSizePopulation
 
 VOLUME_TEST_N_TRIALS = 3
 VOLUME_TEST_RTOL = 5e-3
+
+
+class TestFixedSizePopulation(unittest.TestCase):
+    """Test the fixed-sized population container."""
+
+    def test_initialization(self):
+        """Test initialization."""
+        rng = np.random.default_rng()
+        n_parents = 10
+        n_offspring = 5
+        n_total = n_parents + n_offspring
+        n_dimensions = 5
+        n_objectives = 3
+        population = FixedSizePopulation(
+            n_dimensions,
+            n_objectives,
+            n_parents,
+            n_offspring,
+        )
+        self.assertTrue(
+            population.fitness.shape == (n_total, n_objectives),
+            "fitness shape",
+        )
+        self.assertTrue(
+            population.points.shape == (n_total, n_dimensions), "points shape"
+        )
+        self.assertTrue(
+            population.cov.shape == (n_total, n_dimensions, n_dimensions),
+            "Cov. matrices shape",
+        )
+        index = rng.integers(0, n_total)
+        self.assertTrue(
+            np.all(population.cov[index] == np.eye(n_dimensions)),
+            "Cov. matrices initialization, got: {}".format(
+                population.cov[index],
+            ),
+        )
+
+    def test_update_views(self):
+        """Test that updating data using views works as expected."""
+        rng = np.random.default_rng()
+        n_objectives = 3
+        population = FixedSizePopulation(5, n_objectives, 10, 10)
+        fitness_view = population.fitness[:]
+        new_fitness_chunk = rng.uniform(0, 35, size=(4, n_objectives))
+        fitness_view[3:7] = new_fitness_chunk
+        self.assertTrue(
+            np.all(population.fitness[3:7] == new_fitness_chunk),
+            "first update to fitness_view",
+        )
+        fitness_view[3:7] = rng.uniform(36, 105, size=(4, n_objectives))
+        self.assertFalse(
+            np.all(population.fitness[3:7] == new_fitness_chunk),
+            "second update to fitness_view",
+        )
+        index = rng.integers(0, 20)
+        p_succ_view = population.p_succ[:]
+        p_succ_view[index] = 0.5
+        self.assertTrue(
+            population.p_succ[index] == 0.5, "first update to p_succ_view"
+        )
+        population.p_succ[index] = 1.8
+        self.assertTrue(p_succ_view[index] == 1.8, "second update to p_succ")
+
+    def test_update_cov(self):
+        """Test that updating cov. matrices using views works as expected."""
+        rng = np.random.default_rng()
+        n_dimensions = 5
+        n_parents = 10
+        n_offspring = 10
+        population = FixedSizePopulation(
+            n_dimensions, 3, n_parents, n_offspring
+        )
+        oidx = rng.integers(0, n_parents)
+        pidx = rng.integers(n_parents, n_parents + n_offspring)
+        population.cov[pidx, :, :] = rng.uniform(
+            0,
+            100,
+            size=(n_dimensions, n_dimensions),
+        )
+        population.cov[oidx, :, :] = population.cov[pidx, :, :]
+        self.assertTrue(
+            np.all(population.cov[oidx] == population.cov[pidx]),
+            "copy from parent to offspring",
+        )
+        population.cov[oidx, :, :] = rng.uniform(
+            100,
+            200,
+            size=(n_dimensions, n_dimensions),
+        )
+        self.assertFalse(
+            np.all(population.cov[oidx] == population.cov[pidx]),
+            "update offspring",
+        )
 
 
 class BasicTests(unittest.TestCase):
