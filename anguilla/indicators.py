@@ -51,46 +51,6 @@ class Indicator(metaclass=abc.ABCMeta):
             active_indices = np.delete(active_indices, index)
         return np.array(indices)
 
-    def least_contributors_old(self, points: np.ndarray, k: int) -> np.ndarray:
-        """Compute the k least contributors of a point set.
-
-        Parameters
-        ----------
-        points
-            The objective points.
-        k
-            The number of least contributors to compute.
-
-        Result
-        ------
-        np.ndarray
-            The indices of the k least contributors.
-        """
-
-        def scatter(idx, contribs, tmp):
-            j = 0
-            for i in range(len(idx)):
-                if idx[i]:
-                    tmp[i] = contribs[j]
-                    j += 1
-                else:
-                    tmp[i] = float("+inf")
-
-        n = len(points)
-        least_contributors = []
-        idx = np.ones(n, dtype=bool)
-        tmp = np.zeros(n)
-
-        for _ in range(k):
-            viable_points = points[idx]
-            contribs = self.contributions(viable_points)
-            scatter(idx, contribs, tmp)
-            next_idx = np.argsort(tmp)[0]
-            least_contributors.append(next_idx)
-            idx[next_idx] = False
-
-        return np.array(least_contributors, dtype=int)
-
     @abc.abstractmethod
     @final
     def __call__(self, points: np.ndarray) -> np.ndarray:
