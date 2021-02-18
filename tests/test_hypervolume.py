@@ -20,6 +20,7 @@ from anguilla.util import (
     random_concave_front,
     random_linear_front,
 )
+from anguilla.indicators import HypervolumeIndicator
 
 
 class HVBaseTestFunction:
@@ -172,3 +173,16 @@ class TestOther(unittest.TestCase):
         contrib_a = contributions(points, reference)
         contrib_b = contributions(points)
         self.assertTrue(np.allclose(contrib_a, contrib_b))
+
+
+# class TestHVIndicator(unittest.TestCase):
+#    """HV indicator tests."""
+#
+#    def test_least_contributors(self) -> None:
+#        front = random_concave_front(100, 3)
+#        indicator = HypervolumeIndicator()
+#        a = indicator.least_contributors(front, 20)
+#        b = indicator.least_contributors_old(front, 20)
+#        self.assertTrue(
+#            np.all(sorted(a) == sorted(b)), f"a: {sorted(a)}, b: {sorted(b)}"
+#        )

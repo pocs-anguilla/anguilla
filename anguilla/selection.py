@@ -44,10 +44,12 @@ def indicator_selection(
         current_front_size = np.sum(current_front)
 
     current_front = np.argwhere(current_front).flatten()
-    contributions = indicator.contributions(points[current_front])
-
-    # Remove the smallest contributions
-    sorted_idx = np.argsort(contributions)
-    selected[current_front[sorted_idx[: current_size - target_size]]] = False
+    k = current_size - target_size
+    if k > 0:
+        least_contributors_idx = indicator.least_contributors(
+            points[current_front], k
+        )
+        # Remove the smallest contributions
+        selected[current_front[least_contributors_idx]] = False
 
     return selected, ranks

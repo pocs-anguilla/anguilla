@@ -212,6 +212,9 @@ class FixedSizePopulation:
         self.points = np.zeros((n_individuals, n_dimensions))
         self.fitness = np.zeros((n_individuals, n_objectives))
         self.penalized_fitness = np.zeros((n_individuals, n_objectives))
+        # The following arrays are initialized by the optimizer:
+        # * step_size
+        # * p_succ
         self.step_size = np.zeros((n_individuals,))
         self.p_succ = np.zeros((n_individuals,))
         self.path = np.zeros((n_individuals, n_dimensions))
@@ -492,7 +495,9 @@ class MOCMA(Optimizer):
         """
         if not self._ask_called:
             raise RuntimeError("Tell called before ask")
-        # Convenience local variables
+        # Convenience local variables to improve legibility.
+        # We create views of the arrays, for example, when we update p_succ[i]
+        # we actually update self._population.p_succ[i]
         n_parents = self._n_parents
         n_offspring = self._n_offspring
         points = self._population.points[:]
@@ -505,6 +510,9 @@ class MOCMA(Optimizer):
         parents = self._population.parents[:]
 
         # Update using input data
+        # If the input array has only one dimension, it is a single point
+        # with shape (n_objectives,) so we reshape it to have shape
+        # (1, n_objectives)
         if len(input_fitness.shape) == 1:
             input_fitness = input_fitness.reshape(1, len(input_fitness))
         fitness[n_parents:] = input_fitness
@@ -536,7 +544,6 @@ class MOCMA(Optimizer):
                 oidx, pidx, selected, ranks
             )
             if selected[oidx]:
-                # assert success_indicator > 0.0
                 self._update_step_size(oidx, success_indicator)
                 x_step = (points[oidx] - points[pidx]) / old_step_size[pidx]
                 self._update_covariance_matrix(oidx, x_step)

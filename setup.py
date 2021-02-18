@@ -45,6 +45,13 @@ def main():
                 "typing_extensions",
             ],
         },
+        classifiers=[
+            "Topic :: Scientific/Engineering",
+            "Programming Language :: Python :: 3 :: Only",
+            "Programming Language :: C++",
+            "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+            "Development Status :: 3 - Alpha",
+        ],
     )
 
 

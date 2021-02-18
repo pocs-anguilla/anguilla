@@ -1,0 +1,10 @@
+anguilla/
+conda-recipes/
+cmake/
+docs/
+notebooks/
+tests/
+vendor/
+.github/
+.vscode/
+.git/

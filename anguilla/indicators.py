@@ -38,6 +38,19 @@ class Indicator(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError()
 
+    def least_contributors(self, points, k):
+        indices = []
+        n = len(points)
+        active_points = points.copy()
+        active_indices = np.arange(n)
+        for _ in range(k):
+            contribs = self.contributions(active_points)
+            index = np.argsort(contribs)[0]
+            active_points = np.delete(active_points, index, 0)
+            indices.append(active_indices[index])
+            active_indices = np.delete(active_indices, index)
+        return np.array(indices)
+
     @abc.abstractmethod
     @final
     def __call__(self, points: np.ndarray) -> np.ndarray:
@@ -83,9 +96,6 @@ class HypervolumeIndicator(Indicator):
         self._reference = reference
 
     def contributions(self, points: np.ndarray) -> np.ndarray:
-        # if self._reference is None:
-        # TODO: Check zero contribs (set to max + something (1))
-        # return hv.contributions(points, np.max(points, axis=0))
         return hv.contributions(points, self._reference)
 
     def __call__(self, points: np.ndarray) -> float:

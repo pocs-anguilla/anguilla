@@ -295,6 +295,13 @@ class BaseTestFunction:
             ),
         )
 
+    def test_pareto_front(self):
+        """Test that the Pareto front method does not throw any errors."""
+        fn = self.get_fn()
+        if fn.has_known_pareto_front:
+            fn.n_dimensions = 2
+            fn.n_objectives = 2
+            fn.pareto_front()
 
 class BaseTestFunctionSimple(BaseTestFunction):
     """Test additional properties of the function implementation."""
@@ -307,7 +314,13 @@ class BaseTestFunctionSimple(BaseTestFunction):
         for i in range(n_points):
             single_ys[i] = fn(xs[i])
         multiple_ys = fn(xs)
-        self.assertTrue(np.allclose(single_ys, multiple_ys))
+        if fn.n_objectives == 1:
+            single_ys = single_ys.squeeze()
+        self.assertTrue(single_ys.shape == multiple_ys.shape, "Got different shapes: {} and {}".format(
+            single_ys.shape,
+            multiple_ys.shape,
+        ))
+        self.assertTrue(np.allclose(single_ys, multiple_ys), "Got different values")
 
 
 class BaseTestFunctionWithSamples(BaseTestFunction):
@@ -376,6 +389,10 @@ class TestSphere(BaseTestFunctionWithSamples, unittest.TestCase):
     filename = "Sphere.csv"
     fn_cls = benchmark.Sphere
 
+class TestSumSquares(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the SumSquares function."""
+
+    fn_cls = benchmark.SumSquares
 
 class TestRastrigin(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the Rastrigin function."""
@@ -384,6 +401,11 @@ class TestRastrigin(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.Rastrigin
     fn_kwargs = {"rotate": False}
 
+class TestRastriginRotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the Rastrigin function (with rotation matrix)."""
+
+    fn_cls = benchmark.Rastrigin
+    fn_kwargs = {"rotate": True}
 
 class TestEllipsoid(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the Ellipsoid function."""
@@ -392,6 +414,11 @@ class TestEllipsoid(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.Ellipsoid
     fn_kwargs = {"rotate": False}
 
+class TestEllipsoidRotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the Ellipsoid function (with rotation matrix)."""
+
+    fn_cls = benchmark.Ellipsoid
+    fn_kwargs = {"rotate": True}
 
 class TestFON(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the FON function."""
@@ -442,6 +469,11 @@ class TestIHR1(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.IHR1
     fn_kwargs = {"rotate": False}
 
+class TestIHR1Rotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the IHR1 function (with rotation matrix)."""
+
+    fn_cls = benchmark.IHR1
+    fn_kwargs = {"rotate": True}
 
 class TestIHR2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR2 function."""
@@ -450,6 +482,11 @@ class TestIHR2(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.IHR2
     fn_kwargs = {"rotate": False}
 
+class TestIHR2Rotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the IHR2 function (with rotation matrix)."""
+
+    fn_cls = benchmark.IHR2
+    fn_kwargs = {"rotate": True}
 
 class TestIHR3(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR3 function."""
@@ -458,6 +495,11 @@ class TestIHR3(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.IHR3
     fn_kwargs = {"rotate": False}
 
+class TestIHR3Rotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the IHR3 function (with rotation matrix)."""
+
+    fn_cls = benchmark.IHR3
+    fn_kwargs = {"rotate": True}
 
 class TestIHR4(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR4 function."""
@@ -466,6 +508,11 @@ class TestIHR4(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.IHR4
     fn_kwargs = {"rotate": False}
 
+class TestIHR4Rotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the IHR4 function (with rotation matrix)."""
+
+    fn_cls = benchmark.IHR4
+    fn_kwargs = {"rotate": True}
 
 class TestIHR6(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR6 function."""
@@ -474,6 +521,11 @@ class TestIHR6(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.IHR6
     fn_kwargs = {"rotate": False}
 
+class TestIHR6Rotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the IHR6 function (with rotation matrix)."""
+
+    fn_cls = benchmark.IHR6
+    fn_kwargs = {"rotate": True}
 
 class TestELLI1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ELLI1 function."""
@@ -482,6 +534,11 @@ class TestELLI1(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.ELLI1
     fn_kwargs = {"rotate": False}
 
+class TestELLI1Rotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the ELLI1 function (with rotation matrix)."""
+
+    fn_cls = benchmark.ELLI1
+    fn_kwargs = {"rotate": True}
 
 class TestELLI2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ELLI2 function."""
@@ -490,6 +547,11 @@ class TestELLI2(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.ELLI2
     fn_kwargs = {"rotate": False}
 
+class TestELLI2Rotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the ELLI2 function (with rotation matrix)."""
+
+    fn_cls = benchmark.ELLI2
+    fn_kwargs = {"rotate": True}
 
 class TestGELLI(BaseTestFunctionSimple, unittest.TestCase):
     fn_cls = benchmark.GELLI
@@ -502,6 +564,11 @@ class TestCIGTAB1(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.CIGTAB1
     fn_kwargs = {"rotate": False}
 
+class TestCIGTAB1Rotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the CIGTAB1 function (with rotation matrix)."""
+
+    fn_cls = benchmark.CIGTAB1
+    fn_kwargs = {"rotate": True}
 
 class TestCIGTAB2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the CIGTAB2 function."""
@@ -510,6 +577,11 @@ class TestCIGTAB2(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.CIGTAB2
     fn_kwargs = {"rotate": False}
 
+class TestCIGTAB2Rotated(BaseTestFunctionSimple, unittest.TestCase):
+    """Unit tests for the CIGTAB2 function (with rotation matrix)."""
+
+    fn_cls = benchmark.CIGTAB2
+    fn_kwargs = {"rotate": True}
 
 class TestDTLZ1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ1 function."""

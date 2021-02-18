@@ -314,7 +314,56 @@ def log_mocma_trial(
             trial_parameters.key,
         )
     )
+
     sw = StopWatch()
+
+    def log_to_file():
+        fname_base = "{}_{}_{}_{}".format(
+            fn.name,
+            optimizer.qualified_name,
+            trial_parameters.key,
+            optimizer.evaluation_count,
+        )
+        if log_parameters.log_fitness:
+            fname = f"{fname_base}.fitness.csv"
+            np.savetxt(
+                str(log_parameters.path.joinpath(fname).absolute()),
+                optimizer.best.fitness,
+                delimiter=",",
+                header=header.format(
+                    optimizer.evaluation_count,
+                    sw.duration,
+                    "fitness",
+                ),
+            )
+        if log_parameters.log_points:
+            fname = f"{fname_base}.points.csv"
+            np.savetxt(
+                str(log_parameters.path.joinpath(fname).absolute()),
+                optimizer.best.points,
+                delimiter=",",
+                header=header.format(
+                    optimizer.evaluation_count,
+                    sw.duration,
+                    "point",
+                ),
+            )
+        if log_parameters.log_step_sizes:
+            fname = f"{fname_base}.step_sizes.csv"
+            np.savetxt(
+                str(log_parameters.path.joinpath(fname).absolute()),
+                optimizer.best.step_size,
+                delimiter=",",
+                header=header.format(
+                    optimizer.evaluation_count,
+                    sw.duration,
+                    "step_size",
+                ),
+            )
+
+    # Log initial points
+    log_to_file()
+
     sw.start()
     while not optimizer.stop.triggered:
         points = optimizer.ask()
@@ -326,48 +375,7 @@ def log_mocma_trial(
             optimizer.tell(fitness)
         if optimizer.evaluation_count in log_parameters.log_at:
             sw.stop()
-            fname_base = "{}_{}_{}_{}".format(
-                fn.name,
-                optimizer.qualified_name,
-                trial_parameters.key,
-                optimizer.evaluation_count,
-            )
-            if log_parameters.log_fitness:
-                fname = f"{fname_base}.fitness.csv"
-                np.savetxt(
-                    str(log_parameters.path.joinpath(fname).absolute()),
-                    optimizer.best.fitness,
-                    delimiter=",",
-                    header=header.format(
-                        optimizer.evaluation_count,
-                        sw.duration,
-                        "fitness",
-                    ),
-                )
-            if log_parameters.log_points:
-                fname = f"{fname_base}.points.csv"
-                np.savetxt(
-                    str(log_parameters.path.joinpath(fname).absolute()),
-                    optimizer.best.points,
-                    delimiter=",",
-                    header=header.format(
-                        optimizer.evaluation_count,
-                        sw.duration,
-                        "point",
-                    ),
-                )
-            if log_parameters.log_step_sizes:
-                fname = f"{fname_base}.step_sizes.csv"
-                np.savetxt(
-                    str(log_parameters.path.joinpath(fname).absolute()),
-                    optimizer.best.step_size,
-                    delimiter=",",
-                    header=header.format(
-                        optimizer.evaluation_count,
-                        sw.duration,
-                        "step_size",
-                    ),
-                )
+            log_to_file()
             sw.start()
 
     return "{}-{}-{}".format(
@@ -459,7 +467,7 @@ def log_mocma_trials(
     else:
         if verbose:
             print(f"Running {n_jobs} job(s) using sequential execution")
-        results = map(partial(log_mocma_trial, log_parameters), jobs)
+        results = list(map(partial(log_mocma_trial, log_parameters), jobs))
 
     if verbose:
         print(f"Completed {len(results)} jobs.")
