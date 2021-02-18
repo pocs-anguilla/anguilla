@@ -1,6 +1,5 @@
 """Testsuite for the :py:mod:`selection` package."""
 import unittest
-from typing import Any, Optional, Tuple
 
 import numpy as np
 
