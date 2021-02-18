@@ -38,15 +38,6 @@ Copyright: 2019, German Mendez Bravo (Kronuz)
            2013, Google Inc.
 License: Apache-2
 
-Files: notebooks/shark/exploration/include/moq/*
-       notebooks/shark/exploration/src/moq/*
-Copyright: 2018, Tobias Glasmachers
-License: MIT
-
-Files: notebooks/shark/exploration/include/matplotlibcpp/*
-Copyright: 2014, Benno Evers
-License: MIT
-
 Copyright: 2016, Wenzel Jakob
 License: LICENSE.PyBind11
 Comment: This project uses PyBind11 for its C extensions.
