@@ -23,6 +23,16 @@ namespace py = pybind11;
 
 /* REFERENCES
 
+[2007:mo-cma-es]
+C. Igel, N. Hansen, & S. Roth (2007).
+Covariance Matrix Adaptation for Multi-objective OptimizationEvolutionary Computation, 15(1), 1–28.
+NOTE: see the algorithm described in Lemma 1 of the paper, on page 11. 
+
+[2008:shark]
+C. Igel, V. Heidrich-Meisner, & T. Glasmachers (2008).
+SharkJournal of Machine Learning Research, 9, 993–996.
+URL: https://git.io/Jtm08, https://git.io/JImE2
+
 [2009:hypervolume-hv3d]
 N. Beume, C. Fonseca, M. Lopez-Ibanez, L. Paquete, & J. Vahrenhold (2009).
 On the Complexity of Computing the Hypervolume Indicator
@@ -32,11 +42,6 @@ IEEE transactions on evolutionary computation, 13(5), 1075–1082.
 M. Emmerich, & C. Fonseca (2011).
 Computing Hypervolume Contributions in Low Dimensions: Asymptotically Optimal Algorithm and Complexity Results.
 In Evolutionary Multi-Criterion Optimization (pp. 121–135). Springer Berlin Heidelberg.
-
-[2008:shark]
-C. Igel, V. Heidrich-Meisner, & T. Glasmachers (2008).
-SharkJournal of Machine Learning Research, 9, 993–996.
-URL: https://git.io/Jtm08, https://git.io/JImE2
 
 [2020:hypervolume]
 A. P. Guerreiro, C. M. Fonseca, & L. Paquete. (2020).
@@ -56,6 +61,9 @@ static constexpr const char *docstring = R"_(
     reference
         The reference point. Otherwise computed as the component-wise
         maximum over all the points.
+    preferExtrema
+        Whether to favor the extremum points by giving them infinite \
+        contribution.
 
     Returns
     -------
@@ -69,10 +77,12 @@ static constexpr const char *docstring = R"_(
     The implementation differs from the presentation of the reference paper \
     in that it assumes a minimization problem (instead of maximization). \
     It also incorporates some implementation details taken from \
-    :cite:`2008:shark`. See also HV3D in [2011:hypervolume-3d].)_";
+    :cite:`2008:shark`. See also HV3D in [2011:hypervolume-3d].
+    The implementation also incorporates some aspects described in \
+    :cite:`2007:mo-cma-es` regarding the handling of extremum points.)_";
 
 template <typename T, class Map>
-auto contributions(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &reference);
+auto contributions(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &reference, bool preferExtrema);
 
 template <typename T>
 struct MapValue {
@@ -110,8 +120,11 @@ namespace __hvc3d {
 template <typename T>
 struct IndexedPoint3D;
 
+template <typename T>
+struct ExtremaData;
+
 template <typename T, class Map>
-[[nodiscard]] auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, const T refY, const T refZ);
+[[nodiscard]] auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, const T refY, const T refZ, const ExtremaData<T> extremaData);
 
 template <typename T>
 struct Box3D {
@@ -150,12 +163,20 @@ struct DominatedData {
 
 template <typename T>
 using MapValue = hvc3d::MapValue<T>;
+
+template <typename T>
+struct ExtremaData {
+    std::size_t bestX_i;
+    std::size_t bestY_i;
+    std::size_t bestZ_i;
+    bool preferExtrema;
+};
 }  // namespace __hvc3d
 
 /* Implementation of public interface. */
 namespace hvc3d {
 template <typename T, class Map>
-[[nodiscard]] auto contributions(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference) {
+[[nodiscard]] auto contributions(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference, bool preferExtrema) {
     static_assert(std::is_floating_point<T>::value,
                   "HVC3D is not meant to be instantiated with a non floating point type.");
 
@@ -181,10 +202,33 @@ template <typename T, class Map>
 
     std::vector<__hvc3d::IndexedPoint3D<T>> points;
     points.reserve(n);
-    for (std::size_t i = 0U; i < n; ++i) {
+
+    // To determine the extremum points we need to keep track
+    // of the best x, y and z values.
+    std::size_t bestX_i = 0U;
+    T bestX = pointsR(0U, 0);
+    std::size_t bestY_i = 0U;
+    T bestY = pointsR(0U, 1);
+    std::size_t bestZ_i = 0U;
+    T bestZ = pointsR(0U, 2);
+    points.emplace_back(bestX, bestY, bestZ, 0U);
+
+    for (std::size_t i = 1U; i < n; ++i) {
         const auto pX = pointsR(i, 0);
         const auto pY = pointsR(i, 1);
         const auto pZ = pointsR(i, 2);
+        if(bestX > pX) {
+            bestX = pX;
+            bestX_i = i;
+        }
+        if(bestY > pY) {
+            bestY = pY;
+            bestY_i = i;
+        }
+        if(bestZ > pZ) {
+            bestZ = pZ;
+            bestZ_i = i;
+        }
         points.emplace_back(pX, pY, pZ, i);
         if (!refGiven) {
             refX = std::max(refX, pX);
@@ -195,14 +239,20 @@ template <typename T, class Map>
     std::sort(points.begin(), points.end(),
               [](auto const &l, auto const &r) { return l.pZ < r.pZ; });
 
-    return __hvc3d::contributions<T, Map>(points, refX, refY, refZ);
+    __hvc3d::ExtremaData<T> extremaData;
+    extremaData.bestX_i = bestX_i;
+    extremaData.bestY_i = bestY_i;
+    extremaData.bestZ_i = bestZ_i;
+    extremaData.preferExtrema = preferExtrema;
+
+    return __hvc3d::contributions<T, Map>(points, refX, refY, refZ, extremaData);
 }
 }  // namespace hvc3d
 
 /* Internal implementations. */
 namespace __hvc3d {
 template <typename T, class Map>
-auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, const T refY, const T refZ) {
+auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, const T refY, const T refZ, const ExtremaData<T> extremaData) {
     // Note: assumes the points are received sorted in ascending order by z-component.
 
 #ifdef NDEBUG
@@ -389,6 +439,14 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
             box.uZ = refZ;
             contribution[index] += box.volume();
         }
+    }
+
+    // Optionally, give preference to extrema.
+    if (extremaData.preferExtrema) {
+        constexpr auto inf = std::numeric_limits<T>::max();
+        contribution[extremaData.bestX_i] = inf;
+        contribution[extremaData.bestY_i] = inf;
+        contribution[extremaData.bestZ_i] = inf;
     }
 
     return output;

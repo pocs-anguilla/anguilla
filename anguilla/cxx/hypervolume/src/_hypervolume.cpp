@@ -42,11 +42,12 @@ typedef double f8;  // following Numba's convention
 
 [[nodiscard]] auto hvc3d_f8(const py::array_t<f8>& points,
                             const std::optional<py::array_t<f8>>& reference = std::nullopt,
-                            const bool useBtree = true) {
+                            const bool useBtree = true,
+                            const bool preferExtrema = false) {
     if (useBtree) {
-        return hvc3d::contributions<f8, hvc3d::BTreeMap<f8>>(points, reference);
+        return hvc3d::contributions<f8, hvc3d::BTreeMap<f8>>(points, reference, preferExtrema);
     }
-    return hvc3d::contributions<f8, hvc3d::RBTreeMap<f8>>(points, reference);
+    return hvc3d::contributions<f8, hvc3d::RBTreeMap<f8>>(points, reference, preferExtrema);
 }
 
 PYBIND11_MODULE(_hypervolume, m) {
@@ -75,7 +76,8 @@ PYBIND11_MODULE(_hypervolume, m) {
           hvc3d::docstring,
           py::arg("points"),
           py::arg("reference") = std::nullopt,
-          py::arg("use_btree") = true);
+          py::arg("use_btree") = true,
+          py::arg("preferExtrema") = false);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = Py_STRINGIFY(VERSION_INFO);

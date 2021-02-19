@@ -114,7 +114,8 @@ class HypervolumeIndicator(Indicator):
         self._reference = reference
 
     def contributions(self, points: np.ndarray) -> np.ndarray:
-        return hv.contributions(points, self._reference)
+        prefer_extrema = True
+        return hv.contributions(points, self._reference, prefer_extrema)
 
     def __call__(self, points: np.ndarray) -> float:
         if self._reference is None:
