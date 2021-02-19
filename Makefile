@@ -40,8 +40,7 @@ test:
 
 test_debug:
 	#LD_PRELOAD="libasan.so libubsan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 python -m unittest
-	#LD_PRELOAD="libasan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 python -m unittest
-	LD_PRELOAD="libasan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 pytest tests --color=yes --cov=anguilla
+	LD_PRELOAD="libasan.so" ASAN_OPTIONS=check_initialization_order=1 ASAN_OPTIONS=detect_leaks=0 python -m unittest
 
 jupyter:
 	jupyter-lab --allow-root

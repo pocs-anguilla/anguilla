@@ -9,7 +9,7 @@ from anguilla.fitness import benchmark
 from anguilla.fitness.base import ObjectiveFunction
 from anguilla.optimizers.mocma import MOCMA, FixedSizePopulation
 
-VOLUME_TEST_N_TRIALS = 3
+VOLUME_TEST_N_TRIALS = 1
 VOLUME_TEST_RTOL = 5e-3
 
 
@@ -198,8 +198,7 @@ class VolumeBaseTestFunction:
                     volumes[trial] = optimizer.indicator(
                         result.solution.fitness
                     )
-                # Should check this
-                reference_volume = np.max(volumes)
+                reference_volume = np.min(volumes)
                 self.assertTrue(
                     np.allclose(
                         reference_volume,

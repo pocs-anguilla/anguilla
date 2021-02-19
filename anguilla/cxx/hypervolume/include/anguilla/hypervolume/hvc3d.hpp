@@ -23,6 +23,16 @@ namespace py = pybind11;
 
 /* REFERENCES
 
+[2007:mo-cma-es]
+C. Igel, N. Hansen, & S. Roth (2007).
+Covariance Matrix Adaptation for Multi-objective OptimizationEvolutionary Computation, 15(1), 1–28.
+NOTE: see the algorithm described in Lemma 1 of the paper, on page 11. 
+
+[2008:shark]
+C. Igel, V. Heidrich-Meisner, & T. Glasmachers (2008).
+SharkJournal of Machine Learning Research, 9, 993–996.
+URL: https://git.io/Jtm08, https://git.io/JImE2
+
 [2009:hypervolume-hv3d]
 N. Beume, C. Fonseca, M. Lopez-Ibanez, L. Paquete, & J. Vahrenhold (2009).
 On the Complexity of Computing the Hypervolume Indicator
@@ -32,11 +42,6 @@ IEEE transactions on evolutionary computation, 13(5), 1075–1082.
 M. Emmerich, & C. Fonseca (2011).
 Computing Hypervolume Contributions in Low Dimensions: Asymptotically Optimal Algorithm and Complexity Results.
 In Evolutionary Multi-Criterion Optimization (pp. 121–135). Springer Berlin Heidelberg.
-
-[2008:shark]
-C. Igel, V. Heidrich-Meisner, & T. Glasmachers (2008).
-SharkJournal of Machine Learning Research, 9, 993–996.
-URL: https://git.io/Jtm08, https://git.io/JImE2
 
 [2020:hypervolume]
 A. P. Guerreiro, C. M. Fonseca, & L. Paquete. (2020).
@@ -56,6 +61,9 @@ static constexpr const char *docstring = R"_(
     reference
         The reference point. Otherwise computed as the component-wise
         maximum over all the points.
+    preferExtrema
+        Whether to favor the extremum points by giving them infinite \
+        contribution.
 
     Returns
     -------
@@ -69,10 +77,12 @@ static constexpr const char *docstring = R"_(
     The implementation differs from the presentation of the reference paper \
     in that it assumes a minimization problem (instead of maximization). \
     It also incorporates some implementation details taken from \
-    :cite:`2008:shark`. See also HV3D in [2011:hypervolume-3d].)_";
+    :cite:`2008:shark`. See also HV3D in [2011:hypervolume-3d].
+    The implementation also incorporates some aspects described in \
+    :cite:`2007:mo-cma-es` regarding the handling of extremum points.)_";
 
 template <typename T, class Map>
-auto contributions(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &reference);
+auto contributions(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &reference, bool preferExtrema);
 
 template <typename T>
 struct MapValue {
@@ -110,8 +120,11 @@ namespace __hvc3d {
 template <typename T>
 struct IndexedPoint3D;
 
+template <typename T>
+struct ExtremaData;
+
 template <typename T, class Map>
-[[nodiscard]] auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, const T refY, const T refZ);
+[[nodiscard]] auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, const T refY, const T refZ, const ExtremaData<T> extremaData);
 
 template <typename T>
 struct Box3D {
@@ -150,12 +163,20 @@ struct DominatedData {
 
 template <typename T>
 using MapValue = hvc3d::MapValue<T>;
+
+template <typename T>
+struct ExtremaData {
+    std::size_t extA_i;
+    std::size_t extB_i;
+    std::size_t extC_i;
+    bool preferExtrema;
+};
 }  // namespace __hvc3d
 
 /* Implementation of public interface. */
 namespace hvc3d {
 template <typename T, class Map>
-[[nodiscard]] auto contributions(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference) {
+[[nodiscard]] auto contributions(const py::array_t<T> &_points, const std::optional<py::array_t<T>> &_reference, bool preferExtrema) {
     static_assert(std::is_floating_point<T>::value,
                   "HVC3D is not meant to be instantiated with a non floating point type.");
 
@@ -181,28 +202,69 @@ template <typename T, class Map>
 
     std::vector<__hvc3d::IndexedPoint3D<T>> points;
     points.reserve(n);
+
+    // To determine the extremum points we need to keep track
+    // of the three best extrema.
+
+    constexpr auto max = std::numeric_limits<T>::max();
+    T extA_x = max;
+    T extA_y = max;
+    std::size_t extA_i = n;
+
+    T extB_x = max;
+    T extB_z = max;
+    std::size_t extB_i = n;
+
+    T extC_y = max;
+    T extC_z = max;
+    std::size_t extC_i = n;
+
     for (std::size_t i = 0U; i < n; ++i) {
         const auto pX = pointsR(i, 0);
         const auto pY = pointsR(i, 1);
         const auto pZ = pointsR(i, 2);
         points.emplace_back(pX, pY, pZ, i);
+        if (preferExtrema) {
+            if (pX < extA_x && pY < extA_y) {
+                extA_x = pX;
+                extA_y = pY;
+                extA_i = i;
+            }
+            if (pX < extB_x && pZ < extB_z) {
+                extB_x = pX;
+                extB_z = pZ;
+                extB_i = i;
+            }
+            if (pY < extC_y && pZ < extC_z) {
+                extC_y = pY;
+                extC_z = pZ;
+                extC_i = i;
+            }
+        }
         if (!refGiven) {
             refX = std::max(refX, pX);
             refY = std::max(refY, pY);
             refZ = std::max(refZ, pZ);
         }
     }
+
+    __hvc3d::ExtremaData<T> extremaData;
+    extremaData.extA_i = extA_i;
+    extremaData.extB_i = extB_i;
+    extremaData.extC_i = extC_i;
+    extremaData.preferExtrema = preferExtrema;
+
     std::sort(points.begin(), points.end(),
               [](auto const &l, auto const &r) { return l.pZ < r.pZ; });
 
-    return __hvc3d::contributions<T, Map>(points, refX, refY, refZ);
+    return __hvc3d::contributions<T, Map>(points, refX, refY, refZ, extremaData);
 }
 }  // namespace hvc3d
 
 /* Internal implementations. */
 namespace __hvc3d {
 template <typename T, class Map>
-auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, const T refY, const T refZ) {
+auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, const T refY, const T refZ, const ExtremaData<T> extremaData) {
     // Note: assumes the points are received sorted in ascending order by z-component.
 
 #ifdef NDEBUG
@@ -247,13 +309,13 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
     std::vector<DominatedData<T>> dominated;
 
     {
-        const auto [pX, pY, pZ, index] = points[0U];
-        boxLists[index].emplace_front(pX, pY, pZ, refX, refY, NaN);
         constexpr auto lowest = std::numeric_limits<T>::lowest();
         // Add the sentinels.
         front.try_emplace(lowest, refY, n);
         front.try_emplace(refX, lowest, n);
-        // Add first point.
+        // Process the first point.
+        const auto [pX, pY, pZ, index] = points[0U];
+        boxLists[index].emplace_front(pX, pY, pZ, refX, refY, NaN);
         front.try_emplace(pX, pY, index);
     }
 
@@ -389,6 +451,14 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
             box.uZ = refZ;
             contribution[index] += box.volume();
         }
+    }
+
+    // Optionally, give preference to extrema.
+    if (extremaData.preferExtrema) {
+        constexpr auto inf = std::numeric_limits<T>::max();
+        contribution[extremaData.extA_i] = inf;
+        contribution[extremaData.extB_i] = inf;
+        contribution[extremaData.extC_i] = inf;
     }
 
     return output;

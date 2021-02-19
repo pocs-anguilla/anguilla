@@ -39,6 +39,24 @@ class Indicator(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def least_contributors(self, points, k):
+        """Compute the least contributors indices.
+
+        Parameters
+        ----------
+        points
+            The objective points.
+        k
+            The number of least contributors to determine.
+
+        Result
+        ------
+        np.ndarray
+            The least contributors' indices.
+
+        Notes
+        -----
+        The algorithm is described as part of Lemma 1, page 11, of :cite:`2007:mo-cma-es`.
+        """
         indices = []
         n = len(points)
         active_points = points.copy()
@@ -96,7 +114,8 @@ class HypervolumeIndicator(Indicator):
         self._reference = reference
 
     def contributions(self, points: np.ndarray) -> np.ndarray:
-        return hv.contributions(points, self._reference)
+        prefer_extrema = True
+        return hv.contributions(points, self._reference, prefer_extrema)
 
     def __call__(self, points: np.ndarray) -> float:
         if self._reference is None:

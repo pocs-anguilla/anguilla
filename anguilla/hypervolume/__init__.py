@@ -82,6 +82,7 @@ def contributions(
     reference: Optional[np.ndarray] = None,
     use_btree: bool = True,
     non_dominated: bool = True,
+    prefer_extrema: bool = False,
 ) -> np.ndarray:
     """Compute the hypervolume contribution for a set of k-D points.
 
@@ -97,7 +98,11 @@ def contributions(
         By default `btree` (B-tree), but can also be `rbtree` (Red-black tree).
     non_dominated
         Only relevant for the 2-D implementation.
-        If true, selects a more efficiente algorithm to perform the computation.
+        If true, selects a more efficiente algorithm to perform the \
+        computation.
+    prefer_extrema
+        Whether to give preference to extremum points by assigning them \
+        infinite contribution.
 
     Returns
     -------
@@ -118,7 +123,7 @@ def contributions(
     if d == 2:
         return hvc2d_f8(points, reference, non_dominated)
     elif d == 3:
-        return hvc3d_f8(points, reference, use_btree)
+        return hvc3d_f8(points, reference, use_btree, prefer_extrema)
     elif d > 3:
         if SHARK_BINDINGS_AVAILABLE:
             return shark_contributions(points, reference)
