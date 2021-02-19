@@ -3,7 +3,7 @@ FROM anguilla/devcontainer-base
 RUN . /opt/conda/etc/profile.d/conda.sh \
     && conda activate anguilla-devcontainer \
     && cd /tmp \
-    && git clone -b 4.1-patches --depth 1 https://github.com/pocs-anguilla/shark-patches.git Shark \
+    && git clone -b 4.1-patched-v1 --depth 1 https://github.com/pocs-anguilla/shark-mod.git Shark \
     && git clone --depth 1 https://github.com/ruslo/polly.git \
     && mkdir build \
     && cd build \
