@@ -540,15 +540,25 @@ class MOCMA(Optimizer):
         old_step_size = step_size.copy()
         for oidx in range(n_parents, n_parents + n_offspring):
             pidx = parents[oidx]
-            success_indicator = self._success_indicator(
-                oidx, pidx, selected, ranks
-            )
-            if selected[oidx]:
-                self._update_step_size(oidx, success_indicator)
-                x_step = (points[oidx] - points[pidx]) / old_step_size[pidx]
-                self._update_covariance_matrix(oidx, x_step)
+            # Updates should only occur if individuals are selected and
+            # successful (see [2008:shark], URL: https://git.io/Jty6G).
+            offspring_is_successful = 0.0
+            if self._success_notion == SuccessNotion.IndividualBased:
+                # [2010:mo-cma-es] Section 3.1, p. 489
+                if selected[oidx] and ranks[oidx] <= ranks[pidx]:
+                    offspring_is_successful = 1.0
+                    self._update_step_size(oidx, offspring_is_successful)
+                    x_step = (points[oidx] - points[pidx]) / old_step_size[pidx]
+                    self._update_covariance_matrix(oidx, x_step)
+            elif self._success_notion == SuccessNotion.PopulationBased:
+                # [2010:mo-cma-es] Section 3.2, p. 489
+                if selected[oidx]:
+                    offspring_is_successful = 1.0
+                    self._update_step_size(oidx, offspring_is_successful)
+                    x_step = (points[oidx] - points[pidx]) / old_step_size[pidx]
+                    self._update_covariance_matrix(oidx, x_step)
             if selected[pidx]:
-                self._update_step_size(pidx, success_indicator)
+                self._update_step_size(pidx, offspring_is_successful)
 
         # Complete the selection process
         # [2007:mo-cma-es] Algorithm 4, lines 11-13
@@ -559,7 +569,7 @@ class MOCMA(Optimizer):
         cov[:n_parents] = cov[selected]
         path[:n_parents] = path[selected]
         p_succ[:n_parents] = p_succ[selected]
-        self._parent_ranks = ranks[selected]
+        self._parent_ranks[:] = ranks[selected]
 
         self._generation_count += 1
         self._ask_called = False
@@ -618,23 +628,6 @@ class MOCMA(Optimizer):
             self._population.cov[idx] = (1.0 - c_cov) * self._population.cov[
                 idx
             ] + c_cov * (path_prod + c_c_prod * self._population.cov[idx])
-
-    def _success_indicator(
-        self,
-        oidx: int,
-        pidx: int,
-        selected: np.ndarray,
-        ranks: np.ndarray,
-    ) -> float:
-        success = False
-        if self._success_notion == SuccessNotion.IndividualBased:
-            # [2010:mo-cma-es] Section 3.1, p. 489
-            success = ranks[oidx] <= ranks[pidx]
-        else:
-            # [2010:mo-cma-es] Section 3.2, p. 489
-            success = selected[oidx]
-        return float(success)
-
 
 __all__ = [
     "MOCMA",
