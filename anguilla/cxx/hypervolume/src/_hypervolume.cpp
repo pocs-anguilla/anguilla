@@ -77,7 +77,7 @@ PYBIND11_MODULE(_hypervolume, m) {
           py::arg("points"),
           py::arg("reference") = std::nullopt,
           py::arg("use_btree") = true,
-          py::arg("preferExtrema") = false);
+          py::arg("prefer_extrema") = false);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = Py_STRINGIFY(VERSION_INFO);

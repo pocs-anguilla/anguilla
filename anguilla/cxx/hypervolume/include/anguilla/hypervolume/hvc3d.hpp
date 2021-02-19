@@ -166,9 +166,9 @@ using MapValue = hvc3d::MapValue<T>;
 
 template <typename T>
 struct ExtremaData {
-    std::size_t bestX_i;
-    std::size_t bestY_i;
-    std::size_t bestZ_i;
+    std::size_t extA_i;
+    std::size_t extB_i;
+    std::size_t extC_i;
     bool preferExtrema;
 };
 }  // namespace __hvc3d
@@ -204,46 +204,58 @@ template <typename T, class Map>
     points.reserve(n);
 
     // To determine the extremum points we need to keep track
-    // of the best x, y and z values.
-    std::size_t bestX_i = 0U;
-    T bestX = pointsR(0U, 0);
-    std::size_t bestY_i = 0U;
-    T bestY = pointsR(0U, 1);
-    std::size_t bestZ_i = 0U;
-    T bestZ = pointsR(0U, 2);
-    points.emplace_back(bestX, bestY, bestZ, 0U);
+    // of the three best extrema.
 
-    for (std::size_t i = 1U; i < n; ++i) {
+    constexpr auto max = std::numeric_limits<T>::max();
+    T extA_x = max;
+    T extA_y = max;
+    std::size_t extA_i = n;
+
+    T extB_x = max;
+    T extB_z = max;
+    std::size_t extB_i = n;
+
+    T extC_y = max;
+    T extC_z = max;
+    std::size_t extC_i = n;
+
+    for (std::size_t i = 0U; i < n; ++i) {
         const auto pX = pointsR(i, 0);
         const auto pY = pointsR(i, 1);
         const auto pZ = pointsR(i, 2);
-        if(bestX > pX) {
-            bestX = pX;
-            bestX_i = i;
-        }
-        if(bestY > pY) {
-            bestY = pY;
-            bestY_i = i;
-        }
-        if(bestZ > pZ) {
-            bestZ = pZ;
-            bestZ_i = i;
-        }
         points.emplace_back(pX, pY, pZ, i);
+        if (preferExtrema) {
+            if (pX < extA_x && pY < extA_y) {
+                extA_x = pX;
+                extA_y = pY;
+                extA_i = i;
+            }
+            if (pX < extB_x && pZ < extB_z) {
+                extB_x = pX;
+                extB_z = pZ;
+                extB_i = i;
+            }
+            if (pY < extC_y && pZ < extC_z) {
+                extC_y = pY;
+                extC_z = pZ;
+                extC_i = i;
+            }
+        }
         if (!refGiven) {
             refX = std::max(refX, pX);
             refY = std::max(refY, pY);
             refZ = std::max(refZ, pZ);
         }
     }
-    std::sort(points.begin(), points.end(),
-              [](auto const &l, auto const &r) { return l.pZ < r.pZ; });
 
     __hvc3d::ExtremaData<T> extremaData;
-    extremaData.bestX_i = bestX_i;
-    extremaData.bestY_i = bestY_i;
-    extremaData.bestZ_i = bestZ_i;
+    extremaData.extA_i = extA_i;
+    extremaData.extB_i = extB_i;
+    extremaData.extC_i = extC_i;
     extremaData.preferExtrema = preferExtrema;
+
+    std::sort(points.begin(), points.end(),
+              [](auto const &l, auto const &r) { return l.pZ < r.pZ; });
 
     return __hvc3d::contributions<T, Map>(points, refX, refY, refZ, extremaData);
 }
@@ -297,13 +309,13 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
     std::vector<DominatedData<T>> dominated;
 
     {
-        const auto [pX, pY, pZ, index] = points[0U];
-        boxLists[index].emplace_front(pX, pY, pZ, refX, refY, NaN);
         constexpr auto lowest = std::numeric_limits<T>::lowest();
         // Add the sentinels.
         front.try_emplace(lowest, refY, n);
         front.try_emplace(refX, lowest, n);
-        // Add first point.
+        // Process the first point.
+        const auto [pX, pY, pZ, index] = points[0U];
+        boxLists[index].emplace_front(pX, pY, pZ, refX, refY, NaN);
         front.try_emplace(pX, pY, index);
     }
 
@@ -444,9 +456,9 @@ auto contributions(const std::vector<IndexedPoint3D<T>> &points, const T refX, c
     // Optionally, give preference to extrema.
     if (extremaData.preferExtrema) {
         constexpr auto inf = std::numeric_limits<T>::max();
-        contribution[extremaData.bestX_i] = inf;
-        contribution[extremaData.bestY_i] = inf;
-        contribution[extremaData.bestZ_i] = inf;
+        contribution[extremaData.extA_i] = inf;
+        contribution[extremaData.extB_i] = inf;
+        contribution[extremaData.extC_i] = inf;
     }
 
     return output;
