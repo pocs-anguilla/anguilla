@@ -52,6 +52,7 @@ def indicator_selection(
         else:
             # We select the rest of pending individuals among individuals
             # in the current front by discarding the least contributors.
+            # See also Lemma 1 in page 11 of [2007:mo-cma-es].
             idx = np.arange(len(ranks))[front]
             least_contributors = indicator.least_contributors(
                 points[front], -diff,
