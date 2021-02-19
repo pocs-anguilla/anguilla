@@ -35,8 +35,7 @@ def indicator_selection(
 
     n_pending_select = target_size
     rank = 1
-    pending = True
-    while pending:
+    while n_pending_select > 0:
         front = ranks == rank
         n_front = np.sum(front)
         diff = n_pending_select - n_front
@@ -48,7 +47,7 @@ def indicator_selection(
         elif diff == 0:
             # All pending individuals are exactly in this front.
             selected[front] = True
-            pending = False
+            n_pending_select = 0
         else:
             # We select the rest of pending individuals among individuals
             # in the current front by discarding the least contributors.
@@ -59,6 +58,6 @@ def indicator_selection(
             )
             selected[front] = True
             selected[idx[least_contributors]] = False
-            pending = False
+            n_pending_select = 0
 
     return selected, ranks
