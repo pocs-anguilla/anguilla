@@ -45,7 +45,7 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: joerick/cibuildwheel@v1.9.0
+      - uses: joerick/cibuildwheel@v1.10.0
         env:
           # Skip: unsupported Python versions, PyPy and 32-bit versions
           CIBW_SKIP: "cp27-* cp35-* pp* *-win32 *-manylinux_i686"
