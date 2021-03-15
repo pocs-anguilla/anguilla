@@ -14,7 +14,6 @@ namespace py = pybind11;
 // Anguilla
 #include <anguilla/dominance/dominance.hpp>
 #include <anguilla/dominance/nondominated_set_2d.hpp>
-#include <anguilla/optimizers/individual.hpp>
 namespace ag = anguilla;
 
 typedef double f8; // following Numba's convention

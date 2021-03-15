@@ -136,7 +136,9 @@ target_include_directories("_optimizers" PRIVATE ${xtl_INCLUDE_DIRS})
 target_include_directories("_optimizers" PRIVATE ${xtensor_INCLUDE_DIRS})
 
 target_link_libraries("_optimizers" PUBLIC xtensor xtensor-blas pyxtensor)
-target_link_libraries("_optimizers" PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+if(BLAS_FOUND)
+  target_link_libraries("_optimizers" PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+endif()
 #target_link_libraries("_optimizers" PUBLIC fmt::fmt-header-only)
 target_link_libraries("_optimizers" PUBLIC fmt::fmt)
 

@@ -17,7 +17,6 @@ namespace py = pybind11;
 
 // Anguilla
 #include <anguilla/common/common.hpp>
-#include <anguilla/optimizers/individual.hpp>
 
 /* References:
 
@@ -126,34 +125,6 @@ nonDominatedSort(const xt::xtensor<T, 2U>& points,
     }
 
     return std::make_tuple(ranks, rank);
-}
-
-template <typename T>
-void nonDominatedSort(
-    typename std::vector<optimizers::Individual<T>>::const_iterator
-        populationBegin,
-    typename std::vector<optimizers::Individual<T>>::const_iterator
-        populationEnd,
-    const std::optional<std::size_t>& maxRank = std::nullopt) {
-    const auto nIndividuals = std::distance(populationBegin, populationEnd);
-    if (nIndividuals != 0U) {
-        // Create a 2D tensor to use as input.
-        const auto nObjectives = populationBegin->fitness.shape(0U);
-        xt::xtensor<T, 2U> fitness = xt::empty<T>({nIndividuals, nObjectives});
-        auto rowIterator = xt::axis_begin(fitness);
-        std::copy(populationBegin, populationEnd, rowIterator);
-        // Compute non-domination ranks.
-        const auto ranks =
-            std::get<0>(dominance::nonDominatedSort(fitness, maxRank));
-        // Copy ranks into the population.
-        {
-            std::size_t i = 0U;
-            for (auto individual = populationBegin; individual != populationEnd;
-                 ++individual) {
-                individual->rank = ranks[i++];
-            }
-        }
-    }
 }
 
 } // namespace dominance

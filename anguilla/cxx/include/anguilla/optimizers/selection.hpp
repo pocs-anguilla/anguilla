@@ -46,18 +46,11 @@ auto selection(const xt::xtensor<T, 2U>& points,
     xt::xtensor<bool, 1U> selected = xt::zeros<bool>({points.shape(0U)});
     int nPendingSelect = (int)targetSize;
     std::size_t rank = 1U;
-    int budget = points.shape(0U);
     while (nPendingSelect > 0) {
-        if (budget-- < 0) {
-            throw std::runtime_error("Budget exceeded in selection.");
-        }
         // xt::from_indices returns a 2D tensor when front has size > 1
         // so we need to use xt::squeeze
         const auto front =
             xt::squeeze(xt::from_indices(xt::argwhere(xt::equal(ranks, rank))));
-        if (front.size() == 0U) {
-            throw std::runtime_error("Empty front.");
-        }
         const int diff = nPendingSelect - (int)front.size();
         if (diff > 0) {
             // We must select all individuals in the current front.
