@@ -22,6 +22,7 @@ graft vendor/cxx/spatial
 graft vendor/cxx/xtensor
 graft vendor/cxx/xtensor-blas
 graft vendor/cxx/xtensor-python
+graft vendor/cxx/pyxtensor
 graft vendor/cxx/xtl
 prune notebooks
 prune conda-recipes

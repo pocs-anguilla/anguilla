@@ -49,6 +49,10 @@ Copyright: 2016, Wenzel Jakob
 License: BSD-3-Clause
 Comment: Dependency
 
+Files: vendor/cxx/pyxtensor/*
+Copyright: 2018, Tom de Geus
+License: MIT
+
 Files: vendor/cxx/boost/*
 Copyright: ?
 License: BSL-1
