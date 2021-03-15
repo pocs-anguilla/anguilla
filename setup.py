@@ -37,13 +37,11 @@ def main():
             "-DCMAKE_CXX_STANDARD=17",
             "-DCMAKE_CXX_EXTENSIONS=OFF",
         ],
+        python_requires=">3.7",
         install_requires=[
             "numpy >= 1.20",
         ],
         extras_require={
-            ':python_version == "3.6"': [
-                "dataclasses",
-            ],
             ':python_version <= "3.7"': [
                 "typing_extensions",
             ],

@@ -48,7 +48,7 @@ jobs:
       - uses: joerick/cibuildwheel@v1.10.0
         env:
           # Skip: unsupported Python versions, PyPy and 32-bit versions
-          CIBW_SKIP: "cp27-* cp35-* pp* *-win32 *-manylinux_i686"
+          CIBW_SKIP: "cp27-* cp35-* cp36-* pp* *-win32 *-manylinux_i686"
           MACOSX_DEPLOYMENT_TARGET: "10.15"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_DEPENDENCY_VERSIONS: "latest"

@@ -6,7 +6,7 @@ source:
   path: ../..
 
 build:
-  skip: true  # [not x86_64 or py<36]
+  skip: true  # [not x86_64 or py<37]
   number: 0
 
 requirements:
@@ -26,7 +26,6 @@ requirements:
 
   run:
     - {{ pin_compatible('numpy') }}
-    - dataclasses                                    # [py==36]
     - typing_extensions                              # [py<=37]
 
 #test:
