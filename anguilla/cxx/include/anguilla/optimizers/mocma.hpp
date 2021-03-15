@@ -477,7 +477,7 @@ class MOCMA {
             const auto parentRanks =
                 m_population.rankView(m_population.parentRange());
             const auto selectedParents = xt::squeeze(
-                xt::from_indices(xt::argwhere(xt::equal(parentRanks, true))));
+                xt::from_indices(xt::argwhere(xt::equal(parentRanks, 1U))));
             m_population.parentIndex = xt::random::choice(
                 selectedParents, m_nOffspring, true, m_randomEngine);
         }
