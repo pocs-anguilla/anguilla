@@ -3,19 +3,7 @@
 # Adapted from the reference example for Pybind11 + Scikit-build:
 # https://github.com/pybind/scikit_build_example/blob/master/setup.py
 
-import os
 from skbuild import setup
-
-# Temporary work-around for building PyPI package
-# with the BLAS compatible library BLIS.
-# TODO: figure out if it is possible to use same BLAS as Numpy.
-def compute_install_requires():
-    deps = [
-        "numpy >= 1.20",
-    ]
-    if os.getenv("CONDA_BUILD", None) is None:
-        deps.append("blis >= 0.7.4")
-    return deps
 
 
 def main():
@@ -50,7 +38,7 @@ def main():
             "-DCMAKE_CXX_EXTENSIONS=OFF",
         ],
         python_requires=">3.7",
-        install_requires=compute_install_requires(),
+        install_requires=["numpy >= 1.20"],
         extras_require={
             ':python_version <= "3.7"': [
                 "typing_extensions",
