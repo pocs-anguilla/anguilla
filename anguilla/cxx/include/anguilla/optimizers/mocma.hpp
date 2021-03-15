@@ -270,10 +270,9 @@ auto choleskyUpdate(const xt::xtensor<T, 2U>& L, T alpha, T beta,
                     const xt::xtensor<T, 1U>& v) -> xt::xtensor<T, 2U> {
     // Algorithm 3.1, p.3, [2015:efficient-rank1-update]
     // Computes the updated Cholesky factor L' of alpha * A + beta * vv.T
-    // Here using a port of Shark's implementation which is based on Eigen's
-    // implementation.
-    // Shark: https://git.io/JqgKP
-    // Eigen: https://bit.ly/30JTzXQ
+    // Here we are using a port of Shark's implementation which is based on
+    // Eigen's implementation. Shark: https://git.io/JqgKP Eigen:
+    // https://bit.ly/30JTzXQ
 
     const auto n = L.shape(0U);
     const T alphaSqrt = std::sqrt(alpha);
@@ -295,7 +294,7 @@ auto choleskyUpdate(const xt::xtensor<T, 2U>& L, T alpha, T beta,
         const T x = dj + swj2 / b;
 
         if (x <= (T)0.0) {
-            throw std::runtime_error("update makes matrix indefinite");
+            throw std::runtime_error("Update makes matrix indefinite");
         }
 
         const T nLjj = std::sqrt(x);
@@ -372,7 +371,7 @@ class MOCMA {
           std::optional<T> targetIndicatorValue = std::nullopt,
           std::optional<MOParameters<T>> parameters = std::nullopt,
           std::optional<SeedType> seed = std::nullopt)
-        : m_successNotion(successNotion.compare("population") == 0U
+        : m_successNotion(successNotion.compare("population") == 0
                               ? SuccessNotion::PopulationBased
                               : SuccessNotion::IndividualBased),
           m_nParents(parentPoints.shape(0U)),
@@ -385,6 +384,9 @@ class MOCMA {
                        parentPoints.shape(1U), parentFitness.shape(1U),
                        m_parameters.initialStepSize, m_parameters.pTargetSucc),
           m_generationCount(0), m_evaluationCount(0), m_askCalled(false) {
+        static_assert(std::is_floating_point<T>::value,
+                      "MOCMA is not meant to be instantiated "
+                      "with a non floating point type.");
         if (parentPoints.shape(0U) != parentFitness.shape(0U)) {
             throw std::invalid_argument("Parent points and fitness have "
                                         "different number of elements.");
@@ -446,7 +448,7 @@ class MOCMA {
                              m_population.stepSizeView(parentRange));
     }
 
-    auto ask() -> xt::xtensor<T, 2> {
+    auto ask() -> xt::xtensor<T, 2U> {
         // Update ask-and-tell state machine
         m_askCalled = true;
         // We use Algorithm 4.1 from [2015:efficient-rank1-update]
@@ -461,7 +463,7 @@ class MOCMA {
         m_population.z = xt::random::randn<T>(m_population.z.shape(), 0.0, 1.0,
                                               m_randomEngine);
         xt::xtensor<T, 2> tmp = xt::empty<T>(offspringPoints.shape());
-        for (std::size_t i = 0U; i != tmp.shape(0U); i++) {
+        for (auto i = 0U; i != tmp.shape(0U); i++) {
             xt::row(tmp, i) = xt::linalg::dot(
                 xt::view(m_population.cov, i, xt::all(), xt::all()),
                 xt::row(m_population.z, i));
