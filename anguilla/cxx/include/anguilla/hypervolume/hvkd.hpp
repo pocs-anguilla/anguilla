@@ -105,8 +105,10 @@ calculate(const xt::xtensor<T, 2U>& points,
         }
     }
 
-    // const auto sortedPoints = xt::sort(points, (std::ptrdiff_t)-1);
-    return internal::wfg<T>(points, reference);
+    // Sort the points by their last component.
+    const auto sortedIdx = xt::argsort(xt::col(points, -1));
+    const auto sortedPoints = xt::view(points, xt::keep(sortedIdx));
+    return internal::wfg<T>(sortedPoints, reference);
 }
 
 /* Private */
