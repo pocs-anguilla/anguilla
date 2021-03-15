@@ -52,7 +52,7 @@ else()
 endif()
 
 set(Python3_FIND_IMPLEMENTATIONS CPython PyPy)
-find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 # Add site-packages to the search path
 execute_process(
@@ -62,6 +62,8 @@ execute_process(
   OUTPUT_VARIABLE _tmp_dir
   OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
 list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+
+find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 
 # Find Pybind11
 find_package(pybind11 CONFIG REQUIRED)
