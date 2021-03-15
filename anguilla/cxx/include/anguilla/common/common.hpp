@@ -24,20 +24,6 @@ template <typename T> struct Point2D {
     T y;
 };
 
-template <typename T> struct Point3D {
-    Point3D(const Point3D<T>& other) : x(other.x), y(other.y), z(other.z) {}
-    Point3D(const Point3D<T>&& other) : x(other.x), y(other.y), z(other.z) {}
-    Point3D(T x = std::numeric_limits<T>::signaling_NaN(),
-            T y = std::numeric_limits<T>::signaling_NaN(),
-            T z = std::numeric_limits<T>::signaling_NaN())
-        : x(x), y(y), z(z) {}
-    Point3D<T>& operator=(const Point3D<T>& other) = default;
-
-    T x;
-    T y;
-    T z;
-};
-
 /* Begin external snippets
  - Source 0:
  https://github.com/pybind/pybind11/issues/1042#issuecomment-508582847

@@ -87,8 +87,8 @@ T calculate(const xt::xtensor<T, 2U>& inputPoints,
     std::vector<Point2D<T>> points;
     points.reserve(n);
     for (auto i = 0U; i < n; ++i) {
-        const auto pX = inputPoints(i, 0);
-        const auto pY = inputPoints(i, 1);
+        const auto pX = inputPoints(i, 0U);
+        const auto pY = inputPoints(i, 1U);
 
         if (refGiven && ignoreDominated) {
             if (pX < refX && pY < refY) {

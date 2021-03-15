@@ -38,8 +38,8 @@ hvc2d_f8(const xt::xtensor<f8, 2U>& points,
 }
 
 [[nodiscard]] auto
-hv3d_f8(const py::array_t<f8>& points,
-        const std::optional<py::array_t<f8>>& reference = std::nullopt,
+hv3d_f8(const xt::xtensor<f8, 2U>& points,
+        const std::optional<xt::xtensor<f8, 1U>>& reference = std::nullopt,
         const bool ignoreDominated = false, const bool useBtree = true) {
     if (useBtree) {
         return hv3d::calculate<f8, hv3d::BTreeMap<f8>>(points, reference,
