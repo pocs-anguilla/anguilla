@@ -67,6 +67,21 @@ list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
 
 find_package(Python3 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 
+execute_process(
+  COMMAND
+    "${Python3_EXECUTABLE}" -c
+    "import numpy as np; print(np.show_config())"
+  OUTPUT_VARIABLE _numpy_config_info
+  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
+message(STATUS "Numpy configuration:")
+message(STATUS "${_numpy_config_info}")
+
+# Find BLAS
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
+message(STATUS "BLAS VENDOR:    " ${BLA_VENDOR})
+message(STATUS "BLAS LIBRARIES: " ${BLAS_LIBRARIES})
+
 # Find Pybind11
 find_package(pybind11 CONFIG REQUIRED)
 
@@ -98,13 +113,6 @@ add_subdirectory(vendor/cxx/pyxtensor)
 
 ## Xtensor BLAS
 add_definitions(-DHAVE_CBLAS=1)
-
-find_package(BLAS REQUIRED)
-find_package(LAPACK REQUIRED)
-
-message(STATUS "BLAS VENDOR:    " ${BLA_VENDOR})
-message(STATUS "BLAS LIBRARIES: " ${BLAS_LIBRARIES})
-
 add_subdirectory(vendor/cxx/xtensor-blas)
 
 ## {fmt}
