@@ -23,8 +23,9 @@
 [23] N. Hansen. The CMA evolution strategy: A tutorial. CoRR, 2016. URL: http://arxiv.org/abs/1604.00772, arXiv:1604.00772.
 [24] O. Krause, T. Glasmachers, N. Hansen, and C. Igel. Unbounded Population MO-CMA-ES for the Bi-Objective BBOB Test Suite. In GECCO'16 - Companion of Proceedings of the 2016 Genetic and Evolutionary Computation Conference, 1177–1184. Denver, United States, July 2016. ACM. URL: https://hal.inria.fr/hal-01381653, doi:10.1145/2908961.2931699.
 [25] O. Krause, T. Glasmachers, and C. Igel. Multi-objective optimization with unbounded solution sets. In Proceedings of neural information processing systems (NIPS) workshop on Bayesian optimization: Black-box optimization and beyond. 2016.
-[26] T. Glasmachers. A fast incremental archive for multi-objective optimization. CoRR, 2016. URL: http://arxiv.org/abs/1604.01169, arXiv:1604.01169.
-[27] W. Jakob, J. Rhinelander, and D. Moldovan. Pybind11 – seamless operability between c++11 and python. 2017. https://github.com/pybind/pybind11.
-[28] T. Glasmachers. Challenges of convex quadratic bi-objective benchmark problems. In Proceedings of the Genetic and Evolutionary Computation Conference, GECCO '19, 559–567. New York, NY, USA, 2019. Association for Computing Machinery. URL: https://doi.org/10.1145/3321707.3321708, doi:10.1145/3321707.3321708.
-[29] N. Hansen, Y. Akimoto, and P. Baudis. CMA-ES/pycma on Github. Zenodo, DOI:10.5281/zenodo.2559634, February 2019. URL: https://doi.org/10.5281/zenodo.2559634, doi:10.5281/zenodo.2559634.
-[30] A. P. Guerreiro, C. M. Fonseca, and L. Paquete. The hypervolume indicator: problems and algorithms. 2020. arXiv:2005.00515.
+[26] J. Mabille, S. Corlay, and W. Vollprecht. Xtensor: multi-dimensional arrays with broadcasting and lazy computing. 2016. https://github.com/xtensor-stack/xtensor.
+[27] T. Glasmachers. A fast incremental archive for multi-objective optimization. CoRR, 2016. URL: http://arxiv.org/abs/1604.01169, arXiv:1604.01169.
+[28] W. Jakob, J. Rhinelander, and D. Moldovan. Pybind11 – seamless operability between c++11 and python. 2017. https://github.com/pybind/pybind11.
+[29] T. Glasmachers. Challenges of convex quadratic bi-objective benchmark problems. In Proceedings of the Genetic and Evolutionary Computation Conference, GECCO '19, 559–567. New York, NY, USA, 2019. Association for Computing Machinery. URL: https://doi.org/10.1145/3321707.3321708, doi:10.1145/3321707.3321708.
+[30] N. Hansen, Y. Akimoto, and P. Baudis. CMA-ES/pycma on Github. Zenodo, DOI:10.5281/zenodo.2559634, February 2019. URL: https://doi.org/10.5281/zenodo.2559634, doi:10.5281/zenodo.2559634.
+[31] A. P. Guerreiro, C. M. Fonseca, and L. Paquete. The hypervolume indicator: problems and algorithms. 2020. arXiv:2005.00515.
