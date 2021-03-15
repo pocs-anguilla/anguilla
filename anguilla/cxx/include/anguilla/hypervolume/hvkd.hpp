@@ -4,7 +4,6 @@
 #define ANGUILLA_HYPERVOLUME_HVKD_HPP_
 
 // STL
-#include <cstddef>
 #include <numeric>
 #include <vector>
 
@@ -128,28 +127,27 @@ template <typename T>
 
     // This base case is from Shark:
     if (n == 1U) {
-        vol = xt::prod(reference - xt::view(points, 0U))();
+        vol = xt::prod(reference - xt::row(points, 0U))();
         return vol;
     }
 
-    // WFG recursive calls here:
+    // The WFG recursive calls are here:
     for (auto i = 0U; i < n; ++i) { // excluhv' in the WFG paper
-        const xt::xtensor<T, 1U> currentPoint = xt::view(points, i);
+        const xt::xtensor<T, 1U> currentPoint = xt::row(points, i);
         const xt::xtensor<T, 2U> lset = limitSet<T>(
             xt::view(points, xt::range(i + 1U, n), xt::all()), currentPoint);
         [[maybe_unused]] const auto [ranks, maxRank] =
-            ag::dominance::nonDominatedSort<T>(lset);
+            ag::dominance::nonDominatedSort<T>(lset, std::make_optional<>(1U));
         const auto ndsetIdx =
             xt::squeeze(xt::from_indices(xt::argwhere(xt::equal(ranks, 1U))));
         const auto ndset = xt::view(lset, xt::keep(ndsetIdx));
-        const T boxVol = xt::prod(reference - xt::view(points, i))();
+        const T boxVol = xt::prod(reference - currentPoint)();
         const T wfgVol = wfg<T>(ndset, reference);
         vol += boxVol - wfgVol;
     }
     return vol;
 }
 } // namespace internal
-
 } // namespace hvkd
 
 #endif // ANGUILLA_HYPERVOLUME_HVKD_HPP_
