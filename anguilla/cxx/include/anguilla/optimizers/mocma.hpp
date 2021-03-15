@@ -268,7 +268,7 @@ constexpr auto matrix(xt::xtensor<T, 3U> A, std::size_t idx) {
 template <typename T>
 auto choleskyUpdate(const xt::xtensor<T, 2U>& L, T alpha, T beta,
                     const xt::xtensor<T, 1U>& v) -> xt::xtensor<T, 2U> {
-    // Algorithm 3.1, p.3, [2010:efficient-rank1-update]
+    // Algorithm 3.1, p.3, [2015:efficient-rank1-update]
     // Computes the updated Cholesky factor L' of alpha * A + beta * vv.T
     // Here using a port of Shark's implementation which is based on Eigen's
     // implementation.
@@ -449,7 +449,7 @@ class MOCMA {
     auto ask() -> xt::xtensor<T, 2> {
         // Update ask-and-tell state machine
         m_askCalled = true;
-        // We use Algorithm 4.1 from [2010:efficient-rank1-update]
+        // We use Algorithm 4.1 from [2015:efficient-rank1-update]
         // adapted for Algorithm 1 from [2010:mo-cma-es]
         m_population.parentIndex = xt::arange<std::size_t>(0U, m_nOffspring);
         auto parentRange = m_population.parentRange();
@@ -575,7 +575,7 @@ class MOCMA {
 
     void updateCov(std::size_t idx, const xt::xtensor<T, 1U>& z) {
         if (m_population.pSucc(idx) < m_parameters.pThreshold) {
-            // Algorithm 4.1, line 19, p.5. [2010:efficient-rank1-update]
+            // Algorithm 4.1, line 19, p.5. [2015:efficient-rank1-update]
             // Update evolution path
             xt::row(m_population.pC, idx) =
                 (1.0 - m_parameters.cC) * xt::row(m_population.pC, idx) +
@@ -585,7 +585,7 @@ class MOCMA {
                 matrix(m_population.cov, idx), 1.0 - m_parameters.cCov,
                 m_parameters.cCov, xt::row(m_population.pC, idx));
         } else {
-            // Algorithm 4.1, line 15, p.5. [2010:efficient-rank1-update]
+            // Algorithm 4.1, line 15, p.5. [2015:efficient-rank1-update]
             const T cL =
                 1.0 - m_parameters.cCov +
                 m_parameters.cCov * m_parameters.cC * (2.0 - m_parameters.cC);
