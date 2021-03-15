@@ -58,10 +58,10 @@ def main():
             "Programming Language :: Python :: 3 :: Only",
             "Topic :: Scientific/Engineering",
             "Typing :: Typed",
-            "Operating System :: Microsoft :: Windows",
             "Operating System :: POSIX",
             "Operating System :: Unix",
             "Operating System :: MacOS",
+            "Operating System :: Microsoft :: Windows",
         ],
     )
 
