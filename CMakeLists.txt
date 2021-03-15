@@ -76,12 +76,6 @@ execute_process(
 message(STATUS "Numpy configuration:")
 message(STATUS "${_numpy_config_info}")
 
-# Find BLAS
-find_package(BLAS REQUIRED)
-find_package(LAPACK REQUIRED)
-message(STATUS "BLAS VENDOR:    " ${BLA_VENDOR})
-message(STATUS "BLAS LIBRARIES: " ${BLAS_LIBRARIES})
-
 # Find Pybind11
 find_package(pybind11 CONFIG REQUIRED)
 
@@ -112,7 +106,19 @@ add_subdirectory(vendor/cxx/xtensor)
 add_subdirectory(vendor/cxx/pyxtensor)
 
 ## Xtensor BLAS
-add_definitions(-DHAVE_CBLAS=1)
+
+### Find BLAS
+find_package(BLAS)
+if(BLAS_FOUND)
+  find_package(LAPACK REQUIRED)
+  message(STATUS "BLAS VENDOR:    " ${BLA_VENDOR})
+  message(STATUS "BLAS LIBRARIES: " ${BLAS_LIBRARIES})
+  add_definitions(-DHAVE_CBLAS=1)
+else()
+  message(STATUS "No BLAS found, falling back to using FLENS.")
+  add_definitions(-DXTENSOR_USE_FLENS_BLAS=1)
+endif()
+
 add_subdirectory(vendor/cxx/xtensor-blas)
 
 ## {fmt}
