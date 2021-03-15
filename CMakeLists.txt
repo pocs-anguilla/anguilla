@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
+message(STATUS "Using CMake version ${CMAKE_VERSION}")
 
 project(anguilla_cxx VERSION "0.0.19" LANGUAGES CXX)
 
@@ -53,6 +54,7 @@ endif()
 
 set(Python3_FIND_IMPLEMENTATIONS CPython PyPy)
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
+message(STATUS "Found Python: ${Python3_INTERPRETER_ID}")
 
 # Add site-packages to the search path
 execute_process(
@@ -63,7 +65,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
 list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
 
-find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 
 # Find Pybind11
 find_package(pybind11 CONFIG REQUIRED)
