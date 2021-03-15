@@ -13,3 +13,21 @@
 [submodule "anguilla/cxx/external/boost/assert"]
 	path = vendor/cxx/boost/assert
 	url = https://github.com/boostorg/assert
+[submodule "vendor/cxx/xtensor"]
+	path = vendor/cxx/xtensor
+	url = https://github.com/xtensor-stack/xtensor
+[submodule "vendor/cxx/xtensor-python"]
+	path = vendor/cxx/xtensor-python
+	url = https://github.com/xtensor-stack/xtensor-python
+[submodule "vendor/cxx/xtl"]
+	path = vendor/cxx/xtl
+	url = https://github.com/xtensor-stack/xtl.git
+[submodule "vendor/cxx/fmt"]
+	path = vendor/cxx/fmt
+	url = https://github.com/fmtlib/fmt
+[submodule "vendor/cxx/xtensor-blas"]
+	path = vendor/cxx/xtensor-blas
+	url = https://github.com/xtensor-stack/xtensor-blas.git
+[submodule "vendor/cxx/pyxtensor"]
+	path = vendor/cxx/pyxtensor
+	url = https://github.com/tdegeus/pyxtensor.git

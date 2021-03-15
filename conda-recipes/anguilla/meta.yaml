@@ -1,12 +1,12 @@
 package:
   name: anguilla
-  version: 0.0.18
+  version: 0.0.19
 
 source:
   path: ../..
 
 build:
-  skip: true  # [not x86_64 or py<36]
+  skip: true  # [not x86_64 or py<37]
   number: 0
 
 requirements:
@@ -22,11 +22,10 @@ requirements:
     - scikit-build
     - wheel
     - pybind11 >=2.6.2
-    - numpy >=1.19.4
+    - numpy >=1.20
 
   run:
     - {{ pin_compatible('numpy') }}
-    - dataclasses                                    # [py==36]
     - typing_extensions                              # [py<=37]
 
 #test:

@@ -25,6 +25,34 @@ Files: *
 Copyright: 2020-2021, Anguilla Development Team
 License: LGPL-3-or-later
 
+Files: vendor/cxx/xtensor/*
+Copyright: 2016, Johan Mabille, Sylvain Corlay and Wolf Vollprecht
+           2016, QuantStack
+License: BSD-3-Clause
+
+Files vendor/cxx/xtensor-blas/*
+Copyright: 2017, Wolf Vollprecht, Johan Mabille and Sylvain Corlay
+           2017, QuantStack
+License: BSD-3-Clause
+
+Files: vendor/cxx/xtensor-python/*
+Copyright: 2016, Wolf Vollprecht, Johan Mabille and Sylvain Corlay
+           2016, QuantStack
+License: BSD-3-Clause
+
+Files: vendor/cxx/xtl/*
+Copyright: 2017, Wolf Vollprecht, Johan Mabille and Sylvain Corlay
+           2017, QuantStack
+License: BSD-3-Clause
+
+Copyright: 2016, Wenzel Jakob
+License: BSD-3-Clause
+Comment: Dependency
+
+Files: vendor/cxx/pyxtensor/*
+Copyright: 2018, Tom de Geus
+License: MIT
+
 Files: vendor/cxx/boost/*
 Copyright: ?
 License: BSL-1
@@ -38,9 +66,9 @@ Copyright: 2019, German Mendez Bravo (Kronuz)
            2013, Google Inc.
 License: Apache-2
 
-Copyright: 2016, Wenzel Jakob
-License: LICENSE.PyBind11
-Comment: This project uses PyBind11 for its C extensions.
+Files: vendor/cxx/fmt/*
+Copyright: 2012, Victor Zverovich
+License: MIT
 
 License: REFERENCES
 Comment: Bibliographical references.

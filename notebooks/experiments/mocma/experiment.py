@@ -8,8 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from anguilla.fitness.base import ObjectiveFunction
-from anguilla.optimizers.mocma import MOCMA
-
+#from anguilla.optimizers.mocma import MOCMA
+from anguilla.optimizers import MOCMA
 
 class StopWatch:
     """Keep wall-clock time between operations."""
@@ -152,14 +152,14 @@ def run_trial(parameters: TrialParameters):
         parent_points,
         parent_fitness,
         n_offspring=parameters.n_offspring,
-        rng=rng,
-        success_notion=parameters.success_notion,
-        max_generations=parameters.max_generations,
+        #success_notion=parameters.success_notion,
+        #max_generations=parameters.max_generations,
         max_evaluations=parameters.max_evaluations,
-        target_indicator_value=parameters.target_indicator_value,
+        #target_indicator_value=parameters.target_indicator_value,
+        seed=rng.integers(0, 100000),
     )
-    if parameters.reference is not None:
-        optimizer.indicator.reference = parameters.reference
+    #if parameters.reference is not None:
+    #    optimizer.indicator.reference = parameters.reference
     initial_fitness = optimizer.best.fitness
     ask_sw = StopWatch()
     tell_sw = StopWatch()

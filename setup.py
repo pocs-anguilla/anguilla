@@ -8,7 +8,7 @@ from skbuild import setup
 
 def main():
     author = "Anguilla Development Team"
-    version = "0.0.18"
+    version = "0.0.19"
     with open("README.rst", encoding="utf-8") as f:
         long_description = f.read()
 
@@ -33,24 +33,35 @@ def main():
         cmake_install_dir="anguilla",
         cmake_languages=["CXX"],
         cmake_minimum_required_version="3.18",
-        cmake_args=["-DCMAKE_CXX_STANDARD=17", "-DCMAKE_CXX_EXTENSIONS=OFF"],
-        install_requires=[
-            "numpy >= 1.19.4",
+        cmake_args=[
+            "-DCMAKE_CXX_STANDARD=17",
+            "-DCMAKE_CXX_EXTENSIONS=OFF",
         ],
+        python_requires=">3.7",
+        install_requires=["numpy >= 1.20"],
         extras_require={
-            ':python_version == "3.6"': [
-                "dataclasses",
-            ],
             ':python_version <= "3.7"': [
                 "typing_extensions",
             ],
         },
         classifiers=[
-            "Topic :: Scientific/Engineering",
-            "Programming Language :: Python :: 3 :: Only",
-            "Programming Language :: C++",
-            "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
             "Development Status :: 3 - Alpha",
+            "Intended Audience :: Science/Research",
+            "Intended Audience :: Developers",
+            "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+            "Programming Language :: C++",
+            "Programming Language :: Python",
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.7",
+            "Programming Language :: Python :: 3.8",
+            "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3 :: Only",
+            "Topic :: Scientific/Engineering",
+            "Typing :: Typed",
+            "Operating System :: Microsoft :: Windows",
+            "Operating System :: POSIX",
+            "Operating System :: Unix",
+            "Operating System :: MacOS",
         ],
     )
 

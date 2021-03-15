@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+
+    <title>HVI evolution comparisons</title>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="h1">HVI evolution</h1>
+        <p>
+            In this page we plot the HVI evolution of several implementations running on various benchmark functions.
+            We omitted ELL1, ELLI2, CIGTAB1, CIGTAB2 since in Anguilla (v0.0.18) and Shark (modified 4.1) we changed the
+            parameters that affect the conditioning.
+        </p>
+        <h2 class="h2">Contents</h2>
+        <ul class="list-group">
+            {% for function in functions %}
+            <li class="list-group-item">
+                <a href="#{{function.name}}">{{ function.name }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="container">
+        <h2 class="h2">Plots</h2>
+        <h3>Symbology</h3>
+        <p>
+            (100+1)-MO-CMA-ES-I: Steady-state, MOCMA with individual-based notion of success
+            <br />(100+100)-MO-CMA-ES-I: MOCMA with individual-based notion of success
+            <br />(100+1)-MO-CMA-ES-P: Steady-state MOCMA with population-based notion of success
+            <br />(100+100)-MO-CMA-ES-P: MOCMA with population-based notion of success
+        </p>
+        {% for function in functions %}
+        <a name="{{function.name}}"></a>
+        <h3 class="h3">{{ function.name }}</h3>
+        <div class="row align-items-start">
+            <div class="col">
+                <img src="./plots/hypervolume/anguilla-v019/{{function.name}}.png" class="img-fluid" />
+            </div>
+            <div class="col">
+                <img src="./plots/hypervolume/shark-patched-v0/{{function.name}}.png" class="img-fluid" />
+            </div>
+            <div class="col">
+                <img src="./plots/hypervolume/shark-patched-v1/{{function.name}}.png" class="img-fluid" />
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

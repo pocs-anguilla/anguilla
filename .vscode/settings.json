@@ -18,7 +18,7 @@
         "pylint.extensions.mccabe"
     ],
     "python.formatting.provider": "black",
-    "python.pythonPath": "/opt/conda/envs/anguilla-devcontainer/bin/python",
+    "python.pythonPath": "/opt/mamba/envs/anguilla-devcontainer/bin/python",
     "editor.renderWhitespace": "trailing",
     //"jupyter.jupyterServerType": "remote",
     "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0}",

@@ -121,7 +121,7 @@ def contributions(
     """
     d = len(points[0])
     if d == 2:
-        return hvc2d_f8(points, reference, non_dominated)
+        return hvc2d_f8(points, reference)
     elif d == 3:
         return hvc3d_f8(points, reference, use_btree, prefer_extrema)
     elif d > 3:
