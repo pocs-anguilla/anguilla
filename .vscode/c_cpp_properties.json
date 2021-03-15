@@ -4,23 +4,33 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/opt/conda/envs/development/**",
+                "/opt/mamba/envs/anguilla-devcontainer/**",
                 "/usr/local/include/**"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}",
-                    "/opt/conda/envs/development/include",
+                    "/opt/mamba/envs/anguilla-devcontainer/include",
                     "/usr/local/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
             },
             "defines": [],
-            "compilerPath": "/opt/conda/envs/development/bin/clang++",
+            "compilerPath": "/opt/mamba/envs/anguilla-devcontainer/bin/clang++",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode": "clang-x64",
+            "C_Cpp.intelliSenseEngine": "Disabled",
+            "C_Cpp.autocomplete": "Disabled",
+            "C_Cpp.errorSquiggles": "Disabled",
+            "clangd.path": "/usr/bin/clangd-12",
+            "clangd.arguments": [
+                "-log=verbose",
+                "-pretty",
+                "--background-index",
+                "--compile-commands-dir=${workspaceFolder}/_cxx_build"
+            ]
         }
     ],
     "version": 4

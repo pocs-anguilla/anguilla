@@ -1,0 +1,5 @@
+Add: bugprone-*, modernize-*, performance-*
+Remove: modernize-use-trailing-return-type
+CheckOptions:
+  - key: bugprone-argument-comment.StrictMode
+  value: 1

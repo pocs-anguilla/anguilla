@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(anguilla_cxx VERSION "0.0.18" LANGUAGES CXX)
+project(anguilla_cxx VERSION "0.0.19" LANGUAGES CXX)
+
+find_program(CCACHE_EXE ccache)
+if(CCACHE_EXE)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_EXE}")
+endif()
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 include(CMakeToolsHelpers OPTIONAL)
 include(FeatureSummary)
@@ -44,8 +52,7 @@ else()
 endif()
 
 set(Python3_FIND_IMPLEMENTATIONS CPython PyPy)
-find_package(Python3 COMPONENTS Interpreter Development)
-#find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 
 # Add site-packages to the search path
 execute_process(
@@ -66,9 +73,6 @@ option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
 
 ## Vendor
 
-### BTree
-set(BTREE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/btree/include")
-
 ### Boost
 list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/assert/include")
 list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/config/include")
@@ -76,27 +80,33 @@ list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/mov
 list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/static_assert/include")
 list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/intrusive/include")
 
+### BTree
+set(BTREE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/btree/include")
+
 ### Spatial
 set(SPATIAL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/spatial/include")
 
-## Anguilla
+## Xtensor
+add_subdirectory(vendor/cxx/xtl)
+add_subdirectory(vendor/cxx/xtensor)
+#add_subdirectory(vendor/cxx/xtensor-python)
+add_subdirectory(vendor/cxx/pyxtensor)
 
-### Common
-set(COMMON_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/common/include")
+## Xtensor BLAS
+add_definitions(-DHAVE_CBLAS=1)
 
-### Hypervolume
-add_subdirectory(anguilla/cxx/hypervolume)
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
 
-### Dominance
-add_subdirectory(anguilla/cxx/dominance)
+message(STATUS "BLAS VENDOR:    " ${BLA_VENDOR})
+message(STATUS "BLAS LIBRARIES: " ${BLAS_LIBRARIES})
 
-### Archive
-add_subdirectory(anguilla/cxx/archive)
-set(ANGUILLA_ARCHIVE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/anguilla/cxx/archive/include")
+add_subdirectory(vendor/cxx/xtensor-blas)
 
-### Bindings for Shark's Hypervolume (optional)
-if(WITH_SHARK_BINDINGS)
-  add_subdirectory(anguilla/cxx/shark_hypervolume)
-endif()
+## {fmt}
+add_subdirectory(vendor/cxx/fmt)
+
+## Anguilla CXX
+add_subdirectory(anguilla/cxx)
 
 feature_summary(WHAT ALL)

@@ -16,7 +16,9 @@ import numpy as np
 
 import anguilla
 from anguilla.fitness.base import ObjectiveFunction
-from anguilla.optimizers.mocma import MOCMA
+
+# from anguilla.optimizers.mocma import MOCMA
+from anguilla.optimizers import MOCMA
 
 
 class StopWatch:
@@ -263,7 +265,8 @@ def log_mocma_trial(
         parent_points,
         parent_fitness,
         n_offspring=trial_parameters.n_offspring,
-        rng=rng,
+        seed=trial_parameters.seed.generate_state(1)[0],
+        # rng=rng,
         success_notion=trial_parameters.success_notion,
         max_generations=trial_parameters.max_generations,
         max_evaluations=max_evaluations,

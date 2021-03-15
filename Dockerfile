@@ -1,6 +1,6 @@
 FROM anguilla/devcontainer-base
 
-RUN . /opt/conda/etc/profile.d/conda.sh \
+RUN . /opt/mamba/etc/profile.d/conda.sh \
     && conda activate anguilla-devcontainer \
     && cd /tmp \
     && git clone -b 4.1-patched-v1 --depth 1 https://github.com/pocs-anguilla/shark-mod.git Shark \
@@ -11,7 +11,7 @@ RUN . /opt/conda/etc/profile.d/conda.sh \
     -DBUILD_DOCUMENTATION=OFF \
     -DBUILD_SHARED_LIBS=ON \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_CXX_STANDARD=14 \
+    -DCMAKE_CXX_STANDARD=11 \
     -DCMAKE_TOOLCHAIN_FILE=../polly/clang-libstdcxx.cmake \
     ../Shark \
     && make -j $(nproc) \

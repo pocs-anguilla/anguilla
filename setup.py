@@ -8,7 +8,7 @@ from skbuild import setup
 
 def main():
     author = "Anguilla Development Team"
-    version = "0.0.18"
+    version = "0.0.19"
     with open("README.rst", encoding="utf-8") as f:
         long_description = f.read()
 
@@ -35,7 +35,7 @@ def main():
         cmake_minimum_required_version="3.18",
         cmake_args=["-DCMAKE_CXX_STANDARD=17", "-DCMAKE_CXX_EXTENSIONS=OFF"],
         install_requires=[
-            "numpy >= 1.19.4",
+            "numpy >= 1.20",
         ],
         extras_require={
             ':python_version == "3.6"': [

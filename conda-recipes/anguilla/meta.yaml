@@ -1,6 +1,6 @@
 package:
   name: anguilla
-  version: 0.0.18
+  version: 0.0.19
 
 source:
   path: ../..
@@ -22,7 +22,7 @@ requirements:
     - scikit-build
     - wheel
     - pybind11 >=2.6.2
-    - numpy >=1.19.4
+    - numpy >=1.20
 
   run:
     - {{ pin_compatible('numpy') }}
