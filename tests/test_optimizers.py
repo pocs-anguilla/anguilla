@@ -117,6 +117,46 @@ class TestMOCMA(unittest.TestCase):
             np.all(optimizer.population.fitness[:3] == fitness), "fitness"
         )
 
+    def test_initialization_steady(self):
+        """Test initialization for the steady-state variant."""
+        rng = np.random.default_rng(0)
+        points = rng.uniform(size=(3, 5))
+        fitness = rng.uniform(size=(3, 2))
+        optimizer = MOCMA(
+            points,
+            fitness,
+            max_evaluations=1000,
+            n_offspring=1,
+        )
+        self.assertTrue(optimizer.name == "MO-CMA-ES", "name")
+        self.assertTrue(
+            optimizer.qualified_name == "(3+1)-MO-CMA-ES-P", "qualified_name"
+        )
+        self.assertTrue(
+            optimizer.success_notion.value
+            == SuccessNotion.PopulationBased.value,
+            "success_notion",
+        )
+        self.assertTrue(optimizer.generation_count == 0, "generation_count")
+        self.assertTrue(optimizer.evaluation_count == 0, "evaluation_count")
+        self.assertTrue(
+            optimizer.parameters.n_dimensions == 5, "parameters.n_dimensions"
+        )
+        self.assertTrue(
+            optimizer.stopping_conditions.max_generations == None,
+            "stopping_conditions.max_generations",
+        )
+        self.assertTrue(
+            optimizer.stopping_conditions.max_evaluations == 1000,
+            "stopping_conditions.max_evaluations",
+        )
+        self.assertTrue(
+            np.all(optimizer.population.point[:3] == points), "points"
+        )
+        self.assertTrue(
+            np.all(optimizer.population.fitness[:3] == fitness), "fitness"
+        )
+
     def test_best(self):
         """Test that the best method works as expected."""
         rng = np.random.default_rng(0)
@@ -142,8 +182,9 @@ class TestMOCMA(unittest.TestCase):
     def test_ask(self):
         """Test that the ask method runs without errors."""
         rng = np.random.default_rng(0)
-        points = rng.uniform(size=(3, 5))
-        fitness = rng.uniform(size=(3, 2))
+        n = 3
+        points = rng.uniform(size=(n, 5))
+        fitness = rng.uniform(size=(n, 2))
         optimizer = MOCMA(
             points,
             fitness,
@@ -152,8 +193,16 @@ class TestMOCMA(unittest.TestCase):
         )
         points = optimizer.ask()
         # Basic test shape
-        self.assertTrue(points.shape == (3, 5), "points shape")
+        self.assertTrue(points.shape == (n, 5), "points shape")
+        # Test that the parent indices are correct
+        result = optimizer.population.parent_index
+        expected = np.arange(0, n, dtype=int)
+        self.assertTrue(
+            np.all(result == expected),
+            "parent indices, got: {}, expected: {}".format(result, expected),
+        )
         # Test that the mutation works as expected
+        result = points[0]
         expected = optimizer.population.point[
             0
         ] + optimizer.population.step_size[0] * (
@@ -161,10 +210,44 @@ class TestMOCMA(unittest.TestCase):
         )
         self.assertTrue(
             np.allclose(
-                points[0],
+                result,
                 expected,
             ),
-            "mutation: got {}, expected: {}".format(points[0], expected),
+            "mutation: got {}, expected: {}".format(result, expected),
+        )
+
+    def test_ask_variant(self):
+        """Test the ask method for the n_offspring != n_parents variant."""
+        rng = np.random.default_rng(0)
+        n_parents = 8
+        n_offspring = 4
+        points = rng.uniform(size=(n_parents, 5))
+        # In this set all points have different rank
+        # Only the first element has rank 1
+        fitness = np.array(
+            [
+                [0.01245897, 0.27127751],
+                [0.02213313, 0.23395707],
+                [0.0233907, 0.22994154],
+                [0.0392689, 0.1886141],
+                [0.04339422, 0.17990426],
+                [0.16521067, 0.05107939],
+                [0.17855283, 0.0440614],
+                [0.28619405, 0.00950565],
+            ]
+        )
+        optimizer = MOCMA(
+            points,
+            fitness,
+            max_evaluations=1000,
+            n_offspring=n_offspring,
+        )
+        # Test that the parent indices are correct
+        result = optimizer.population.parent_index
+        expected = np.zeros(n_offspring, dtype=int)
+        self.assertTrue(
+            np.all(result == expected),
+            "parent indices, got: {}, expected: {}".format(result, expected),
         )
 
     def test_tell(self):
