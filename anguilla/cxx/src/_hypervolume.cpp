@@ -50,8 +50,8 @@ hv3d_f8(const xt::xtensor<f8, 2U>& points,
 }
 
 [[nodiscard]] auto
-hvc3d_f8(const py::array_t<f8>& points,
-         const std::optional<py::array_t<f8>>& reference = std::nullopt,
+hvc3d_f8(const xt::xtensor<f8, 2U>& points,
+         const std::optional<xt::xtensor<f8, 1U>>& reference = std::nullopt,
          const bool useBtree = true, const bool preferExtrema = false) {
     if (useBtree) {
         return hvc3d::contributions<f8, hvc3d::BTreeMap<f8>>(points, reference,

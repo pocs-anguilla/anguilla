@@ -3,12 +3,6 @@
 #ifndef ANGUILLA_HYPERVOLUME_HV3D_HPP
 #define ANGUILLA_HYPERVOLUME_HV3D_HPP
 
-// PyBind11
-#include <pybind11/stl.h>
-
-// Xtensor
-#include <xtensor/xtensor.hpp>
-
 // STL
 #include <algorithm>
 #include <map>
@@ -18,6 +12,12 @@
 #ifdef __cpp_lib_memory_resource
 #include <memory_resource>
 #endif
+
+// PyBind11
+#include <pybind11/stl.h>
+
+// Xtensor
+#include <xtensor/xtensor.hpp>
 
 // Btree
 #include <btree/map.h>

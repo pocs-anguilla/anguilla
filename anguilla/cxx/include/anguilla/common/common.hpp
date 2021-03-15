@@ -12,18 +12,6 @@ namespace py = pybind11;
 #include <memory>
 #include <vector>
 
-template <typename T> struct Point2D {
-    Point2D(const Point2D<T>& other) : x(other.x), y(other.y) {}
-    Point2D(const Point2D<T>&& other) : x(other.x), y(other.y) {}
-    Point2D(T x = std::numeric_limits<T>::signaling_NaN(),
-            T y = std::numeric_limits<T>::signaling_NaN())
-        : x(x), y(y) {}
-    Point2D<T>& operator=(const Point2D<T>& other) = default;
-
-    T x;
-    T y;
-};
-
 /* Begin external snippets
  - Source 0:
  https://github.com/pybind/pybind11/issues/1042#issuecomment-508582847
