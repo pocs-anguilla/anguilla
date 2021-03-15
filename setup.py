@@ -3,7 +3,9 @@
 # Adapted from the reference example for Pybind11 + Scikit-build:
 # https://github.com/pybind/scikit_build_example/blob/master/setup.py
 
+import distutils.sysconfig as sysconfig
 from skbuild import setup
+from distutils.sysconfig import get_python_inc
 
 
 def main():
@@ -33,7 +35,12 @@ def main():
         cmake_install_dir="anguilla",
         cmake_languages=["CXX"],
         cmake_minimum_required_version="3.18",
-        cmake_args=["-DCMAKE_CXX_STANDARD=17", "-DCMAKE_CXX_EXTENSIONS=OFF"],
+        cmake_args=[
+            "-DCMAKE_CXX_STANDARD=17",
+            "-DCMAKE_CXX_EXTENSIONS=OFF",
+            f"-DPYTHON_INCLUDE_DIR={get_python_inc()}",
+            f"-DPYTHON_LIBRARY={sysconfig.get_config_var('LIBDIR')}",
+        ],
         install_requires=[
             "numpy >= 1.20",
         ],
