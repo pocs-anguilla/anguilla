@@ -23,7 +23,8 @@ if(MSVC)
   # See: https://cibuildwheel.readthedocs.io/en/stable/faq/#importerror-dll-load-failed-the-specific-module-could-not-be-found-error-on-windows
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /d2FH4-")
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpedantic -Wall")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpedantic -Wall") # xtensor flens fails otherwise
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
   if (CMAKE_BUILD_TYPE MATCHES Debug)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1 -g -fdiagnostics-color -Wstrict-aliasing")
     set(ASAN_FLAGS "-fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize-address-use-after-scope")
@@ -108,14 +109,14 @@ add_subdirectory(vendor/cxx/pyxtensor)
 ## Xtensor BLAS
 
 ### Find BLAS
+add_definitions(-DHAVE_CBLAS=1)
 find_package(BLAS)
 if(BLAS_FOUND)
   find_package(LAPACK REQUIRED)
   message(STATUS "BLAS VENDOR:    " ${BLA_VENDOR})
   message(STATUS "BLAS LIBRARIES: " ${BLAS_LIBRARIES})
-  add_definitions(-DHAVE_CBLAS=1)
 else()
-  message(STATUS "No BLAS found, falling back to using FLENS.")
+  message(STATUS "No BLAS found, will use fall-back provided by xtensor.")
   add_definitions(-DXTENSOR_USE_FLENS_BLAS=1)
 endif()
 
