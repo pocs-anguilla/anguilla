@@ -19,7 +19,6 @@ from anguilla.dominance import non_dominated_sort
 from anguilla.indicators import HypervolumeIndicator
 from anguilla.fitness import benchmark
 from anguilla.fitness.base import ObjectiveFunction
-from anguilla.util import random_orthogonal_matrix
 
 
 class TestSuccessNotion(unittest.TestCase):
