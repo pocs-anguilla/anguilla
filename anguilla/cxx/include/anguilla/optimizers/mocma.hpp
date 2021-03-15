@@ -279,9 +279,10 @@ auto choleskyUpdate(const xt::xtensor<T, 2U>& L, T alpha, T beta,
                     const xt::xtensor<T, 1U>& v) -> xt::xtensor<T, 2U> {
     // Algorithm 3.1, p.3, [2015:efficient-rank1-update]
     // Computes the updated Cholesky factor L' of alpha * A + beta * vv.T
-    // Here we are using a port of Shark's implementation which is based on
-    // Eigen's implementation. Shark: https://git.io/JqgKP Eigen:
-    // https://bit.ly/30JTzXQ
+    // Here using a port of Shark's implementation, which is based on Eigen's
+    // implementation.
+    // Shark: https://git.io/JqgKP
+    // Eigen: https://bit.ly/30JTzXQ
 
     const auto n = L.shape(0U);
     const T alphaSqrt = std::sqrt(alpha);
