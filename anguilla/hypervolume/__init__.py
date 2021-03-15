@@ -9,13 +9,23 @@ from typing import Optional
 from ._hypervolume import (
     hv2d_f8,
     hv3d_f8,
+    hvkd_f8,
     hvc2d_f8,
     hvc3d_f8,
 )
 
 from .exact import hvkd as prototype_hvkd
 
-__all__ = ["calculate", "contributions", "contributions_naive"]
+__all__ = [
+    "calculate",
+    "contributions",
+    "contributions_naive",
+    "hv2d_f8",
+    "hv3d_f8",
+    "hvkd_f8",
+    "hvc2d_f8",
+    "hvc3d_f8",
+]
 
 # Optional
 try:
@@ -69,10 +79,7 @@ def calculate(
     elif d == 3:
         return hv3d_f8(points, reference, ignore_dominated, use_btree)
     elif d > 3:
-        if SHARK_BINDINGS_AVAILABLE:
-            return shark_calculate(points, reference)
-        else:
-            return prototype_hvkd(points, reference)
+        return hvkd_f8(points, reference)
     else:
         raise ValueError("Input dimensionality can't be one.")
 
@@ -81,7 +88,6 @@ def contributions(
     points: np.ndarray,
     reference: Optional[np.ndarray] = None,
     use_btree: bool = True,
-    non_dominated: bool = True,
     prefer_extrema: bool = False,
 ) -> np.ndarray:
     """Compute the hypervolume contribution for a set of k-D points.

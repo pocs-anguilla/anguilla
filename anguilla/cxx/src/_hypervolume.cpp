@@ -18,6 +18,7 @@ namespace py = pybind11;
 #include <anguilla/hypervolume/hv3d.hpp>
 #include <anguilla/hypervolume/hvc2d.hpp>
 #include <anguilla/hypervolume/hvc3d.hpp>
+#include <anguilla/hypervolume/hvkd.hpp>
 
 typedef double f8; // following Numba's convention
 
@@ -61,6 +62,13 @@ hvc3d_f8(const xt::xtensor<f8, 2U>& points,
                                                           preferExtrema);
 }
 
+[[nodiscard]] auto
+hvkd_f8(const xt::xtensor<f8, 2U>& points,
+        const std::optional<xt::xtensor<f8, 1U>>& reference = std::nullopt,
+        const bool ignoreDominated = false) {
+    return hvkd::calculate<f8>(points, reference, ignoreDominated);
+}
+
 PYBIND11_MODULE(_hypervolume, m) {
     m.doc() = "Hypervolume algorithms implemented in C++.";
 
@@ -71,6 +79,10 @@ PYBIND11_MODULE(_hypervolume, m) {
     m.def("hv3d_f8", &hv3d_f8, hv3d::docstring, py::arg("points"),
           py::arg("reference") = std::nullopt,
           py::arg("ignoreDominated") = false, py::arg("use_btree") = true);
+
+    m.def("hvkd_f8", &hvkd_f8, hvkd::docstring, py::arg("points"),
+          py::arg("reference") = std::nullopt,
+          py::arg("ignoreDominated") = false);
 
     m.def("hvc2d_f8", &hvc2d_f8, hvc2d::docstring, py::arg("points"),
           py::arg("reference") = std::nullopt);
