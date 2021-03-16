@@ -15,8 +15,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-20.04, windows-2019, macos-10.15]
-        python-version: ["3.7", "3.8"]
+        #platform: [ubuntu-latest, windows-latest, macos-latest]
+        platform: [ubuntu-latest]
+        #python-version: ["3.7", "3.8"]
     runs-on: ${{ matrix.platform }}
 
     defaults:
@@ -31,17 +32,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Get conda
-        # See: https://github.com/conda-incubator/setup-miniconda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Install micromamba
+        # See: https://github.com/mamba-org/provision-with-micromamba
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          auto-activate-base: true
-          python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          channels: conda-forge
-
-      - name: Prepare
-        run: conda install conda-build conda-verify anaconda-client
+          - environment-file: ci-environment.yml          
 
       # See: https://git.io/Jtg1y
       - name: Set up build directory
