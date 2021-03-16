@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.18...3.19)
+
 message(STATUS "Using CMake version ${CMAKE_VERSION}")
 
 project(anguilla_cxx VERSION "0.0.19" LANGUAGES CXX)
@@ -30,6 +31,10 @@ option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
 set(Python3_FIND_IMPLEMENTATIONS CPython)
 
 if(SKBUILD)
+  if(CONDA_BUILD)
+    set(Python3_EXECUTABLE $ENV{PYTHON})
+  endif()
+
   find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
 
   # Add site-packages to the search path
@@ -45,6 +50,7 @@ if(SKBUILD)
   # across different platforms on CI builds.
   find_package(NumPy REQUIRED)
   set(Python3_NumPy_INCLUDE_DIRS ${NumPy_INCLUDE_DIRS})
+  message("Found NumPy: ${Python3_NumPy_INCLUDE_DIRS}")
 else()
   find_package(Python3 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 endif()
