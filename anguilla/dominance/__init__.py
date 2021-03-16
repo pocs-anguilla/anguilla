@@ -1,4 +1,5 @@
 """This module contains operators related to Pareto dominance."""
+
 import numpy as np
 
 from ._dominance import non_dominated_sort_f8 as non_dominated_sort

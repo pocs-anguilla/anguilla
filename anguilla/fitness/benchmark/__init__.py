@@ -1,5 +1,6 @@
 """This package contains implementations of single and multi-objective \
 benchmark functions."""
+
 from anguilla.fitness.benchmark.elli import ELLI1, ELLI2, GELLI
 from anguilla.fitness.benchmark.cigtab import CIGTAB1, CIGTAB2
 from anguilla.fitness.benchmark.fon import FON
