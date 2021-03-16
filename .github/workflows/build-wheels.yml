@@ -57,7 +57,6 @@ jobs:
           CIBW_DEPENDENCY_VERSIONS: "latest"
           CIBW_TEST_REQUIRES: pytest coverage[toml] pytest-cov
           CIBW_TEST_COMMAND_LINUX: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla --cov-report=xml && mkdir -p /output && mv coverage.xml /output"
-          CIBW_TEST_COMMAND_WINDOWS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_TEST_COMMAND_MACOS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_TEST_COMMAND_WINDOWS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_BEFORE_ALL_MACOS: "unset __PYVENV_LAUNCHER__"
