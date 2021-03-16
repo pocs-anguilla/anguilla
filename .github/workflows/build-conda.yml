@@ -15,7 +15,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.7", "3.8"]
+
     runs-on: ${{ matrix.platform }}
 
     defaults:
@@ -30,11 +32,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install micromamba
-        # See: https://github.com/mamba-org/provision-with-micromamba
-        uses: mamba-org/provision-with-micromamba@v8
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@v2
         with:
-          environment-file: ci-environment.yml
+          auto-activate-base: true
+          python-version: ${{ matrix.python-version }}
 
       # See: https://git.io/Jtg1y
       - name: Set up build directory
