@@ -116,8 +116,7 @@ class MOQ(ObjectiveFunction):
         m: int = 1,
         region_bounds: Optional[BoundsTuple] = None,
     ) -> np.ndarray:
-        shape = (m, self._n_dimensions) if m > 1 else (self._n_dimensions)
-        return np.zeros(shape)
+        return np.zeros((m, self._n_dimensions))
 
     def _post_update_n_dimensions(self) -> None:
         n_dimensions = self._n_dimensions

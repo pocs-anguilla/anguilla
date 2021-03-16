@@ -78,7 +78,7 @@ class IHR(ObjectiveFunction):
     def name(self) -> str:
         return "IHR"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
         raise NotImplementedError()
 
     def _post_update_n_dimensions(self) -> None:
