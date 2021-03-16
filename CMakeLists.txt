@@ -103,7 +103,7 @@ if(NOT MSVC)
   endif()
 else()
   # See: https://cibuildwheel.readthedocs.io/en/stable/faq/#importerror-dll-load-failed-the-specific-module-could-not-be-found-error-on-windows
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /d2FH4-")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /d2FH4-")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /W4 /EHsc /MP /bigobj") # required by xtensor
   set(CMAKE_EXE_LINKER_FLAGS /MANIFEST:NO)
 endif()
