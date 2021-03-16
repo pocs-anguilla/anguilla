@@ -45,7 +45,9 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: joerick/cibuildwheel@v1.10.0
+      # Linux and macOS
+      - if: matrix.os != 'windows-latest'
+        uses: joerick/cibuildwheel@v1.10.0
         env:
           # Skip: unsupported Python versions, PyPy and 32-bit versions
           CIBW_SKIP: "cp27-* cp35-* cp36-* pp* *-win32 *-manylinux_i686"
@@ -57,6 +59,17 @@ jobs:
           CIBW_TEST_COMMAND_WINDOWS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_TEST_COMMAND_MACOS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_BEFORE_ALL_MACOS: "unset __PYVENV_LAUNCHER__"
+
+      # Windows
+      - if: matrix.os == 'windows-latest'
+        uses: microsoft/setup-msbuild@v1.0.2
+        uses: joerick/cibuildwheel@v1.10.0
+        env:
+          # Skip: unsupported Python versions, PyPy and 32-bit versions
+          CIBW_SKIP: "cp27-* cp35-* cp36-* pp* *-win32 *-manylinux_i686"
+          CIBW_DEPENDENCY_VERSIONS: "latest"
+          CIBW_TEST_REQUIRES: pytest coverage[toml] pytest-cov
+          CIBW_TEST_COMMAND_WINDOWS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} {wheel}"
           # Skip testing in Windows + Python 3.8+ due to DLL loading issues.
           CIBW_TEST_SKIP: "cp3{8,9}-win_amd64"
