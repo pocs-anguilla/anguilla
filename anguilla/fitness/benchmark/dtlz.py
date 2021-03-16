@@ -27,7 +27,7 @@ class DTLZ(ObjectiveFunction):
     def name(self) -> str:
         return "DTLZ"
 
-    def evaluate(self, x: np.ndarray, count: bool = True) -> np.ndarray:
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
         raise NotImplementedError()
 
     def _pre_update_n_dimensions(self, n_dimensions: int) -> None:
@@ -273,9 +273,9 @@ class DTLZ6(DTLZ):
 
     def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
         self._pre_evaluate(xs, count=count)
-        values = np.array(shape=(len(xs), self._n_objectives))
+        values = np.empty(shape=(len(xs), self._n_objectives))
         for i in range(len(xs)):
-            g = np.sum(x[self._n_dimensions - self._k :] ** 0.1)
+            g = np.sum(xs[i, self._n_dimensions - self._k :] ** 0.1)
             values[i, :] = np.repeat(1.0 + g, self._n_objectives)
             theta = np.repeat(np.pi / (4.0 * (1 + g)), self._n_dimensions)
             theta[0] = xs[i, 0] * 0.5 * math.pi

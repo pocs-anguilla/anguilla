@@ -61,7 +61,7 @@ class BoxConstraintsHandler(ConstraintsHandler):
         region_bounds: typing.Optional[BoundsTuple] = None,
     ) -> np.ndarray:
         n = self._n_dimensions
-        shape = (m, n) if m > 1 else (n,)
+        shape = (m, n)
         # Use custom region (within the box constraints)
         if region_bounds is not None:
             lower, upper = region_bounds

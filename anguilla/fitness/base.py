@@ -216,8 +216,7 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
             return self._constraints_handler.random_points(
                 self._rng, m, region_bounds
             )
-        n = self._n_dimensions
-        shape = (m, n)
+        shape = (m, self._n_dimensions)
 
         if region_bounds is not None:
             lower, upper = region_bounds
