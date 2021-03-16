@@ -7,131 +7,228 @@ import numpy as np
 
 from anguilla.fitness import benchmark
 from anguilla.fitness.base import ObjectiveFunction
-from anguilla.optimizers.mocma import MOCMA, FixedSizePopulation
+from anguilla.optimizers import MOCMA, SuccessNotion
+from anguilla.indicators import HypervolumeIndicator
 
 VOLUME_TEST_N_TRIALS = 1
 VOLUME_TEST_RTOL = 5e-3
 
 
-class TestFixedSizePopulation(unittest.TestCase):
-    """Test the fixed-sized population container."""
-
+class TestMOCMA(unittest.TestCase):
     def test_initialization(self):
         """Test initialization."""
-        rng = np.random.default_rng()
-        n_parents = 10
-        n_offspring = 5
-        n_total = n_parents + n_offspring
-        n_dimensions = 5
-        n_objectives = 3
-        population = FixedSizePopulation(
-            n_dimensions,
-            n_objectives,
-            n_parents,
-            n_offspring,
-        )
-        self.assertTrue(
-            population.fitness.shape == (n_total, n_objectives),
-            "fitness shape",
-        )
-        self.assertTrue(
-            population.points.shape == (n_total, n_dimensions), "points shape"
-        )
-        self.assertTrue(
-            population.cov.shape == (n_total, n_dimensions, n_dimensions),
-            "Cov. matrices shape",
-        )
-        index = rng.integers(0, n_total)
-        self.assertTrue(
-            np.all(population.cov[index] == np.eye(n_dimensions)),
-            "Cov. matrices initialization, got: {}".format(
-                population.cov[index],
-            ),
-        )
-
-    def test_update_views(self):
-        """Test that updating data using views works as expected."""
-        rng = np.random.default_rng()
-        n_objectives = 3
-        population = FixedSizePopulation(5, n_objectives, 10, 10)
-        fitness_view = population.fitness[:]
-        new_fitness_chunk = rng.uniform(0, 35, size=(4, n_objectives))
-        fitness_view[3:7] = new_fitness_chunk
-        self.assertTrue(
-            np.all(population.fitness[3:7] == new_fitness_chunk),
-            "first update to fitness_view",
-        )
-        fitness_view[3:7] = rng.uniform(36, 105, size=(4, n_objectives))
-        self.assertFalse(
-            np.all(population.fitness[3:7] == new_fitness_chunk),
-            "second update to fitness_view",
-        )
-        index = rng.integers(0, 20)
-        p_succ_view = population.p_succ[:]
-        p_succ_view[index] = 0.5
-        self.assertTrue(
-            population.p_succ[index] == 0.5, "first update to p_succ_view"
-        )
-        population.p_succ[index] = 1.8
-        self.assertTrue(p_succ_view[index] == 1.8, "second update to p_succ")
-
-    def test_update_cov(self):
-        """Test that updating cov. matrices using views works as expected."""
-        rng = np.random.default_rng()
-        n_dimensions = 5
-        n_parents = 10
-        n_offspring = 10
-        population = FixedSizePopulation(
-            n_dimensions, 3, n_parents, n_offspring
-        )
-        oidx = rng.integers(0, n_parents)
-        pidx = rng.integers(n_parents, n_parents + n_offspring)
-        population.cov[pidx, :, :] = rng.uniform(
-            0,
-            100,
-            size=(n_dimensions, n_dimensions),
-        )
-        population.cov[oidx, :, :] = population.cov[pidx, :, :]
-        self.assertTrue(
-            np.all(population.cov[oidx] == population.cov[pidx]),
-            "copy from parent to offspring",
-        )
-        population.cov[oidx, :, :] = rng.uniform(
-            100,
-            200,
-            size=(n_dimensions, n_dimensions),
-        )
-        self.assertFalse(
-            np.all(population.cov[oidx] == population.cov[pidx]),
-            "update offspring",
-        )
-
-
-class BasicTests(unittest.TestCase):
-    """Test basic properties."""
-
-    def test_evaluation_count_steady(self):
-        fn = benchmark.GELLI(5, 3)
-        parent_points = fn.random_points(10)
-        parent_fitness = fn(parent_points)
+        rng = np.random.default_rng(0)
+        points = rng.uniform(size=(3, 5))
+        fitness = rng.uniform(size=(3, 2))
         optimizer = MOCMA(
-            parent_points, parent_fitness, n_offspring=1, max_evaluations=4
+            points,
+            fitness,
+            success_notion="individual",
+            max_evaluations=1000,
         )
-        res = optimizer.fmin(fn)
+        self.assertTrue(optimizer.name == "MO-CMA-ES", "name")
         self.assertTrue(
-            res.stopping_conditions.max_evaluations == 4,
-            "stopping condition count, got: {}, expected: {}".format(
-                res.stopping_conditions.max_evaluations, 4
-            ),
+            optimizer.qualified_name == "(3+3)-MO-CMA-ES-I", "qualified_name"
         )
         self.assertTrue(
-            fn.evaluation_count - len(parent_points)
-            == optimizer.evaluation_count,
-            "function count: {}, optimizer count: {}".format(
-                fn.evaluation_count - len(parent_points),
-                optimizer.evaluation_count,
-            ),
+            optimizer.success_notion.value
+            == SuccessNotion.IndividualBased.value,
+            "success_notion",
         )
+        self.assertTrue(optimizer.generation_count == 0, "generation_count")
+        self.assertTrue(optimizer.evaluation_count == 0, "evaluation_count")
+        self.assertTrue(
+            optimizer.parameters.n_dimensions == 5, "parameters.n_dimensions"
+        )
+        self.assertTrue(
+            optimizer.stopping_conditions.max_generations == None,
+            "stopping_conditions.max_generations",
+        )
+        self.assertTrue(
+            optimizer.stopping_conditions.max_evaluations == 1000,
+            "stopping_conditions.max_evaluations",
+        )
+        self.assertTrue(
+            np.all(optimizer.population.point[:3] == points), "points"
+        )
+        self.assertTrue(
+            np.all(optimizer.population.fitness[:3] == fitness), "fitness"
+        )
+
+    def test_initialization_steady(self):
+        """Test initialization for the steady-state variant."""
+        rng = np.random.default_rng(0)
+        points = rng.uniform(size=(3, 5))
+        fitness = rng.uniform(size=(3, 2))
+        optimizer = MOCMA(
+            points,
+            fitness,
+            max_evaluations=1000,
+            n_offspring=1,
+        )
+        self.assertTrue(optimizer.name == "MO-CMA-ES", "name")
+        self.assertTrue(
+            optimizer.qualified_name == "(3+1)-MO-CMA-ES-P", "qualified_name"
+        )
+        self.assertTrue(
+            optimizer.success_notion.value
+            == SuccessNotion.PopulationBased.value,
+            "success_notion",
+        )
+        self.assertTrue(optimizer.generation_count == 0, "generation_count")
+        self.assertTrue(optimizer.evaluation_count == 0, "evaluation_count")
+        self.assertTrue(
+            optimizer.parameters.n_dimensions == 5, "parameters.n_dimensions"
+        )
+        self.assertTrue(
+            optimizer.stopping_conditions.max_generations == None,
+            "stopping_conditions.max_generations",
+        )
+        self.assertTrue(
+            optimizer.stopping_conditions.max_evaluations == 1000,
+            "stopping_conditions.max_evaluations",
+        )
+        self.assertTrue(
+            np.all(optimizer.population.point[:3] == points), "points"
+        )
+        self.assertTrue(
+            np.all(optimizer.population.fitness[:3] == fitness), "fitness"
+        )
+
+    def test_best(self):
+        """Test that the best method works as expected."""
+        rng = np.random.default_rng(0)
+        points = rng.uniform(size=(3, 5))
+        fitness = rng.uniform(size=(3, 2))
+        optimizer = MOCMA(
+            points,
+            fitness,
+            success_notion="individual",
+            max_evaluations=1000,
+        )
+        best = optimizer.best
+        self.assertTrue(np.all(best.point == points), "points")
+        self.assertTrue(np.all(best.fitness == fitness), "fitness")
+        self.assertTrue(
+            np.all(
+                best.step_size
+                == np.repeat(optimizer.parameters.initial_step_size, 3)
+            ),
+            "step_size",
+        )
+
+    def test_ask(self):
+        """Test that the ask method runs without errors."""
+        rng = np.random.default_rng(0)
+        n = 100
+        points = rng.uniform(size=(n, 5))
+        fitness = rng.uniform(size=(n, 2))
+        optimizer = MOCMA(
+            points,
+            fitness,
+            success_notion="individual",
+            max_evaluations=1000,
+        )
+        points = optimizer.ask()
+        # Basic test shape
+        self.assertTrue(points.shape == (n, 5), "points shape")
+        # Test that the parent indices are correct
+        result = optimizer.population.parent_index
+        expected = np.arange(0, n, dtype=int)
+        self.assertTrue(
+            np.all(result == expected),
+            "parent indices, got: {}, expected: {}".format(result, expected),
+        )
+        # Test that no numbers are infinite or NaN
+        self.assertFalse(
+            np.any(np.isinf(points)),
+            "Got infinite values: {}".format(points),
+        )
+        self.assertFalse(
+            np.any(np.isnan(points)),
+            "Got NaN values: {}".format(points),
+        )
+        # Test that the mutation works as expected
+        result = points[0]
+        expected = optimizer.population.point[
+            0
+        ] + optimizer.population.step_size[0] * (
+            optimizer.population.cov[0] @ optimizer.population.z[0]
+        )
+        self.assertTrue(
+            np.allclose(
+                result,
+                expected,
+            ),
+            "mutation: got {}, expected: {}".format(result, expected),
+        )
+
+    def test_ask_variant(self):
+        """Test the ask method for the n_offspring != n_parents variant."""
+        rng = np.random.default_rng(0)
+        n_parents = 8
+        n_offspring = 4
+        points = rng.uniform(size=(n_parents, 5))
+        # In this set all points have different rank
+        # Only the first element has rank 1
+        fitness = np.array(
+            [
+                [0.01245897, 0.27127751],
+                [0.02213313, 0.23395707],
+                [0.0233907, 0.22994154],
+                [0.0392689, 0.1886141],
+                [0.04339422, 0.17990426],
+                [0.16521067, 0.05107939],
+                [0.17855283, 0.0440614],
+                [0.28619405, 0.00950565],
+            ]
+        )
+        optimizer = MOCMA(
+            points,
+            fitness,
+            max_evaluations=1000,
+            n_offspring=n_offspring,
+        )
+        # Test that the parent indices are correct
+        result = optimizer.population.parent_index
+        expected = np.zeros(n_offspring, dtype=int)
+        self.assertTrue(
+            np.all(result == expected),
+            "parent indices, got: {}, expected: {}".format(result, expected),
+        )
+
+    def test_tell(self):
+        """Test that the tell method runs without errors."""
+        # Note: this doesn't test anything about the correctness
+        # of adaptation and selection, just that they don't result in an error.
+        n = 3
+        rng = np.random.default_rng()
+        points = rng.uniform(size=(n, 5))
+        fitness = rng.uniform(size=(n, 2))
+        optimizer = MOCMA(
+            points,
+            fitness,
+            success_notion="individual",
+            max_evaluations=1000,
+        )
+        points = optimizer.ask()
+        fitness = rng.uniform(size=(n, 2))
+        penalized_fitness = rng.uniform(size=(n, 2))
+        optimizer.tell(fitness, penalized_fitness)
+        # We test the offspring data is copied correctly
+        # which we can do since the offspring data remains untouched
+        # in its buffer after selection.
+        self.assertTrue(
+            np.all(fitness == optimizer.population.fitness[n:]), "fitness"
+        )
+        self.assertTrue(
+            np.all(
+                penalized_fitness == optimizer.population.penalized_fitness[n:]
+            ),
+            "penalized_fitness",
+        )
+        self.assertTrue(optimizer.generation_count == 1, "generation_count")
+        self.assertTrue(optimizer.evaluation_count == n, "evaluation_count")
 
 
 class VolumeBaseTestFunction:
@@ -169,17 +266,12 @@ class VolumeBaseTestFunction:
                 n_dimensions = int(row[3])
                 n_objectives = int(row[4])
                 reference = row[5 : 5 + n_objectives]
-                volumes = np.empty(VOLUME_TEST_N_TRIALS)
+                volumes = np.empty(1)
                 fn = self.fn_cls(rng=self.rng)
                 fn.n_dimensions = n_dimensions
                 fn.n_objectives = n_objectives
 
-                # We will call fmin with evaluate
-                def evaluate(points):
-                    if fn.has_constraints:
-                        return fn.evaluate_with_penalty(points)
-                    return fn(points)
-
+                indicator = HypervolumeIndicator(reference)
                 for trial in range(VOLUME_TEST_N_TRIALS):
                     parent_points = fn.random_points(n_parents)
                     parent_fitness = fn(parent_points)
@@ -189,15 +281,15 @@ class VolumeBaseTestFunction:
                         n_offspring=self.n_offspring,
                         success_notion=success_notion,
                         max_evaluations=max_evaluations,
-                        rng=self.rng,
+                        seed=self.rng.integers(0, 10000),
                     )
-                    optimizer.indicator.reference = reference
-
-                    result = optimizer.fmin(evaluate)
-
-                    volumes[trial] = optimizer.indicator(
-                        result.solution.fitness
-                    )
+                    while not optimizer.stop.triggered:
+                        points = optimizer.ask()
+                        if fn.has_constraints:
+                            optimizer.tell(*fn.evaluate_with_penalty(points))
+                        else:
+                            optimizer.tell(fn(points))
+                    volumes[trial] = indicator(optimizer.best.fitness)
                 reference_volume = np.median(volumes)
                 self.assertTrue(
                     np.allclose(
@@ -205,13 +297,15 @@ class VolumeBaseTestFunction:
                         target_volume,
                         rtol=VOLUME_TEST_RTOL,
                     ),
-                    f"Failed (row {i}), got {reference_volume}, expected {target_volume}",
+                    "Failed (row {}), got {}, expected {}".format(
+                        i, reference_volume, target_volume
+                    ),
                 )
 
     # TODO: Check if individual notion of success needs more evaluations
     #       for this unit test
-    #def test_volume_individual(self) -> None:
-    #    self.run_test_volume("individual")
+    def test_volume_individual(self) -> None:
+        self.run_test_volume("individual")
 
     def test_volume_population(self) -> None:
         self.run_test_volume("population")
