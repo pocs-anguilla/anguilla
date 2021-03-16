@@ -12,7 +12,6 @@ cxx_extension: CMakeLists.txt
 	set -x; cmake $(COMMON_CMAKE_OPTS) -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_BUILD_TYPE=Release ..
 	CCACHE_DIR=$(PWD)/_ccache CCACHE_COMPILERCHECK=content make -C _cxx_build -j $(shell nproc)
 	cp _cxx_build/anguilla/cxx/_hypervolume.cpython-38-x86_64-linux-gnu.so anguilla/hypervolume/
-	cp _cxx_build/anguilla/cxx/_shark_hypervolume.cpython-38-x86_64-linux-gnu.so anguilla/hypervolume/
 	cp _cxx_build/anguilla/cxx/_dominance.cpython-38-x86_64-linux-gnu.so anguilla/dominance/
 	cp _cxx_build/anguilla/cxx/_archive.cpython-38-x86_64-linux-gnu.so anguilla/archive/
 	cp _cxx_build/anguilla/cxx/_optimizers.cpython-38-x86_64-linux-gnu.so anguilla/optimizers/
@@ -24,7 +23,6 @@ cxx_extension_debug: CMakeLists.txt
 	set -x; cmake $(COMMON_CMAKE_OPTS) -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_BUILD_TYPE=Debug ..
 	make -C _cxx_build -j $(shell nproc)
 	cp _cxx_build/anguilla/cxx/_hypervolume.cpython-38-x86_64-linux-gnu.so anguilla/hypervolume/
-	cp _cxx_build/anguilla/cxx/_shark_hypervolume.cpython-38-x86_64-linux-gnu.so anguilla/hypervolume/
 	cp _cxx_build/anguilla/cxx/_dominance.cpython-38-x86_64-linux-gnu.so anguilla/dominance/
 	cp _cxx_build/anguilla/cxx/_archive.cpython-38-x86_64-linux-gnu.so anguilla/archive/
 	cp _cxx_build/anguilla/cxx/_optimizers.cpython-38-x86_64-linux-gnu.so anguilla/optimizers/
