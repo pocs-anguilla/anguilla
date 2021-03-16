@@ -16,7 +16,7 @@ include(FeatureSummary)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON FORCE)
 set(CMAKE_CXX_EXTENSIONS OFF FORCE)
-message(STATUS "Using C++ standard version: ${CMAKE_CXX_STANDARD}")
+message(STATUS "C++ standard version: ${CMAKE_CXX_STANDARD}")
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /W4")
@@ -81,6 +81,7 @@ message(STATUS "${_numpy_config_info}")
 find_package(pybind11 CONFIG REQUIRED)
 
 # Define options
+option(BUILD_PORTABLE "Build the C extensions to be portable" OFF)
 option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
 
 # Add the different modules
@@ -107,20 +108,21 @@ add_subdirectory(vendor/cxx/xtensor)
 add_subdirectory(vendor/cxx/pyxtensor)
 
 ## Xtensor BLAS
-
-### Find BLAS
-add_definitions(-DHAVE_CBLAS=1)
-find_package(BLAS)
-if(BLAS_FOUND)
-  find_package(LAPACK REQUIRED)
-  message(STATUS "BLAS VENDOR:    " ${BLA_VENDOR})
-  message(STATUS "BLAS LIBRARIES: " ${BLAS_LIBRARIES})
+if(NOT BUILD_PORTABLE)
+  set(HAVE_CBLAS 1)
+  find_package(BLAS REQUIRED)
+  if(BLAS_FOUND)
+    find_package(LAPACK REQUIRED)
+    message(STATUS "BLAS VENDOR:    " ${BLA_VENDOR})
+    message(STATUS "BLAS LIBRARIES: " ${BLAS_LIBRARIES})
+  endif()
+  add_subdirectory(vendor/cxx/xtensor-blas)
 else()
-  message(STATUS "No BLAS found, will use fall-back provided by xtensor.")
-  add_definitions(-DXTENSOR_USE_FLENS_BLAS=1)
+  message(STATUS "Will use xtensor-blas with FLENS.")
+  set(XTENSOR_USE_FLENS_BLAS 1 CACHE BOOL "Use xtensor with FLENS." FORCE)
+  add_subdirectory(vendor/cxx/xtensor-blas)
 endif()
 
-add_subdirectory(vendor/cxx/xtensor-blas)
 
 ## {fmt}
 add_subdirectory(vendor/cxx/fmt)
