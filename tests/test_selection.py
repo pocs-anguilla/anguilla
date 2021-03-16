@@ -3,8 +3,8 @@ import unittest
 
 import numpy as np
 
-from anguilla.selection import indicator_selection
-from anguilla.indicators import HypervolumeIndicator
+from anguilla.dominance import non_dominated_sort
+from anguilla.optimizers import selection
 
 
 class TestHypervolumeIndicatorSelection(unittest.TestCase):
@@ -28,9 +28,12 @@ class TestHypervolumeIndicatorSelection(unittest.TestCase):
         expected = np.array(
             [True, False, False, False, False, True, False, True], dtype=bool
         )
-        indicator = HypervolumeIndicator()
-        selected, _ = indicator_selection(indicator, points, len(points) - 5)
-        self.assertTrue(np.all(selected == expected))
+        ranks, _ = non_dominated_sort(points)
+        selected = selection(points, ranks, len(points) - 5)
+        self.assertTrue(
+            np.all(selected == expected),
+            "got: {}, expected: {}".format(selected, expected),
+        )
 
     def test_example2(self):
         """Test a constructed 2D example"""
@@ -54,6 +57,29 @@ class TestHypervolumeIndicatorSelection(unittest.TestCase):
             [True, False, True, False, True, False, True, False, False, True],
             dtype=bool,
         )
-        indicator = HypervolumeIndicator()
-        selected, _ = indicator_selection(indicator, points, len(points) - 5)
-        self.assertTrue(np.all(selected == expected))
+        ranks, _ = non_dominated_sort(points)
+        selected = selection(points, ranks, len(points) - 5)
+        self.assertTrue(
+            np.all(selected == expected),
+            "got: {}, expected: {}".format(selected, expected),
+        )
+
+    def test_example3(self):
+        """Test an example in which the first front has size one."""
+        points = np.array(
+            [
+                [0.67996405, 0.29296719],
+                [0.16359694, 0.67606755],
+                [0.18515826, 0.91830604],
+                [0.09758624, 0.21536309],
+                [0.58368728, 0.52277089],
+                [0.74548241, 0.51495986],
+            ]
+        )
+        ranks, _ = non_dominated_sort(points)
+        selected = selection(points, ranks, 3)
+        expected = np.array([True, True, False, True, False, False])
+        self.assertTrue(
+            np.all(selected == expected),
+            "got: {}, expected: {}".format(selected, expected),
+        )
