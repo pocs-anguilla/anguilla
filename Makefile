@@ -4,7 +4,7 @@
 # For development, prefer the C++20 toolchain, as it has template support for the nodiscard attribute.
 TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libstdcxx.cmake
 
-COMMON_CMAKE_OPTS=-DWITH_SHARK_BINDINGS=ON -DCMAKE_TOOLCHAIN_FILE=$(TOOLCHAIN_FILE)
+COMMON_CMAKE_OPTS=-DPORTABLE_BUILD=OFF -DCMAKE_TOOLCHAIN_FILE=$(TOOLCHAIN_FILE)
 
 cxx_extension: CMakeLists.txt
 	mkdir -p _cxx_build

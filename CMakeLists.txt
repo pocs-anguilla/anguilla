@@ -21,7 +21,7 @@ message(STATUS "C++ standard version: ${CMAKE_CXX_STANDARD}")
 ################
 # Define options
 
-option(BUILD_PORTABLE "Build the C extensions to be portable (e.g., for wheels)" ON)
+option(PORTABLE_BUILD "Build the C extensions to be portable (e.g., for wheels)" ON)
 option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
 
 ###############
@@ -92,7 +92,7 @@ if(NOT MSVC)
   if(MINGW)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
   endif()
-  if(NOT BUILD_PORTABLE)
+  if(NOT PORTABLE_BUILD)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64")
@@ -125,7 +125,7 @@ add_subdirectory(vendor/cxx/xtl)
 add_subdirectory(vendor/cxx/xtensor)
 
 ### Xtensor BLAS
-if(NOT BUILD_PORTABLE)
+if(NOT PORTABLE_BUILD)
   find_package(BLAS REQUIRED)
   if(BLAS_FOUND)
     add_definitions(-DHAVE_CBLAS=1)
