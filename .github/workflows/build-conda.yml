@@ -36,7 +36,7 @@ jobs:
         # See: https://github.com/mamba-org/provision-with-micromamba
         uses: mamba-org/provision-with-micromamba@main
         with:
-          - environment-file: ci-environment.yml          
+          environment-file: ci-environment.yml
 
       # See: https://git.io/Jtg1y
       - name: Set up build directory
