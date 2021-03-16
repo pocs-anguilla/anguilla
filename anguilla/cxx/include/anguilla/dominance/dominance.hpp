@@ -58,7 +58,7 @@ nonDominatedSort(const xt::xtensor<T, 2U>& points,
 
     const auto nPoints = points.shape(0U);
     const auto nDimensions = points.shape(1U);
-    xt::xtensor<T, 1U> ranks = xt::zeros<T>({nPoints});
+    xt::xtensor<T, 1U> ranks = xt::zeros<std::size_t>({nPoints});
     if (nPoints == 0U) {
         return std::make_tuple(ranks, 0U);
     }
