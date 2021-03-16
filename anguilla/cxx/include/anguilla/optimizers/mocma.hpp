@@ -194,7 +194,8 @@ template <typename T> struct MOPopulation {
               xt::xtensor<T, 2U>::from_shape({nIndividuals, 1U}), stepSize)),
           pSucc(xt::full_like(
               xt::xtensor<T, 2U>::from_shape({nIndividuals, 1U}), pSucc)),
-          z(xt::empty<T>({nOffspring, nDimensions})),
+          lastStep(xt::empty<T>({nOffspring, nDimensions})),
+          lastZ(xt::empty<T>({nOffspring, nDimensions})),
           pC(xt::zeros_like(
               xt::xtensor<T, 2U>::from_shape({nIndividuals, nDimensions}))),
           cov(xt::eye<T>({nIndividuals, nDimensions, nDimensions}, 0)),
@@ -216,8 +217,10 @@ template <typename T> struct MOPopulation {
     xt::xtensor<T, 2U> stepSize;
     // The smoothed probabilities of success.
     xt::xtensor<T, 2U> pSucc;
+    // The last mutative step
+    xt::xtensor<T, 2U> lastStep;
     // The samples used to mutate the parent points.
-    xt::xtensor<T, 2U> z;
+    xt::xtensor<T, 2U> lastZ;
     // The covariance adaptation evolution paths.
     xt::xtensor<T, 2U> pC;
     // The covariance matrices.
@@ -443,19 +446,17 @@ class MOCMA {
         auto parentIdx = m_population.parentIdx;
         auto offspringIdx = xt::arange<std::size_t>(m_nParents, m_nIndividuals);
         // Perform mutation of the parents chosen to reproduce.
-        m_population.z = xt::random::randn<T>(m_population.z.shape(), 0.0, 1.0,
-                                              m_randomEngine);
-        xt::xtensor<T, 2U> tmp =
-            xt::empty<T>({m_nOffspring, m_parameters.nDimensions});
-        for (auto i = 0U; i != tmp.shape(0U); i++) {
-            xt::row(tmp, i) = xt::linalg::dot(
+        m_population.lastZ = xt::random::randn<T>(m_population.lastZ.shape(),
+                                                  0.0, 1.0, m_randomEngine);
+        for (auto i = 0U; i != m_nOffspring; i++) {
+            xt::row(m_population.lastStep, i) = xt::linalg::dot(
                 xt::view(m_population.cov, parentIdx(i), xt::all(), xt::all()),
-                xt::row(m_population.z, i));
+                xt::row(m_population.lastZ, i));
         }
         xt::view(m_population.point, xt::keep(offspringIdx), xt::all()) =
             xt::view(m_population.point, xt::keep(parentIdx), xt::all()) +
             xt::view(m_population.stepSize, xt::keep(parentIdx), xt::all()) *
-                tmp;
+                m_population.lastStep;
         // Copy data from the parent.
         // Step size.
         xt::view(m_population.stepSize, xt::keep(offspringIdx), xt::all()) =
@@ -521,14 +522,14 @@ class MOCMA {
                 // [2010:mo-cma-es] Section 3.1, p. 489
                 offspringIsSuccessful = 1.0;
                 updateStepSize(oidx, offspringIsSuccessful);
-                updateCov(oidx, xt::row(m_population.z, i));
+                updateCov(oidx, xt::row(m_population.lastStep, i));
             } else {
                 if (m_successNotion == SuccessNotion::PopulationBased &&
                     selected(oidx)) {
                     // [2010:mo-cma-es] Section 3.2, p. 489
                     offspringIsSuccessful = 1.0;
                     updateStepSize(oidx, offspringIsSuccessful);
-                    updateCov(oidx, xt::row(m_population.z, i));
+                    updateCov(oidx, xt::row(m_population.lastStep, i));
                 }
             }
             // Parent adaptation
@@ -583,7 +584,7 @@ class MOCMA {
                       (1.0 - m_parameters.pTargetSucc)));
     }
 
-    void updateCov(std::size_t idx, const xt::xtensor<T, 1U>& z) {
+    void updateCov(std::size_t idx, const xt::xtensor<T, 1U>& lastStep) {
         const T pCUpdateWeight = m_parameters.cC * (2.0 - m_parameters.cC);
         // Update the evolution path
         xt::row(m_population.pC, idx) *= 1.0 - m_parameters.cC;
@@ -591,7 +592,8 @@ class MOCMA {
             // Algorithm 4.1, line 19, p.5. [2015:efficient-rank1-update]
             // [2008:Shark] See: https://git.io/Jqphk
             // Update the evolution path
-            xt::row(m_population.pC, idx) += std::sqrt(pCUpdateWeight) * z;
+            xt::row(m_population.pC, idx) +=
+                std::sqrt(pCUpdateWeight) * lastStep;
             // Update the Cholesky factor of the covariance matrix
             xt::view(m_population.cov, idx, xt::all(), xt::all()) =
                 choleskyUpdate<T>(

@@ -155,7 +155,9 @@ PYBIND11_MODULE(_optimizers, m) {
                       py::return_value_policy::reference_internal)
         .def_readonly("cov", &ag::optimizers::MOPopulation<f8>::cov,
                       py::return_value_policy::reference_internal)
-        .def_readonly("z", &ag::optimizers::MOPopulation<f8>::z,
+        .def_readonly("last_z", &ag::optimizers::MOPopulation<f8>::lastZ,
+                      py::return_value_policy::reference_internal)
+        .def_readonly("last_step", &ag::optimizers::MOPopulation<f8>::lastStep,
                       py::return_value_policy::reference_internal)
         .def_readonly("parent_index",
                       &ag::optimizers::MOPopulation<f8>::parentIdx,
