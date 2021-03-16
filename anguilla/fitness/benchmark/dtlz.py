@@ -27,7 +27,7 @@ class DTLZ(ObjectiveFunction):
     def name(self) -> str:
         return "DTLZ"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
+    def evaluate(self, x: np.ndarray, count: bool = True) -> np.ndarray:
         raise NotImplementedError()
 
     def _pre_update_n_dimensions(self, n_dimensions: int) -> None:
@@ -64,20 +64,8 @@ class DTLZ1(DTLZ):
     def name(self) -> str:
         return "DTLZ1"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        tmp = x[self._n_dimensions - self._k :] - 0.5
-        g = 100.0 * (self._k + np.sum(tmp * tmp - np.cos(20.0 * np.pi * tmp)))
-        value = np.repeat(0.5 * (1.0 + g), self._n_objectives)
-        for i in range(self._n_objectives):
-            for j in range(self._n_objectives - i - 1):
-                value[i] *= x[j]
-            if i > 0:
-                value[i] *= 1.0 - x[self._n_objectives - i - 1]
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         tmp = xs[:, self._n_dimensions - self._k :] - 0.5
         g = 100.0 * (
             self._k + np.sum(tmp * tmp - np.cos(20.0 * np.pi * tmp), axis=1)
@@ -89,7 +77,7 @@ class DTLZ1(DTLZ):
             :, -1::-1
         ]
         values[:, 1:] *= 1.0 - xs[:, -self._k - 1 :: -1]
-        return values if len(values) > 1 else values[0]
+        return values
 
     def pareto_front(self, num=50) -> np.ndarray:
         if self._n_objectives == 2:
@@ -115,18 +103,22 @@ class DTLZ2(DTLZ):
     def name(self) -> str:
         return "DTLZ2"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        tmp = x[self._n_dimensions - self._k :] - 0.5
-        g = np.sum(tmp * tmp)
-        half_pi = 0.5 * math.pi
-        value = np.repeat(1.0 + g, self._n_objectives)
-        for i in range(self._n_objectives):
-            for j in range(self._n_objectives - i - 1):
-                value[i] *= math.cos(x[j] * half_pi)
-            if i > 0:
-                value[i] *= math.sin(x[self._n_objectives - i - 1] * half_pi)
-        return value
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
+        values = np.empty(shape=(len(xs), self._n_objectives))
+        for i in range(len(xs)):
+            tmp = xs[i, self._n_dimensions - self._k :] - 0.5
+            g = np.sum(tmp * tmp)
+            half_pi = 0.5 * math.pi
+            values[i, :] = np.repeat(1.0 + g, self._n_objectives)
+            for a in range(self._n_objectives):
+                for b in range(self._n_objectives - a - 1):
+                    values[i, a] *= math.cos(xs[i, b] * half_pi)
+                if a > 0:
+                    values[i, a] *= math.sin(
+                        xs[i, self._n_objectives - a - 1] * half_pi
+                    )
+        return values
 
     def pareto_front(self, num=50) -> np.ndarray:
         if self._n_objectives == 2:
@@ -152,18 +144,24 @@ class DTLZ3(DTLZ):
     def name(self) -> str:
         return "DTLZ3"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        tmp = x[self._n_dimensions - self._k :] - 0.5
-        g = 100.0 * (self._k + np.sum(tmp * tmp - np.cos(20.0 * np.pi * tmp)))
-        half_pi = 0.5 * math.pi
-        value = np.repeat(1.0 + g, self._n_objectives)
-        for i in range(self._n_objectives):
-            for j in range(self._n_objectives - i - 1):
-                value[i] *= math.cos(x[j] * half_pi)
-            if i > 0:
-                value[i] *= math.sin(x[self._n_objectives - i - 1] * half_pi)
-        return value
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
+        values = np.empty(shape=(len(xs), self._n_objectives))
+        for i in range(len(xs)):
+            tmp = xs[i, self._n_dimensions - self._k :] - 0.5
+            g = 100.0 * (
+                self._k + np.sum(tmp * tmp - np.cos(20.0 * np.pi * tmp))
+            )
+            half_pi = 0.5 * math.pi
+            values[i, :] = np.repeat(1.0 + g, self._n_objectives)
+            for a in range(self._n_objectives):
+                for b in range(self._n_objectives - a - 1):
+                    values[i, a] *= math.cos(xs[i, b] * half_pi)
+                if a > 0:
+                    values[i, a] *= math.sin(
+                        xs[i, self._n_objectives - a - 1] * half_pi
+                    )
+        return values
 
     def pareto_front(self, num=50) -> np.ndarray:
         if self._n_objectives == 2:
@@ -201,19 +199,23 @@ class DTLZ4(DTLZ):
     def name(self) -> str:
         return "DTLZ4"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        tmp = x[self._n_dimensions - self._k :] - 0.5
-        g = np.sum(tmp * tmp)
-        half_pi = 0.5 * math.pi
-        xm = x ** self._a
-        value = np.repeat(1.0 + g, self._n_objectives)
-        for i in range(self._n_objectives):
-            for j in range(self._n_objectives - i - 1):
-                value[i] *= math.cos(xm[j] * half_pi)
-            if i > 0:
-                value[i] *= math.sin(xm[self._n_objectives - i - 1] * half_pi)
-        return value
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
+        values = np.empty(shape=(len(xs), self._n_objectives))
+        xm = xs ** self._a
+        for i in range(len(xs)):
+            tmp = xs[i, self._n_dimensions - self._k :] - 0.5
+            g = np.sum(tmp * tmp)
+            half_pi = 0.5 * math.pi
+            values[i, :] = np.repeat(1.0 + g, self._n_objectives)
+            for a in range(self._n_objectives):
+                for b in range(self._n_objectives - a - 1):
+                    values[i, a] *= math.cos(xm[i, b] * half_pi)
+                if a > 0:
+                    values[i, a] *= math.sin(
+                        xm[i, self._n_objectives - a - 1] * half_pi
+                    )
+        return values
 
     def pareto_front(self, num=50) -> np.ndarray:
         if self._n_objectives == 2:
@@ -237,20 +239,22 @@ class DTLZ5(DTLZ):
     def name(self) -> str:
         return "DTLZ5"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        tmp = x[self._n_dimensions - self._k :] - 0.5
-        g = np.sum(tmp * tmp)
-        value = np.repeat(1.0 + g, self._n_objectives)
-        theta = np.repeat(np.pi / (4.0 * (1 + g)), self._n_dimensions)
-        theta[0] = x[0] * 0.5 * math.pi
-        theta[1:] *= 1.0 + 2.0 * g * x[1:]
-        for i in range(self._n_objectives):
-            for j in range(self._n_objectives - i - 1):
-                value[i] *= math.cos(theta[j])
-            if i > 0:
-                value[i] *= math.sin(theta[self._n_objectives - i - 1])
-        return value
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
+        values = np.empty(shape=(len(xs), self._n_objectives))
+        for i in range(len(xs)):
+            tmp = xs[i, self._n_dimensions - self._k :] - 0.5
+            g = np.sum(tmp * tmp)
+            values[i, :] = np.repeat(1.0 + g, self._n_objectives)
+            theta = np.repeat(np.pi / (4.0 * (1 + g)), self._n_dimensions)
+            theta[0] = xs[i, 0] * 0.5 * math.pi
+            theta[1:] *= 1.0 + 2.0 * g * xs[i, 1:]
+            for a in range(self._n_objectives):
+                for b in range(self._n_objectives - a - 1):
+                    values[i, a] *= math.cos(theta[b])
+                if a > 0:
+                    values[i, a] *= math.sin(theta[self._n_objectives - a - 1])
+        return values
 
 
 class DTLZ6(DTLZ):
@@ -267,19 +271,21 @@ class DTLZ6(DTLZ):
     def name(self) -> str:
         return "DTLZ6"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        g = np.sum(x[self._n_dimensions - self._k :] ** 0.1)
-        value = np.repeat(1.0 + g, self._n_objectives)
-        theta = np.repeat(np.pi / (4.0 * (1 + g)), self._n_dimensions)
-        theta[0] = x[0] * 0.5 * math.pi
-        theta[1:] *= 1.0 + 2.0 * g * x[1:]
-        for i in range(self._n_objectives):
-            for j in range(self._n_objectives - i - 1):
-                value[i] *= math.cos(theta[j])
-            if i > 0:
-                value[i] *= math.sin(theta[self._n_objectives - i - 1])
-        return value
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
+        values = np.array(shape=(len(xs), self._n_objectives))
+        for i in range(len(xs)):
+            g = np.sum(x[self._n_dimensions - self._k :] ** 0.1)
+            values[i, :] = np.repeat(1.0 + g, self._n_objectives)
+            theta = np.repeat(np.pi / (4.0 * (1 + g)), self._n_dimensions)
+            theta[0] = xs[i, 0] * 0.5 * math.pi
+            theta[1:] *= 1.0 + 2.0 * g * xs[i, 1:]
+            for a in range(self._n_objectives):
+                for b in range(self._n_objectives - a - 1):
+                    values[i, a] *= math.cos(theta[b])
+                if a > 0:
+                    values[i, a] *= math.sin(theta[self._n_objectives - a - 1])
+        return values
 
 
 class DTLZ7(DTLZ):
@@ -297,15 +303,21 @@ class DTLZ7(DTLZ):
     def name(self) -> str:
         return "DTLZ7"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        g = 1.0 + 9.0 * np.sum(x[self._n_dimensions - self._k :]) / self._k
-        value = np.copy(x[: self._n_objectives])
-        h = self._n_objectives - np.sum(
-            (value[:-1] / (1.0 + g)) * (1.0 + np.sin(3.0 * np.pi * value[:-1]))
-        )
-        value[-1] = (1.0 + g) * h
-        return value
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
+        values = np.empty(shape=(len(xs), self._n_objectives))
+        for i in range(len(xs)):
+            g = (
+                1.0
+                + 9.0 * np.sum(xs[i, self._n_dimensions - self._k :]) / self._k
+            )
+            values[i, :] = xs[i, : self._n_objectives]
+            h = self._n_objectives - np.sum(
+                (values[i, :-1] / (1.0 + g))
+                * (1.0 + np.sin(3.0 * np.pi * values[i, :-1]))
+            )
+            values[i, -1] = (1.0 + g) * h
+        return values
 
     def pareto_front(self, num=50) -> np.ndarray:
         if self._n_objectives == 2:
