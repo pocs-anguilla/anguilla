@@ -27,7 +27,7 @@ target_include_directories("_hypervolume" PRIVATE ${xtl_INCLUDE_DIRS})
 target_include_directories("_hypervolume" PRIVATE ${xtensor_INCLUDE_DIRS})
 target_link_libraries("_hypervolume" PUBLIC xtensor)
 target_link_libraries("_hypervolume" PUBLIC pyxtensor)
-install(TARGETS "_hypervolume" LIBRARY DESTINATION ".")
+install(TARGETS "_hypervolume" LIBRARY DESTINATION "hypervolume")
 
 #######################
 ### Dominance extension
@@ -49,7 +49,7 @@ target_include_directories("_dominance" PRIVATE ${xtl_INCLUDE_DIRS})
 target_include_directories("_dominance" PRIVATE ${xtensor_INCLUDE_DIRS})
 target_link_libraries("_dominance" PUBLIC xtensor)
 target_link_libraries("_dominance" PUBLIC pyxtensor)
-install(TARGETS "_dominance" LIBRARY DESTINATION ".")
+install(TARGETS "_dominance" LIBRARY DESTINATION "dominance")
 
 #####################
 ### Archive extension
@@ -67,7 +67,7 @@ target_compile_definitions("_archive" PRIVATE VERSION_INFO=${PROJECT_VERSION})
 target_include_directories("_archive" PRIVATE ${ANGUILLA_INCLUDE_DIRS})
 target_include_directories("_archive" PRIVATE ${BOOST_INCLUDE_DIRS})
 target_include_directories("_archive" PRIVATE ${SPATIAL_INCLUDE_DIRS})
-install(TARGETS "_archive" LIBRARY DESTINATION ".")
+install(TARGETS "_archive" LIBRARY DESTINATION "archive")
 
 ########################
 ### Optimizers extension
@@ -93,7 +93,7 @@ target_link_libraries("_optimizers" PUBLIC xtensor-blas)
 if(BLAS_FOUND)
   target_link_libraries("_optimizers" PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
-install(TARGETS "_optimizers" LIBRARY DESTINATION ".")
+install(TARGETS "_optimizers" LIBRARY DESTINATION "optimizers")
 
 ###############################################
 ### Bindings for Shark's Hypervolume (optional)
@@ -107,5 +107,5 @@ if(WITH_SHARK_BINDINGS)
     target_include_directories("_shark_hypervolume" PRIVATE ${ANGUILLA_INCLUDE_DIRS})
     target_link_libraries("_shark_hypervolume" PRIVATE ${SHARK_LIBRARIES})
     target_link_libraries("_shark_hypervolume" PRIVATE ${Boost_LIBRARIES})
-    install(TARGETS "_shark_hypervolume" LIBRARY DESTINATION ".")
+    install(TARGETS "_shark_hypervolume" LIBRARY DESTINATION "shark_hypervolume")
 endif()
