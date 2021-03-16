@@ -12,7 +12,7 @@ class CIGTAB(ObjectiveFunction):
     def __init__(
         self,
         n_dimensions: int = 2,
-        a: float = 1e6,
+        a: float = 1e3,
         rng: np.random.Generator = None,
         rotate: bool = True,
     ) -> None:
@@ -28,21 +28,8 @@ class CIGTAB(ObjectiveFunction):
     def qualified_name(self) -> str:
         return "{}(a={:.2E})".format(self.name, self._a)
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        y = self._rotation_matrix_y @ x
-        y *= y
-        z = self._rotation_matrix_z @ x - 2.0
-        z *= z
-        a_sqr = self._a * self._a
-        value = np.empty(self._n_objectives)
-        value[0] = y[0] + np.sum(self._a * y[1:-1]) + a_sqr * y[-1]
-        value[1] = z[0] + np.sum(self._a * z[1:-1]) + a_sqr * z[-1]
-        value /= self._scaler_inv
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         n_points = len(xs)
         ys = np.empty_like(xs)
         zs = np.empty_like(xs)
@@ -64,7 +51,7 @@ class CIGTAB(ObjectiveFunction):
             + a_sqr * zs[:, -1]
         )
         values /= self._scaler_inv
-        return values if n_points > 1 else values[0]
+        return values
 
 
 class CIGTAB1(CIGTAB):
