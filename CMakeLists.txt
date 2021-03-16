@@ -31,20 +31,11 @@ option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
 set(Python3_FIND_IMPLEMENTATIONS CPython)
 
 if(SKBUILD)
-  if(CONDA_BUILD)
+  if(DEFINED $ENV{CONDA_BUILD})
     set(Python3_EXECUTABLE $ENV{PYTHON})
   endif()
 
   find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
-
-  # Add site-packages to the search path
-  execute_process(
-    COMMAND
-      "${Python3_EXECUTABLE}" -c
-      "import pybind11; print(pybind11.get_cmake_dir())"
-    OUTPUT_VARIABLE _tmp_dir
-    OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
-  list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
 
   # Using skbuild's as CMake's FindPython3 isn't working consistently
   # across different platforms on CI builds.
@@ -54,6 +45,15 @@ if(SKBUILD)
 else()
   find_package(Python3 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 endif()
+
+# Add site-packages to the search path
+execute_process(
+  COMMAND
+    "${Python3_EXECUTABLE}" -c
+    "import pybind11; print(pybind11.get_cmake_dir())"
+  OUTPUT_VARIABLE _tmp_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
+list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
 
 message(STATUS "Found Python: ${Python3_INTERPRETER_ID}")
 
