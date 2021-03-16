@@ -56,6 +56,7 @@ jobs:
           CIBW_TEST_COMMAND_LINUX: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla --cov-report=xml && mkdir -p /output && mv coverage.xml /output"
           CIBW_TEST_COMMAND_WINDOWS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_TEST_COMMAND_MACOS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
+          CIBW_BEFORE_ALL_MACOS: "unset __PYVENV_LAUNCHER__"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} {wheel}"
           # Skip testing in Windows + Python 3.8+ due to DLL loading issues.
           CIBW_TEST_SKIP: "cp3{8,9}-win_amd64"
