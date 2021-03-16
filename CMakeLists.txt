@@ -27,19 +27,19 @@ option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
 ###############
 # Find Python 3
 
-if(DEFINED $ENV{CONDA_BUILD})
-  set(Python3_EXECUTABLE $ENV{PYTHON})
-else()
-  if(SKBUILD)
-    set(Python3_EXECUTABLE "${PYTHON_EXECUTABLE}")
-    set(Python3_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
-    set(Python3_LIBRARY "${PYTHON_LIBRARY}")
-    set(_DUMMY "${PYTHON_VERSION_STRING}")  # silence warning
-  endif()
-endif()
+#if(DEFINED $ENV{CONDA_BUILD})
+#  set(Python3_EXECUTABLE $ENV{PYTHON})
+#else()
+#  if(SKBUILD)
+#    set(Python3_EXECUTABLE "${PYTHON_EXECUTABLE}")
+#    set(Python3_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
+#    set(Python3_LIBRARY "${PYTHON_LIBRARY}")
+#    set(_DUMMY "${PYTHON_VERSION_STRING}")  # silence warning
+#  endif()
+#endif()
 
-set(Python3_FIND_IMPLEMENTATIONS CPython PyPy)
-find_package(Python3 COMPONENTS Interpreter REQUIRED)
+set(Python3_FIND_IMPLEMENTATIONS CPython)
+find_package(Python3 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 message(STATUS "Found Python: ${Python3_INTERPRETER_ID}")
 
 # Add site-packages to the search path
@@ -50,8 +50,6 @@ execute_process(
   OUTPUT_VARIABLE _tmp_dir
   OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
 list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
-
-find_package(Python3 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 
 execute_process(
   COMMAND
