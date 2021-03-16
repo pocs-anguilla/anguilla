@@ -125,8 +125,8 @@ set(BTREE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/btree/include")
 set(SPATIAL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/spatial/include")
 
 ## Xtensor
-add_subdirectory(vendor/cxx/xtl)
-add_subdirectory(vendor/cxx/xtensor)
+add_subdirectory(vendor/cxx/xtl EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/cxx/xtensor EXCLUDE_FROM_ALL)
 
 ### Xtensor BLAS
 if(NOT PORTABLE_BUILD)
@@ -141,14 +141,14 @@ else()
   message(STATUS "No BLAS found, will use FLENS + CXXBLAS.")
   add_definitions(-DXTENSOR_USE_FLENS_BLAS=1)
 endif()
-add_subdirectory(vendor/cxx/xtensor-blas)
+add_subdirectory(vendor/cxx/xtensor-blas EXCLUDE_FROM_ALL)
 
 ### Xtensor Python bindings
 #add_subdirectory(vendor/cxx/xtensor-python)
-add_subdirectory(vendor/cxx/pyxtensor)
+add_subdirectory(vendor/cxx/pyxtensor EXCLUDE_FROM_ALL)
 
 ### {fmt}
-add_subdirectory(vendor/cxx/fmt)
+add_subdirectory(vendor/cxx/fmt EXCLUDE_FROM_ALL)
 
 ### Anguilla CXX
 add_subdirectory(anguilla/cxx)

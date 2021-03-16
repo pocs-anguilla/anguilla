@@ -60,7 +60,13 @@ jobs:
           CIBW_TEST_COMMAND_MACOS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_TEST_COMMAND_WINDOWS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_BEFORE_ALL_MACOS: "unset __PYVENV_LAUNCHER__"
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} {wheel}"
+          CIBW_BEFORE_ALL_WINDOWS: "pip install delvewheel"
+          # See: https://github.com/joerick/cibuildwheel/issues/459
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
+            delvewheel repair
+            -v
+            --wheel-dir={dest_dir}
+            {wheel}
           # Skip testing in Windows + Python 3.8+ due to DLL loading issues.
           CIBW_TEST_SKIP: "cp3{8,9}-win_amd64"
 
