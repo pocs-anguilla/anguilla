@@ -23,10 +23,14 @@ class Samples:
 
 def get_sample(row: np.ndarray) -> Samples:
     start_point, end_point, start_fitness, end_fitness = row[0:4]
-    point = np.squeeze(row[int(start_point) : int(end_point)])
-    fitness = np.squeeze(row[int(start_fitness) : int(end_fitness)])
     n_dimensions = int(end_point - start_point)
     n_objectives = int(end_fitness - start_fitness)
+    point = np.reshape(
+        row[int(start_point) : int(end_point)], (-1, n_dimensions)
+    )
+    fitness = np.reshape(
+        row[int(start_fitness) : int(end_fitness)], (-1, n_objectives)
+    )
     return Samples(point, fitness, n_dimensions, n_objectives)
 
 
@@ -34,8 +38,8 @@ def get_samples(rows: np.ndarray) -> Samples:
     # Assumes all samples in the given rows have the same number of
     # dimensions and objectives
     start_point, end_point, start_fitness, end_fitness = rows[0, 0:4]
-    points = np.squeeze(rows[:, int(start_point) : int(end_point)])
-    fitness = np.squeeze(rows[:, int(start_fitness) : int(end_fitness)])
+    points = rows[:, int(start_point) : int(end_point)]
+    fitness = rows[:, int(start_fitness) : int(end_fitness)]
     n_dimensions = int(end_point - start_point)
     n_objectives = int(end_fitness - start_fitness)
     return Samples(points, fitness, n_dimensions, n_objectives)
@@ -160,14 +164,14 @@ class BaseTestFunction:
         fn(fn.random_points(1))
         self.assertTrue(
             fn.evaluation_count == 1,
-            "Evaluation count after single call failed, got {}.".format(
+            "Evaluation count after call with single point failed, got {}.".format(
                 fn.evaluation_count
             ),
         )
         fn(fn.random_points(11))
         self.assertTrue(
             fn.evaluation_count == 12,
-            "Evaluation count after multiple call failed, got {}.".format(
+            "Evaluation count after call with multiple points failed, got {}.".format(
                 fn.evaluation_count
             ),
         )
@@ -180,26 +184,18 @@ class BaseTestFunction:
         assert fn.n_dimensions == n_dimensions
         point = fn.random_points(1)
         points = fn.random_points(n_points)
-        expected_single = (fn.n_objectives,)
-        expected_multiple = (
-            (n_points, fn.n_objectives) if fn.n_objectives > 1 else (n_points,)
-        )
+        expected_single = (1, fn.n_objectives)
+        expected_multiple = (n_points, fn.n_objectives)
 
         value = fn(point)
-        if fn.n_objectives > 1:
-            computed = value.shape
-            self.assertTrue(
-                computed == expected_single,
-                "__call__, got: {}, expected: {}".format(
-                    computed,
-                    expected_single,
-                ),
-            )
-        else:
-            self.assertTrue(
-                isinstance(value, float),
-                "__call__, expected a scalar with type float",
-            )
+        computed = value.shape
+        self.assertTrue(
+            computed == expected_single,
+            "__call__, got: {}, expected: {}".format(
+                computed,
+                expected_single,
+            ),
+        )
 
         value = fn(points)
         computed = value.shape
@@ -212,49 +208,16 @@ class BaseTestFunction:
             ),
         )
 
-        value = fn.evaluate_single(point)
-        if fn.n_objectives > 1:
-            computed = value.shape
-            self.assertTrue(
-                computed == expected_single,
-                "evaluate_single, got: {}, expected: {}".format(
-                    computed,
-                    expected_single,
-                ),
-            )
-        else:
-            self.assertTrue(
-                isinstance(value, float),
-                "evaluate_single, expected a scalar with type float",
-            )
-
-        value = fn.evaluate_multiple(points)
+        _, value = fn.evaluate_with_penalty(point)
         computed = value.shape
         self.assertTrue(
-            computed == expected_multiple,
-            "evaluate_with_penalty, multiple points, "
+            computed == expected_single,
+            "evaluate_with_penalty, single point, "
             "got: {}, expected: {}".format(
                 computed,
-                expected_multiple,
+                expected_single,
             ),
         )
-
-        _, value = fn.evaluate_with_penalty(point)
-        if fn.n_objectives > 1:
-            computed = value.shape
-            self.assertTrue(
-                computed == expected_single,
-                "evaluate_with_penalty, single point, "
-                "got: {}, expected: {}".format(
-                    computed,
-                    expected_single,
-                ),
-            )
-        else:
-            self.assertTrue(
-                isinstance(value, float),
-                "evaluate_with_penalty, expected a scalar with type float",
-            )
 
         _, value = fn.evaluate_with_penalty(points)
         computed = value.shape
@@ -268,21 +231,15 @@ class BaseTestFunction:
         )
 
         value = fn.evaluate_with_constraints(point)
-        if fn.n_objectives > 1:
-            computed = value.shape
-            self.assertTrue(
-                computed == expected_single,
-                "evaluate_with_constraints, single point, "
-                "got: {}, expected: {}".format(
-                    computed,
-                    expected_single,
-                ),
-            )
-        else:
-            self.assertTrue(
-                isinstance(value, float),
-                "evaluate_with_constraints, expected a scalar with type float",
-            )
+        computed = value.shape
+        self.assertTrue(
+            computed == expected_single,
+            "evaluate_with_constraints, single point, "
+            "got: {}, expected: {}".format(
+                computed,
+                expected_single,
+            ),
+        )
 
         value = fn.evaluate_with_constraints(points)
         computed = value.shape
@@ -303,24 +260,9 @@ class BaseTestFunction:
             fn.n_objectives = 2
             fn.pareto_front()
 
+
 class BaseTestFunctionSimple(BaseTestFunction):
     """Test additional properties of the function implementation."""
-
-    def test_call_single_multiple(self):
-        fn = self.get_fn()
-        n_points = 10
-        xs = fn.random_points(n_points)
-        single_ys = np.empty((n_points, fn.n_objectives))
-        for i in range(n_points):
-            single_ys[i] = fn(xs[i])
-        multiple_ys = fn(xs)
-        if fn.n_objectives == 1:
-            single_ys = single_ys.squeeze()
-        self.assertTrue(single_ys.shape == multiple_ys.shape, "Got different shapes: {} and {}".format(
-            single_ys.shape,
-            multiple_ys.shape,
-        ))
-        self.assertTrue(np.allclose(single_ys, multiple_ys), "Got different values")
 
 
 class BaseTestFunctionWithSamples(BaseTestFunction):
@@ -344,7 +286,7 @@ class BaseTestFunctionWithSamples(BaseTestFunction):
             fn.n_dimensions = sample.n_dimensions
             fn.n_objectives = sample.n_objectives
             self.assertTrue(
-                np.allclose(fn.evaluate_single(sample.points), sample.fitness),
+                np.allclose(fn.evaluate(sample.points), sample.fitness),
                 f"Values don't match (row {i})",
             )
 
@@ -353,20 +295,11 @@ class BaseTestFunctionWithSamples(BaseTestFunction):
         samples = get_samples(self.data[5:])
         fn.n_dimensions = samples.n_dimensions
         fn.n_objectives = samples.n_objectives
+        result = fn.evaluate(samples.points)
         self.assertTrue(
-            np.allclose(fn.evaluate_multiple(samples.points), samples.fitness)
+            np.allclose(result, samples.fitness),
+            "Got: {}, expected: {}".format(result, samples.fitness),
         )
-
-    def test_single_multiple(self):
-        fn = self.get_fn()
-        for row in self.data:
-            sample = get_sample(row)
-            fn.n_dimensions = sample.n_dimensions
-            fn.n_objectives = sample.n_objectives
-            v1 = fn.evaluate_single(sample.points)
-            v2 = fn.evaluate_multiple(sample.points)
-            self.assertTrue(v1.shape == v2.shape, "Shapes don't match.")
-            self.assertTrue(np.allclose(v1, v2), "Values don't match.")
 
     def test_call(self):
         fn = self.get_fn()
@@ -375,50 +308,9 @@ class BaseTestFunctionWithSamples(BaseTestFunction):
         fn.n_objectives = samples.n_objectives
         self.assertTrue(
             np.allclose(fn(samples.points), samples.fitness),
-            "Call with multiple failed.",
+            "Call failed.",
         )
-        for point, fitness in zip(samples.points, samples.fitness):
-            self.assertTrue(
-                np.allclose(fn(point), fitness), "Call with single failed."
-            )
 
-
-class TestSphere(BaseTestFunctionWithSamples, unittest.TestCase):
-    """Unit tests for the Sphere function."""
-
-    filename = "Sphere.csv"
-    fn_cls = benchmark.Sphere
-
-class TestSumSquares(BaseTestFunctionSimple, unittest.TestCase):
-    """Unit tests for the SumSquares function."""
-
-    fn_cls = benchmark.SumSquares
-
-class TestRastrigin(BaseTestFunctionWithSamples, unittest.TestCase):
-    """Unit tests for the Rastrigin function."""
-
-    filename = "Rastrigin.csv"
-    fn_cls = benchmark.Rastrigin
-    fn_kwargs = {"rotate": False}
-
-class TestRastriginRotated(BaseTestFunctionSimple, unittest.TestCase):
-    """Unit tests for the Rastrigin function (with rotation matrix)."""
-
-    fn_cls = benchmark.Rastrigin
-    fn_kwargs = {"rotate": True}
-
-class TestEllipsoid(BaseTestFunctionWithSamples, unittest.TestCase):
-    """Unit tests for the Ellipsoid function."""
-
-    filename = "Ellipsoid.csv"
-    fn_cls = benchmark.Ellipsoid
-    fn_kwargs = {"rotate": False}
-
-class TestEllipsoidRotated(BaseTestFunctionSimple, unittest.TestCase):
-    """Unit tests for the Ellipsoid function (with rotation matrix)."""
-
-    fn_cls = benchmark.Ellipsoid
-    fn_kwargs = {"rotate": True}
 
 class TestFON(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the FON function."""
@@ -469,11 +361,13 @@ class TestIHR1(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.IHR1
     fn_kwargs = {"rotate": False}
 
+
 class TestIHR1Rotated(BaseTestFunctionSimple, unittest.TestCase):
     """Unit tests for the IHR1 function (with rotation matrix)."""
 
     fn_cls = benchmark.IHR1
     fn_kwargs = {"rotate": True}
+
 
 class TestIHR2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR2 function."""
@@ -482,11 +376,13 @@ class TestIHR2(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.IHR2
     fn_kwargs = {"rotate": False}
 
+
 class TestIHR2Rotated(BaseTestFunctionSimple, unittest.TestCase):
     """Unit tests for the IHR2 function (with rotation matrix)."""
 
     fn_cls = benchmark.IHR2
     fn_kwargs = {"rotate": True}
+
 
 class TestIHR3(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR3 function."""
@@ -495,11 +391,13 @@ class TestIHR3(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.IHR3
     fn_kwargs = {"rotate": False}
 
+
 class TestIHR3Rotated(BaseTestFunctionSimple, unittest.TestCase):
     """Unit tests for the IHR3 function (with rotation matrix)."""
 
     fn_cls = benchmark.IHR3
     fn_kwargs = {"rotate": True}
+
 
 class TestIHR4(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR4 function."""
@@ -508,11 +406,13 @@ class TestIHR4(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.IHR4
     fn_kwargs = {"rotate": False}
 
+
 class TestIHR4Rotated(BaseTestFunctionSimple, unittest.TestCase):
     """Unit tests for the IHR4 function (with rotation matrix)."""
 
     fn_cls = benchmark.IHR4
     fn_kwargs = {"rotate": True}
+
 
 class TestIHR6(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the IHR6 function."""
@@ -521,11 +421,13 @@ class TestIHR6(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.IHR6
     fn_kwargs = {"rotate": False}
 
+
 class TestIHR6Rotated(BaseTestFunctionSimple, unittest.TestCase):
     """Unit tests for the IHR6 function (with rotation matrix)."""
 
     fn_cls = benchmark.IHR6
     fn_kwargs = {"rotate": True}
+
 
 class TestELLI1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ELLI1 function."""
@@ -534,11 +436,13 @@ class TestELLI1(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.ELLI1
     fn_kwargs = {"rotate": False}
 
+
 class TestELLI1Rotated(BaseTestFunctionSimple, unittest.TestCase):
     """Unit tests for the ELLI1 function (with rotation matrix)."""
 
     fn_cls = benchmark.ELLI1
     fn_kwargs = {"rotate": True}
+
 
 class TestELLI2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the ELLI2 function."""
@@ -547,11 +451,13 @@ class TestELLI2(BaseTestFunctionWithSamples, unittest.TestCase):
     fn_cls = benchmark.ELLI2
     fn_kwargs = {"rotate": False}
 
+
 class TestELLI2Rotated(BaseTestFunctionSimple, unittest.TestCase):
     """Unit tests for the ELLI2 function (with rotation matrix)."""
 
     fn_cls = benchmark.ELLI2
     fn_kwargs = {"rotate": True}
+
 
 class TestGELLI(BaseTestFunctionSimple, unittest.TestCase):
     fn_cls = benchmark.GELLI
@@ -562,7 +468,8 @@ class TestCIGTAB1(BaseTestFunctionWithSamples, unittest.TestCase):
 
     filename = "CIGTAB1.csv"
     fn_cls = benchmark.CIGTAB1
-    fn_kwargs = {"rotate": False}
+    fn_kwargs = {"rotate": False, "a": 1e6}
+
 
 class TestCIGTAB1Rotated(BaseTestFunctionSimple, unittest.TestCase):
     """Unit tests for the CIGTAB1 function (with rotation matrix)."""
@@ -570,18 +477,21 @@ class TestCIGTAB1Rotated(BaseTestFunctionSimple, unittest.TestCase):
     fn_cls = benchmark.CIGTAB1
     fn_kwargs = {"rotate": True}
 
+
 class TestCIGTAB2(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the CIGTAB2 function."""
 
     filename = "CIGTAB2.csv"
     fn_cls = benchmark.CIGTAB2
-    fn_kwargs = {"rotate": False}
+    fn_kwargs = {"rotate": False, "a": 1e6}
+
 
 class TestCIGTAB2Rotated(BaseTestFunctionSimple, unittest.TestCase):
     """Unit tests for the CIGTAB2 function (with rotation matrix)."""
 
     fn_cls = benchmark.CIGTAB2
     fn_kwargs = {"rotate": True}
+
 
 class TestDTLZ1(BaseTestFunctionWithSamples, unittest.TestCase):
     """Unit tests for the DTLZ1 function."""
@@ -678,8 +588,8 @@ class TestConstrainedEvaluation(unittest.TestCase):
         def name(self):
             return "constrained identity"
 
-        def evaluate_single(self, x):
-            return x
+        def evaluate(self, xs: np.ndarray, count: bool = True):
+            return np.copy(xs)
 
         def _post_update_n_dimensions(self) -> None:
             lower_bound = np.array([-3.0, -4.0, -5.0])
@@ -692,8 +602,8 @@ class TestConstrainedEvaluation(unittest.TestCase):
         """Test evaluation of point that should be penalized."""
         penalty = 1e-6
         fn = TestConstrainedEvaluation.ContrainedIdentity()
-        x = np.array([6.0, 1.0, -6.0])
-        x_feasible = np.array([5.0, 1.0, -5.0])
+        x = np.array([[6.0, 1.0, -6.0]])
+        x_feasible = np.array([[5.0, 1.0, -5.0]])
         y_expected = x_feasible + penalty
         y_constrained, y_penalized = fn.evaluate_with_penalty(
             x, penalty=penalty
@@ -718,7 +628,7 @@ class TestConstrainedEvaluation(unittest.TestCase):
         """Test evaluation of point within constraints."""
         penalty = 1e-6
         fn = TestConstrainedEvaluation.ContrainedIdentity()
-        x = np.array([1.0, -2.0, 3.0])
+        x = np.array([[1.0, -2.0, 3.0]])
         y_constrained, y_penalized = fn.evaluate_with_penalty(
             x, penalty=penalty
         )
