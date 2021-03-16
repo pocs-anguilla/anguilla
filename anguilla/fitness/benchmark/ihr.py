@@ -107,15 +107,17 @@ class IHR1(IHR):
     def name(self) -> str:
         return "IHR1"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         n = self._n_dimensions
-        y = self._rotation_matrix @ x
-        value = np.array([abs(y[0]), 0.0])
-        h = _h(y[0], n)
-        g = _ihr_g(y, n)
-        value[1] = g * _h_f(1.0 - math.sqrt(h / g), y[0], self._y_max)
-        return value
+        values = np.empty(shape=(len(xs), self.n_objectives))
+        for i in range(len(xs)):
+            y = self._rotation_matrix @ xs[i]
+            values[i, :] = np.array([abs(y[0]), 0.0])
+            h = _h(y[0], n)
+            g = _ihr_g(y, n)
+            values[i, 1] = g * _h_f(1.0 - math.sqrt(h / g), y[0], self._y_max)
+        return values
 
 
 class IHR2(IHR):
@@ -132,15 +134,17 @@ class IHR2(IHR):
     def name(self) -> str:
         return "IHR2"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         n = self._n_dimensions
-        y = self._rotation_matrix @ x
-        value = np.array([abs(y[0]), 0.0])
-        g = _ihr_g(y, n)
-        tmp = y[0] / g
-        value[1] = g * _h_f(1.0 - tmp * tmp, value[0], self._y_max)
-        return value
+        values = np.empty(shape=(len(xs), self._n_objectives))
+        for i in range(len(xs)):
+            y = self._rotation_matrix @ xs[i]
+            values[i, :] = np.array([abs(y[0]), 0.0])
+            g = _ihr_g(y, n)
+            tmp = y[0] / g
+            values[i, 1] = g * _h_f(1.0 - tmp * tmp, values[i, 0], self._y_max)
+        return values
 
 
 class IHR3(IHR):
@@ -157,19 +161,21 @@ class IHR3(IHR):
     def name(self) -> str:
         return "IHR3"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         n = self._n_dimensions
-        y = self._rotation_matrix @ x
-        value = np.array([abs(y[0]), 0.0])
-        h = _h(y[0], n)
-        g = _ihr_g(y, n)
-        tmp1 = h / g
-        tmp2 = tmp1 * math.sin(10.0 * math.pi * y[0])
-        value[1] = g * _h_f(
-            1.0 - math.sqrt(tmp1) - tmp2, value[0], self._y_max
-        )
-        return value
+        values = np.empty(shape=(len(xs), self._n_objectives))
+        for i in range(len(xs)):
+            y = self._rotation_matrix @ xs[i]
+            values[i, :] = np.array([abs(y[0]), 0.0])
+            h = _h(y[0], n)
+            g = _ihr_g(y, n)
+            tmp1 = h / g
+            tmp2 = tmp1 * math.sin(10.0 * math.pi * y[0])
+            values[i, 1] = g * _h_f(
+                1.0 - math.sqrt(tmp1) - tmp2, values[i, 0], self._y_max
+            )
+        return values
 
 
 class IHR4(IHR):
@@ -186,19 +192,23 @@ class IHR4(IHR):
     def name(self) -> str:
         return "IHR4"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         n = self._n_dimensions
-        y = self._rotation_matrix @ x
-        value = np.array([abs(y[0]), 0.0])
-        h = _h(y[0], n)
-        g = (
-            1.0
-            + 10.0 * (n - 1)
-            + np.sum(y[1:] * y[1:] - 10.0 * np.cos(4.0 * np.pi * y[1:]))
-        )
-        value[1] = g * _h_f(1.0 - math.sqrt(h / g), value[0], self._y_max)
-        return value
+        values = np.empty(shape=(len(xs), self._n_objectives))
+        for i in range(len(xs)):
+            y = self._rotation_matrix @ xs[i]
+            values[i, :] = np.array([abs(y[0]), 0.0])
+            h = _h(y[0], n)
+            g = (
+                1.0
+                + 10.0 * (n - 1)
+                + np.sum(y[1:] * y[1:] - 10.0 * np.cos(4.0 * np.pi * y[1:]))
+            )
+            values[i, 1] = g * _h_f(
+                1.0 - math.sqrt(h / g), values[i, 0], self._y_max
+            )
+        return values
 
 
 class IHR6(IHR):
@@ -215,18 +225,19 @@ class IHR6(IHR):
     def name(self) -> str:
         return "IHR6"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         n = self._n_dimensions
-        y = self._rotation_matrix @ x
-        value = np.zeros(2)
-        value[0] = 1.0 - math.exp(-4.0 * abs(y[0])) * math.pow(
-            math.sin(6.0 * math.pi * y[0]), 6
-        )
-        g = 1.0 + 9.0 * math.pow(np.sum(_h_g(y[1:])) / (n - 1), 0.25)
-        tmp = value[0] / g
-        value[1] = g * _h_f(1.0 - (tmp * tmp), abs(y[0]), self._y_max)
-        return value
+        values = np.zeros(shape=(len(xs), self._n_objectives))
+        for i in range(len(xs)):
+            y = self._rotation_matrix @ xs[i]
+            values[i, 0] = 1.0 - math.exp(-4.0 * abs(y[0])) * math.pow(
+                math.sin(6.0 * math.pi * y[0]), 6
+            )
+            g = 1.0 + 9.0 * math.pow(np.sum(_h_g(y[1:])) / (n - 1), 0.25)
+            tmp = values[i, 0] / g
+            values[i, 1] = g * _h_f(1.0 - (tmp * tmp), abs(y[0]), self._y_max)
+        return values
 
 
 __all__ = [
