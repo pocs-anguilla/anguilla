@@ -158,7 +158,7 @@ PYBIND11_MODULE(_optimizers, m) {
         .def_readonly("z", &ag::optimizers::MOPopulation<f8>::z,
                       py::return_value_policy::reference_internal)
         .def_readonly("parent_index",
-                      &ag::optimizers::MOPopulation<f8>::parentIndex,
+                      &ag::optimizers::MOPopulation<f8>::parentIdx,
                       py::return_value_policy::reference_internal);
 #ifdef VERSION_INFO
     m.attr("__version__") = Py_STRINGIFY(VERSION_INFO);
