@@ -446,6 +446,7 @@ class MOCMA {
         auto parentIdx = m_population.parentIdx;
         auto offspringIdx = xt::arange<std::size_t>(m_nParents, m_nIndividuals);
         // Perform mutation of the parents chosen to reproduce.
+        // See also: [2008:shark] https://git.io/JqhW7
         m_population.lastZ = xt::random::randn<T>(m_population.lastZ.shape(),
                                                   0.0, 1.0, m_randomEngine);
         for (auto i = 0U; i != m_nOffspring; i++) {
@@ -464,6 +465,9 @@ class MOCMA {
         // Smoothed probability of success.
         xt::view(m_population.pSucc, xt::keep(offspringIdx), xt::all()) =
             xt::view(m_population.pSucc, xt::keep(parentIdx), xt::all());
+        // Evolution path.
+        xt::view(m_population.pC, xt::keep(offspringIdx), xt::all()) =
+            xt::view(m_population.pC, xt::keep(parentIdx), xt::all());
         // Covariance Cholesky factor.
         xt::view(m_population.cov, xt::keep(offspringIdx), xt::all(),
                  xt::all()) = xt::view(m_population.cov, xt::keep(parentIdx),
