@@ -63,7 +63,7 @@ jobs:
           CIBW_BEFORE_ALL_WINDOWS: "python -m pip install delvewheel"
           # See: https://github.com/joerick/cibuildwheel/issues/459
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
-            python -m delvewheel repair
+            delvewheel repair
             -v
             --wheel-dir={dest_dir}
             {wheel}
