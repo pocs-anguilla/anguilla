@@ -181,7 +181,7 @@ class TestMOCMA(unittest.TestCase):
     def test_ask(self):
         """Test that the ask method runs without errors."""
         rng = np.random.default_rng(0)
-        n = 3
+        n = 100
         points = rng.uniform(size=(n, 5))
         fitness = rng.uniform(size=(n, 2))
         optimizer = MOCMA(
@@ -199,6 +199,15 @@ class TestMOCMA(unittest.TestCase):
         self.assertTrue(
             np.all(result == expected),
             "parent indices, got: {}, expected: {}".format(result, expected),
+        )
+        # Test that no numbers are infinite or NaN
+        self.assertFalse(
+            np.any(np.isinf(points)),
+            "Got infinite values: {}".format(points),
+        )
+        self.assertFalse(
+            np.any(np.isnan(points)),
+            "Got NaN values: {}".format(points),
         )
         # Test that the mutation works as expected
         result = points[0]

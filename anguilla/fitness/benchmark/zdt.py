@@ -29,21 +29,13 @@ class ZDT1(ObjectiveFunction):
     def name(self) -> str:
         return "ZDT1"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        value = np.empty(self._n_objectives)
-        value[0] = x[0]
-        g = 1.0 + 9.0 * np.average(x[1:])
-        value[1] = g * (1.0 - math.sqrt(x[0] / g))
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count)
         values = np.empty((len(xs), self._n_objectives))
         values[:, 0] = xs[:, 0]
         g = 1.0 + 9.0 * np.average(xs[:, 1:], axis=1)
         values[:, 1] = g * (1.0 - np.sqrt(xs[:, 0] / g))
-        return values if len(xs) > 1 else values[0]
+        return values
 
     def pareto_front(self, num=50) -> np.ndarray:
         y1 = np.linspace(0.0, 1.0, num, True)
