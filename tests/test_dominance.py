@@ -1,7 +1,5 @@
 """Testsuite for the :py:mod:`dominance` module."""
-import dataclasses
 import unittest
-import typing
 
 import numpy as np
 

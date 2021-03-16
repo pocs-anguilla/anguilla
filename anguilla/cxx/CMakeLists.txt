@@ -94,18 +94,3 @@ if(BLAS_FOUND)
   target_link_libraries("_optimizers" PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 install(TARGETS "_optimizers" LIBRARY DESTINATION "optimizers")
-
-###############################################
-### Bindings for Shark's Hypervolume (optional)
-
-if(WITH_SHARK_BINDINGS)
-    find_package(Shark REQUIRED)
-    include(${SHARK_USE_FILE})
-    find_package(Boost REQUIRED COMPONENTS regex system filesystem serialization)
-
-    pybind11_add_module("_shark_hypervolume" MODULE "src/_shark_hypervolume.cpp")
-    target_include_directories("_shark_hypervolume" PRIVATE ${ANGUILLA_INCLUDE_DIRS})
-    target_link_libraries("_shark_hypervolume" PRIVATE ${SHARK_LIBRARIES})
-    target_link_libraries("_shark_hypervolume" PRIVATE ${Boost_LIBRARIES})
-    install(TARGETS "_shark_hypervolume" LIBRARY DESTINATION "shark_hypervolume")
-endif()

@@ -1,11 +1,8 @@
 """Testsuite for the :py:mod:`optimizers` package."""
-import pathlib
 import math
 import unittest
-from typing import Any, Optional
 
 import numpy as np
-from numpy.linalg import cholesky
 
 from anguilla.optimizers import (
     MOParameters,
