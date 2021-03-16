@@ -47,7 +47,7 @@ auto selection(const xt::xtensor<T, 2U>& points,
     int nPendingSelect = (int)targetSize;
     std::size_t rank = 1U;
     while (nPendingSelect > 0) {
-        // xt::from_indices returns a 2D tensor when front has size > 1
+        // xt::from_indices returns a 2D tensor when the front has size > 1
         // so we need to use xt::squeeze
         const auto front =
             xt::squeeze(xt::from_indices(xt::argwhere(xt::equal(ranks, rank))));
@@ -63,7 +63,7 @@ auto selection(const xt::xtensor<T, 2U>& points,
             xt::index_view(selected, front) = true;
             nPendingSelect = 0;
             // Otherwise
-            // We select the rest of pending individuals among individuals
+            // We select the rest of the pending individuals among individuals
             // in the current front by discarding the least contributors.
             // See also Lemma 1 in page 11 of [2007:mo-cma-es].
             if (diff < 0) {

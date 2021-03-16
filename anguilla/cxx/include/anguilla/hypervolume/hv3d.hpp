@@ -3,11 +3,6 @@
 #ifndef ANGUILLA_HYPERVOLUME_HV3D_HPP
 #define ANGUILLA_HYPERVOLUME_HV3D_HPP
 
-// PyBind11
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
-
 // STL
 #include <algorithm>
 #include <map>
@@ -18,11 +13,14 @@ namespace py = pybind11;
 #include <memory_resource>
 #endif
 
+// PyBind11
+#include <pybind11/stl.h>
+
+// Xtensor
+#include <xtensor/xtensor.hpp>
+
 // Btree
 #include <btree/map.h>
-
-// Anguilla
-#include <anguilla/common/common.hpp>
 
 /* REFERENCES
 
@@ -41,8 +39,8 @@ A. P. Guerreiro, C. M. Fonseca, & L. Paquete. (2020).
 The Hypervolume Indicator: Problems and Algorithms.
 */
 
-/* Public interface */
 namespace hv3d {
+/* Public interface */
 static constexpr const char* docstring = R"_(
     Calculate the exact hypervolume indicator for a set of 3-D points
 
@@ -72,7 +70,7 @@ static constexpr const char* docstring = R"_(
 
     The following figure shows an example of how the algorithm is \
     transformed for working with a minimization problem. Note that \
-    in both cases, the x-coordinates are assumed to be sorted in \
+    in both cases the x-coordinates are assumed to be sorted in \
     ascending order.
 
     .. image:: /figures/hv3d_min.png
@@ -101,32 +99,40 @@ template <typename T> using BTreeMap = btree::map<T, T>;
 #endif
 
 template <typename T, class Map = BTreeMap<T>>
-[[nodiscard]] auto calculate(const py::array_t<T>& _points,
-                             const std::optional<py::array_t<T>>& _reference,
-                             bool ignoreDominated = false);
-
-} // namespace hv3d
+[[nodiscard]] T
+calculate(const xt::xtensor<T, 2U>& inputPoints,
+          const std::optional<xt::xtensor<T, 1U>>& inputReference,
+          bool ignoreDominated = false);
 
 /* Internal interface */
-namespace __hv3d {
+namespace internal {
+template <typename T> struct Point3D {
+    Point3D(T x = std::numeric_limits<T>::signaling_NaN(),
+            T y = std::numeric_limits<T>::signaling_NaN(),
+            T z = std::numeric_limits<T>::signaling_NaN())
+        : x(x), y(y), z(z) {}
+    Point3D<T>& operator=(const Point3D<T>& other) = default;
+
+    T x;
+    T y;
+    T z;
+};
+
 template <typename T, class Map>
-[[nodiscard]] auto calculate(const std::vector<Point3D<T>>& points,
-                             const T refX, const T refY, const T refZ);
-}
+[[nodiscard]] T calculate(const std::vector<Point3D<T>>& points, const T refX,
+                          const T refY, const T refZ);
+} // namespace internal
 
 /* Implementation of public interface. */
-namespace hv3d {
 template <typename T, class Map>
-auto calculate(const py::array_t<T>& _points,
-               const std::optional<py::array_t<T>>& _reference,
-               bool ignoreDominated) {
+T calculate(const xt::xtensor<T, 2U>& inputPoints,
+            const std::optional<xt::xtensor<T, 1U>>& inputReference,
+            bool ignoreDominated) {
     static_assert(
         std::is_floating_point<T>::value,
         "HV3D is not meant to be instantiated with a non floating point type.");
 
-    const auto pointsR = _points.template unchecked<2>();
-    const auto n = static_cast<std::size_t>(pointsR.shape(0));
-
+    const std::size_t n = inputPoints.shape(0U);
     if (n == 0U) {
         return 0.0;
     }
@@ -135,22 +141,21 @@ auto calculate(const py::array_t<T>& _points,
     T refX = lowest;
     T refY = lowest;
     T refZ = lowest;
-    const bool refGiven = _reference.has_value();
+    const bool refGiven = inputReference.has_value();
 
     if (refGiven) {
-        const auto referenceR = _reference->template unchecked<1>();
-        refX = referenceR(0);
-        refY = referenceR(1);
-        refZ = referenceR(2);
+        refX = (*inputReference)[0U];
+        refY = (*inputReference)[1U];
+        refZ = (*inputReference)[2U];
     }
 
-    std::vector<Point3D<T>> points;
+    std::vector<internal::Point3D<T>> points;
     points.reserve(n);
 
     for (std::size_t i = 0U; i < n; ++i) {
-        const auto pX = pointsR(i, 0);
-        const auto pY = pointsR(i, 1);
-        const auto pZ = pointsR(i, 2);
+        const auto pX = inputPoints(i, 0U);
+        const auto pY = inputPoints(i, 1U);
+        const auto pZ = inputPoints(i, 2U);
 
         if (refGiven && ignoreDominated) {
             if (pX < refX && pY < refY && pZ < refZ) {
@@ -170,20 +175,19 @@ auto calculate(const py::array_t<T>& _points,
     std::sort(points.begin(), points.end(),
               [](auto const& lhs, auto const& rhs) { return lhs.z < rhs.z; });
 
-    return __hv3d::calculate<T, Map>(points, refX, refY, refZ);
+    return internal::calculate<T, Map>(points, refX, refY, refZ);
 }
-} // namespace hv3d
 
-namespace __hv3d {
+namespace internal {
 template <typename T, class Map>
-auto calculate(const std::vector<Point3D<T>>& points, const T refX,
-               const T refY, const T refZ) {
+T calculate(const std::vector<Point3D<T>>& points, const T refX, const T refY,
+            const T refZ) {
     // Note: assumes the points are received sorted in ascending order by
     // z-component.
 
     // The algorithm works by performing sweeping in the z-axis,
     // and it uses a tree with balanced height as its sweeping structure
-    // (e.g. an AVL tree or red-black tree) in which the keys are
+    // (e.g. an AVL tree or a Red-Black tree) in which the keys are
     // the x-coordinates and the values are the y-coordinates.
     // See p. 6 of [2009:hypervolume-hv3d].
 
@@ -204,7 +208,7 @@ auto calculate(const std::vector<Point3D<T>>& points, const T refX,
     front.try_emplace(lowest, refY);
     front.try_emplace(refX, lowest);
 
-    // The first point from the set is added.
+    // The first point from the set is added...
     const auto [pX, pY, pZ] = points[0U];
     T lastZ = pZ;
     front.try_emplace(pX, pY);
@@ -212,7 +216,7 @@ auto calculate(const std::vector<Point3D<T>>& points, const T refX,
     T area = (refX - pX) * (refY - pY);
     T volume = 0.0;
 
-    // and then the rest of the points are processed
+    // ...and then the rest of the points are processed.
     for (std::size_t i = 1U, n = points.size(); i < n; i++) {
         const auto [pX, pY, pZ] = points[i];
 
@@ -263,6 +267,7 @@ auto calculate(const std::vector<Point3D<T>>& points, const T refX,
     volume += area * (refZ - lastZ);
     return volume;
 }
-} // namespace __hv3d
+} // namespace internal
+} // namespace hv3d
 
 #endif // ANGUILLA_HYPERVOLUME_HV3D_HPP

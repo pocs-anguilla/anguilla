@@ -7,7 +7,12 @@ import numpy as np
 
 from typing import Any, Optional
 
-from anguilla.hypervolume import calculate, contributions, contributions_naive
+from anguilla.hypervolume import (
+    calculate,
+    contributions,
+    contributions_naive,
+    hvkd_f8,
+)
 from anguilla.hypervolume.exact import hv2d as hv2d_prototype
 from anguilla.hypervolume.exact import hv3d as hv3d_prototype
 from anguilla.hypervolume.exact import hvkd as hvkd_prototype
@@ -89,7 +94,7 @@ class TestHVKD(unittest.TestCase):
         front = random_cliff_3d(25)
         nadir = np.max(front, axis=0)
         vol_a = calculate(front, nadir)
-        vol_b = hvkd_prototype(front, nadir)
+        vol_b = hvkd_f8(front, nadir)
         self.assertTrue(
             math.isclose(vol_a, vol_b),
             "expected: {}, got: {}".format(vol_a, vol_b),
@@ -99,7 +104,7 @@ class TestHVKD(unittest.TestCase):
         front = random_convex_front(25, 3)
         nadir = np.max(front, axis=0)
         vol_a = calculate(front, nadir)
-        vol_b = hvkd_prototype(front, nadir)
+        vol_b = hvkd_f8(front, nadir)
         self.assertTrue(
             math.isclose(vol_a, vol_b),
             "expected: {}, got: {}".format(vol_a, vol_b),
@@ -109,7 +114,7 @@ class TestHVKD(unittest.TestCase):
         front = random_concave_front(25, 3)
         nadir = np.max(front, axis=0)
         vol_a = calculate(front, nadir)
-        vol_b = hvkd_prototype(front, nadir)
+        vol_b = hvkd_f8(front, nadir)
         self.assertTrue(
             math.isclose(vol_a, vol_b),
             "expected: {}, got: {}".format(vol_a, vol_b),
@@ -119,7 +124,7 @@ class TestHVKD(unittest.TestCase):
         front = random_linear_front(25, 3)
         nadir = np.max(front, axis=0)
         vol_a = calculate(front, nadir)
-        vol_b = hvkd_prototype(front, nadir)
+        vol_b = hvkd_f8(front, nadir)
         self.assertTrue(
             math.isclose(vol_a, vol_b),
             "expected: {}, got: {}".format(vol_a, vol_b),
@@ -155,7 +160,7 @@ class TestOther(unittest.TestCase):
         """Test the 2-D implementation using the naive implementation."""
         _, _, front, nadir = random_2d_3d_front(10, dominated=False)
         contrib_a = contributions_naive(front, nadir)
-        contrib_b = contributions(front, nadir, non_dominated=True)
+        contrib_b = contributions(front, nadir)
         self.assertTrue(np.allclose(contrib_a, contrib_b))
 
     def test_2d_3d(self) -> None:
@@ -164,7 +169,7 @@ class TestOther(unittest.TestCase):
             10, dominated=False
         )
         contrib_a = contributions(front_3d, nadir_3d)
-        contrib_b = contributions(front_2d, nadir_2d, non_dominated=True)
+        contrib_b = contributions(front_2d, nadir_2d)
         self.assertTrue(np.allclose(contrib_a, contrib_b))
 
     def test_auto_refpoint_computation(self) -> None:
@@ -173,16 +178,3 @@ class TestOther(unittest.TestCase):
         contrib_a = contributions(points, reference)
         contrib_b = contributions(points)
         self.assertTrue(np.allclose(contrib_a, contrib_b))
-
-
-# class TestHVIndicator(unittest.TestCase):
-#    """HV indicator tests."""
-#
-#    def test_least_contributors(self) -> None:
-#        front = random_concave_front(100, 3)
-#        indicator = HypervolumeIndicator()
-#        a = indicator.least_contributors(front, 20)
-#        b = indicator.least_contributors_old(front, 20)
-#        self.assertTrue(
-#            np.all(sorted(a) == sorted(b)), f"a: {sorted(a)}, b: {sorted(b)}"
-#        )

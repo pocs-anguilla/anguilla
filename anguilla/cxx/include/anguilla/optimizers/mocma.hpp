@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <ctime>
+#include <iostream>
 #include <optional>
 #include <stdexcept>
 
@@ -187,6 +188,8 @@ template <typename T> struct MOPopulation {
           point(xt::empty<T>({nIndividuals, nDimensions})),
           fitness(xt::empty<T>({nIndividuals, nObjectives})),
           penalizedFitness(xt::empty<T>({nIndividuals, nObjectives})),
+          rank(xt::ones_like(
+              xt::xtensor<T, 2U>::from_shape({nIndividuals, 1U}))),
           stepSize(xt::full_like(
               xt::xtensor<T, 2U>::from_shape({nIndividuals, 1U}), stepSize)),
           pSucc(xt::full_like(
@@ -198,41 +201,6 @@ template <typename T> struct MOPopulation {
           parentIndex(
               xt::zeros_like(xt::xtensor<T, 1U>::from_shape({nOffspring}))) {}
 
-    auto allRange() { return xt::range(0, nIndividuals); }
-
-    auto parentRange() { return xt::range(0, nParents); }
-
-    auto offspringRange() { return xt::range(nParents, nIndividuals); }
-
-    // See: https://git.io/JqWUd
-    template <class S> auto pointView(S&& slice) {
-        return xt::view(point, slice, xt::all());
-    }
-
-    template <class S> auto fitnessView(S&& slice) {
-        return xt::view(fitness, slice, xt::all());
-    }
-
-    template <class S> auto penalizedFitnessView(S&& slice) {
-        return xt::view(penalizedFitness, slice, xt::all());
-    }
-
-    template <class S> auto stepSizeView(S&& slice) {
-        return xt::view(stepSize, slice, xt::all());
-    }
-
-    template <class S> auto pSuccView(S&& slice) {
-        return xt::view(pSucc, slice, xt::all());
-    }
-
-    template <class S> auto pCView(S&& slice) {
-        return xt::view(pC, slice, xt::all());
-    }
-
-    template <class S> auto covView(S&& slice) {
-        return xt::view(cov, slice, xt::all(), xt::all());
-    }
-
     std::size_t nParents;
     std::size_t nOffspring;
     std::size_t nIndividuals;
@@ -242,35 +210,30 @@ template <typename T> struct MOPopulation {
     xt::xtensor<T, 2U> fitness;
     // The penalized objective points
     xt::xtensor<T, 2U> penalizedFitness;
+    // The non-domination ranks.
+    xt::xtensor<std::size_t, 1U> rank;
     // The step sizes.
     xt::xtensor<T, 2U> stepSize;
     // The smoothed probabilities of success.
     xt::xtensor<T, 2U> pSucc;
     // The samples used to mutate the parent points.
     xt::xtensor<T, 2U> z;
-    // The covariance adaptation evolution path.
+    // The covariance adaptation evolution paths.
     xt::xtensor<T, 2U> pC;
     // The covariance matrices.
     xt::xtensor<T, 3U> cov;
     // The parent indices.
-    xt::xtensor<T, 1U> parentIndex;
+    xt::xtensor<std::size_t, 1U> parentIndex;
 };
 
 template <typename T> constexpr auto square(T x) { return x * x; }
-
-template <typename T>
-constexpr auto matrix(xt::xtensor<T, 3U> A, std::size_t idx) {
-    // Selects a matrix from a 3D array.
-    // Similar to xt::row but for 3D arrays.
-    return xt::view(A, idx, xt::all(), xt::all());
-}
 
 template <typename T>
 auto choleskyUpdate(const xt::xtensor<T, 2U>& L, T alpha, T beta,
                     const xt::xtensor<T, 1U>& v) -> xt::xtensor<T, 2U> {
     // Algorithm 3.1, p.3, [2015:efficient-rank1-update]
     // Computes the updated Cholesky factor L' of alpha * A + beta * vv.T
-    // Here using a port of Shark's implementation which is based on Eigen's
+    // Here using a port of Shark's implementation, which is based on Eigen's
     // implementation.
     // Shark: https://git.io/JqgKP
     // Eigen: https://bit.ly/30JTzXQ
@@ -295,7 +258,7 @@ auto choleskyUpdate(const xt::xtensor<T, 2U>& L, T alpha, T beta,
         const T x = dj + swj2 / b;
 
         if (x <= (T)0.0) {
-            throw std::runtime_error("update makes matrix indefinite");
+            throw std::runtime_error("Update makes matrix indefinite");
         }
 
         const T nLjj = std::sqrt(x);
@@ -372,11 +335,12 @@ class MOCMA {
           std::optional<T> targetIndicatorValue = std::nullopt,
           std::optional<MOParameters<T>> parameters = std::nullopt,
           std::optional<SeedType> seed = std::nullopt)
-        : m_successNotion(successNotion.compare("population") == 0U
+        : m_successNotion(successNotion.compare("population") == 0
                               ? SuccessNotion::PopulationBased
                               : SuccessNotion::IndividualBased),
           m_nParents(parentPoints.shape(0U)),
           m_nOffspring(nOffspring.value_or(m_nParents)),
+          m_nIndividuals(m_nParents + m_nOffspring),
           m_parameters(parameters.value_or(
               MOParameters<T>(parentPoints.shape(1U), initialStepSize))),
           m_stoppingConditions(maxGenerations, maxEvaluations,
@@ -385,14 +349,22 @@ class MOCMA {
                        parentPoints.shape(1U), parentFitness.shape(1U),
                        m_parameters.initialStepSize, m_parameters.pTargetSucc),
           m_generationCount(0), m_evaluationCount(0), m_askCalled(false) {
+        static_assert(std::is_floating_point<T>::value,
+                      "MOCMA is not meant to be instantiated "
+                      "with a non floating point type.");
         if (parentPoints.shape(0U) != parentFitness.shape(0U)) {
             throw std::invalid_argument("Parent points and fitness have "
                                         "different number of elements.");
         }
-        auto parentRange = m_population.parentRange();
-        m_population.pointView(parentRange) = parentPoints;
-        m_population.fitnessView(parentRange) = parentFitness;
-        m_population.penalizedFitnessView(parentRange) = parentFitness;
+        xt::view(m_population.point, xt::range(0U, m_nParents), xt::all()) =
+            parentPoints;
+        xt::view(m_population.fitness, xt::range(0U, m_nParents), xt::all()) =
+            parentFitness;
+        xt::view(m_population.penalizedFitness, xt::range(0U, m_nParents),
+                 xt::all()) = parentFitness;
+        xt::view(m_population.rank, xt::range(0U, m_nParents)) =
+            std::get<0U>(dominance::nonDominatedSort<T>(
+                xt::view(m_population.rank, xt::range(0U, m_nParents))));
         m_randomEngine.seed(seed.value_or(time(NULL)));
     }
 
@@ -440,39 +412,63 @@ class MOCMA {
     }
 
     auto best() -> MOSolution<T> {
-        auto parentRange = m_population.parentRange();
-        return MOSolution<T>(m_population.pointView(parentRange),
-                             m_population.fitnessView(parentRange),
-                             m_population.stepSizeView(parentRange));
+        return MOSolution<T>(
+            xt::view(m_population.point, xt::range(0U, m_nParents), xt::all()),
+            xt::view(m_population.fitness, xt::range(0U, m_nParents),
+                     xt::all()),
+            xt::view(m_population.stepSize, xt::range(0U, m_nParents),
+                     xt::all()));
     }
 
-    auto ask() -> xt::xtensor<T, 2> {
-        // Update ask-and-tell state machine
+    auto ask() -> xt::xtensor<T, 2U> {
+        // Update ask-and-tell state machine.
         m_askCalled = true;
+        if (m_nParents == m_nOffspring) {
+            // Each parent produces an offspring
+            // Algorithm 1, line 4b [2010:mo-cma-es].
+            m_population.parentIndex = xt::arange<std::size_t>(0U, m_nParents);
+        } else {
+            // Parents with a non-domination rank of 1 are selected to reproduce
+            // uniformly at random with replacement. Algorithm 1, line 4a
+            // [2010:mo-cma-es].
+            const auto parentRanks =
+                xt::view(m_population.rank, xt::range(0U, m_nParents));
+            const auto eligibleParents = xt::squeeze(
+                xt::from_indices(xt::argwhere(xt::equal(parentRanks, 1U))));
+            m_population.parentIndex = xt::random::choice(
+                eligibleParents, m_nOffspring, true, m_randomEngine);
+        }
         // We use Algorithm 4.1 from [2015:efficient-rank1-update]
-        // adapted for Algorithm 1 from [2010:mo-cma-es]
-        m_population.parentIndex = xt::arange<std::size_t>(0U, m_nOffspring);
-        auto parentRange = m_population.parentRange();
-        auto offspringRange = m_population.offspringRange();
-        auto parentPoints = m_population.pointView(parentRange);
-        auto offspringPoints = m_population.pointView(offspringRange);
-        auto parentStepSize = m_population.stepSizeView(parentRange);
-        auto parentCov = m_population.covView(parentRange);
+        // adapted for Algorithm 1 from [2010:mo-cma-es].
+        auto parentIdx = m_population.parentIndex;
+        auto offspringIdx = xt::arange<std::size_t>(m_population.nParents,
+                                                    m_population.nIndividuals);
+        // Perform mutation of the parents chosen to reproduce.
         m_population.z = xt::random::randn<T>(m_population.z.shape(), 0.0, 1.0,
                                               m_randomEngine);
-        xt::xtensor<T, 2> tmp = xt::empty<T>(offspringPoints.shape());
-        for (std::size_t i = 0U; i != tmp.shape(0U); i++) {
+        xt::xtensor<T, 2U> tmp =
+            xt::empty<T>({m_nOffspring, m_parameters.nDimensions});
+        for (auto i = 0U; i != tmp.shape(0U); i++) {
             xt::row(tmp, i) = xt::linalg::dot(
-                xt::view(m_population.cov, i, xt::all(), xt::all()),
+                xt::view(m_population.cov, parentIdx(i), xt::all(), xt::all()),
                 xt::row(m_population.z, i));
         }
-        offspringPoints = parentPoints + parentStepSize * tmp;
-        // Copy other data
-        m_population.stepSizeView(offspringRange) = parentStepSize;
-        m_population.pSuccView(offspringRange) =
-            m_population.pSuccView(parentRange);
-        m_population.covView(offspringRange) = parentCov;
-        return offspringPoints;
+        xt::view(m_population.point, xt::keep(offspringIdx), xt::all()) =
+            xt::view(m_population.point, xt::keep(parentIdx), xt::all()) +
+            xt::view(m_population.stepSize, xt::keep(parentIdx), xt::all()) *
+                tmp;
+        // Copy data from the parent.
+        // Step size.
+        xt::view(m_population.stepSize, xt::keep(offspringIdx), xt::all()) =
+            xt::view(m_population.stepSize, xt::keep(parentIdx), xt::all());
+        // Smoothed probability of success.
+        xt::view(m_population.pSucc, xt::keep(offspringIdx), xt::all()) =
+            xt::view(m_population.pSucc, xt::keep(parentIdx), xt::all());
+        // Covariance Cholesky factor.
+        xt::view(m_population.cov, xt::keep(offspringIdx), xt::all(),
+                 xt::all()) = xt::view(m_population.cov, xt::keep(parentIdx),
+                                       xt::all(), xt::all());
+        return xt::view(m_population.point, xt::keep(offspringIdx), xt::all());
     }
 
     void tell(
@@ -492,16 +488,17 @@ class MOCMA {
         }
         m_generationCount += 1;
         // Copy provided fitness data into the population container
-        auto offspringRange = m_population.offspringRange();
-        m_population.fitnessView(offspringRange) = fitness;
-        m_population.penalizedFitnessView(offspringRange) =
+        xt::view(m_population.fitness, xt::range(m_nParents, m_nIndividuals),
+                 xt::all()) = fitness;
+        xt::view(m_population.penalizedFitness,
+                 xt::range(m_nParents, m_nIndividuals), xt::all()) =
             penalizedFitness.value_or(fitness);
         // Compute non-domination ranks
-        auto ranks = std::get<0U>(
+        m_population.rank = std::get<0U>(
             dominance::nonDominatedSort<T>(m_population.penalizedFitness));
         // Compute indicator-based selection
-        auto selected =
-            hvi::selection(m_population.penalizedFitness, ranks, m_nParents);
+        auto selected = hvi::selection(m_population.penalizedFitness,
+                                       m_population.rank, m_nParents);
         // Perform adaptation
         for (auto i = 0U; i != m_nOffspring; i++) {
             auto oidx = m_nParents + i;
@@ -511,7 +508,8 @@ class MOCMA {
             T offspringIsSuccessful = 0.0;
             // Offspring adaptation
             if (m_successNotion == SuccessNotion::IndividualBased &&
-                selected(oidx) && ranks(oidx) <= ranks(pidx)) {
+                selected(oidx) &&
+                m_population.rank(oidx) <= m_population.rank(pidx)) {
                 // [2010:mo-cma-es] Section 3.1, p. 489
                 offspringIsSuccessful = 1.0;
                 updateStepSize(oidx, offspringIsSuccessful);
@@ -532,58 +530,65 @@ class MOCMA {
         }
         // Perform selection
         // [2007:mo-cma-es] Algorithm 4, line 20
-        const auto parentIndices = xt::arange<std::size_t>(0U, m_nParents);
-        const auto selectedIndices = xt::squeeze(
+        const auto parentIdx = xt::arange<std::size_t>(0U, m_nParents);
+        const auto selectedIdx = xt::squeeze(
             xt::from_indices(xt::argwhere(xt::equal(selected, true))));
         // The search points.
-        m_population.pointView(xt::keep(parentIndices)) =
-            m_population.pointView(xt::keep(selectedIndices));
+        xt::view(m_population.point, xt::keep(parentIdx), xt::all()) =
+            xt::view(m_population.point, xt::keep(selectedIdx), xt::all());
         // The objective points.
-        m_population.fitnessView(xt::keep(parentIndices)) =
-            m_population.fitnessView(xt::keep(selectedIndices));
+        xt::view(m_population.fitness, xt::keep(parentIdx), xt::all()) =
+            xt::view(m_population.fitness, xt::keep(selectedIdx), xt::all());
         // The penalized objective points
-        m_population.penalizedFitnessView(xt::keep(parentIndices)) =
-            m_population.penalizedFitnessView(xt::keep(selectedIndices));
+        xt::view(m_population.penalizedFitness, xt::keep(parentIdx),
+                 xt::all()) = xt::view(m_population.penalizedFitness,
+                                       xt::keep(selectedIdx), xt::all());
+        // The non-domination ranks
+        xt::view(m_population.rank, xt::keep(parentIdx)) =
+            xt::view(m_population.rank, xt::keep(selectedIdx));
         // The step sizes.
-        m_population.stepSizeView(xt::keep(parentIndices)) =
-            m_population.stepSizeView(xt::keep(selectedIndices));
+        xt::view(m_population.stepSize, xt::keep(parentIdx), xt::all()) =
+            xt::view(m_population.stepSize, xt::keep(selectedIdx), xt::all());
         // The smoothed probabilities of success.
-        m_population.pSuccView(xt::keep(parentIndices)) =
-            m_population.pSuccView(xt::keep(selectedIndices));
-        // The covariance adaptation evolution path.
-        m_population.pCView(xt::keep(parentIndices)) =
-            m_population.pCView(xt::keep(selectedIndices));
+        xt::view(m_population.pSucc, xt::keep(parentIdx), xt::all()) =
+            xt::view(m_population.pSucc, xt::keep(selectedIdx), xt::all());
+        // The covariance adaptation evolution paths.
+        xt::view(m_population.pC, xt::keep(parentIdx), xt::all()) =
+            xt::view(m_population.pC, xt::keep(selectedIdx), xt::all());
         // The covariance matrices.
-        m_population.covView(xt::keep(parentIndices)) =
-            m_population.covView(xt::keep(selectedIndices));
+        xt::view(m_population.cov, xt::keep(parentIdx), xt::all(), xt::all()) =
+            xt::view(m_population.cov, xt::keep(selectedIdx), xt::all(),
+                     xt::all());
     }
 
   private:
     void updateStepSize(std::size_t idx, T offspringIsSuccessful) {
         // Algorithm 1, lines 9-10, 17-18, p. 2 [2010:mo-cma-es]
         // Update the smoothed probability of success
-        m_population.pSucc(idx) =
-            (1.0 - m_parameters.cP) * m_population.pSucc(idx) +
+        m_population.pSucc(idx, 0U) =
+            (1.0 - m_parameters.cP) * m_population.pSucc(idx, 0U) +
             offspringIsSuccessful * m_parameters.cP;
         // Update the step size
-        m_population.stepSize(idx) =
-            m_population.stepSize(idx) *
+        m_population.stepSize(idx, 0U) =
+            m_population.stepSize(idx, 0U) *
             std::exp((1.0 / m_parameters.d) *
-                     ((m_population.pSucc(idx) - m_parameters.pTargetSucc) /
+                     ((m_population.pSucc(idx, 0U) - m_parameters.pTargetSucc) /
                       (1.0 - m_parameters.pTargetSucc)));
     }
 
     void updateCov(std::size_t idx, const xt::xtensor<T, 1U>& z) {
-        if (m_population.pSucc(idx) < m_parameters.pThreshold) {
+        if (m_population.pSucc(idx, 0) < m_parameters.pThreshold) {
             // Algorithm 4.1, line 19, p.5. [2015:efficient-rank1-update]
             // Update evolution path
             xt::row(m_population.pC, idx) =
                 (1.0 - m_parameters.cC) * xt::row(m_population.pC, idx) +
                 std::sqrt(m_parameters.cC * (2.0 - m_parameters.cC)) * z;
             // Update Cholesky factor of the covariance matrix
-            matrix(m_population.cov, idx) = choleskyUpdate<T>(
-                matrix(m_population.cov, idx), 1.0 - m_parameters.cCov,
-                m_parameters.cCov, xt::row(m_population.pC, idx));
+            xt::view(m_population.cov, idx, xt::all(), xt::all()) =
+                choleskyUpdate<T>(
+                    xt::view(m_population.cov, idx, xt::all(), xt::all()),
+                    1.0 - m_parameters.cCov, m_parameters.cCov,
+                    xt::row(m_population.pC, idx));
         } else {
             // Algorithm 4.1, line 15, p.5. [2015:efficient-rank1-update]
             const T cL =
@@ -593,15 +598,17 @@ class MOCMA {
             xt::row(m_population.pC, idx) =
                 (1.0 - m_parameters.cC) * xt::row(m_population.pC, idx);
             // Update Cholesky factor of the covariance matrix
-            matrix(m_population.cov, idx) = choleskyUpdate<T>(
-                matrix(m_population.cov, idx), cL, m_parameters.cCov,
-                xt::row(m_population.pC, idx));
+            xt::view(m_population.cov, idx, xt::all(), xt::all()) =
+                choleskyUpdate<T>(
+                    xt::view(m_population.cov, idx, xt::all(), xt::all()), cL,
+                    m_parameters.cCov, xt::row(m_population.pC, idx));
         }
     }
 
     SuccessNotion m_successNotion;
     std::size_t m_nParents;
     std::size_t m_nOffspring;
+    std::size_t m_nIndividuals;
     RandomEngine m_randomEngine;
     MOParameters<T> m_parameters;
     MOStoppingConditions<T> m_stoppingConditions;

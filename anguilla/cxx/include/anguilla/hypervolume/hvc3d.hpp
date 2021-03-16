@@ -3,11 +3,6 @@
 #ifndef ANGUILLA_HYPERVOLUME_HVC3D_HPP
 #define ANGUILLA_HYPERVOLUME_HVC3D_HPP
 
-// PyBind11
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
-
 // STL
 #include <algorithm>
 #include <deque>
@@ -20,6 +15,17 @@ namespace py = pybind11;
 #ifdef __cpp_lib_memory_resource
 #include <memory_resource>
 #endif
+
+// PyBind11
+#include <pybind11/stl.h>
+
+// Xtensor
+#include <xtensor/xbuilder.hpp>
+#include <xtensor/xtensor.hpp>
+#include <xtensor/xview.hpp>
+
+// Btree
+#include <btree/map.h>
 
 /* REFERENCES
 
@@ -50,8 +56,8 @@ A. P. Guerreiro, C. M. Fonseca, & L. Paquete. (2020).
 The Hypervolume Indicator: Problems and Algorithms.
 */
 
-/* Public interface */
 namespace hvc3d {
+/* Public interface */
 static constexpr const char* docstring = R"_(
     Compute the hypervolume contributions for a set of 3-D points.
 
@@ -84,9 +90,9 @@ static constexpr const char* docstring = R"_(
     :cite:`2007:mo-cma-es` regarding the handling of extremum points.)_";
 
 template <typename T, class Map>
-auto contributions(const py::array_t<T>& _points,
-                   const std::optional<py::array_t<T>>& reference,
-                   bool preferExtrema);
+auto contributions(const xt::xtensor<T, 2U>& inputPoints,
+                   const std::optional<xt::xtensor<T, 1U>>& inputReference,
+                   bool preferExtrema) -> xt::xtensor<T, 1U>;
 
 template <typename T> struct MapValue {
     MapValue(T pY, std::size_t index) : pY(pY), index(index) {}
@@ -114,10 +120,9 @@ template <typename T> using RBTreeMap = std::map<T, MapValue<T>>;
 
 template <typename T> using BTreeMap = btree::map<T, MapValue<T>>;
 #endif
-} // namespace hvc3d
 
 /* Internal interface */
-namespace __hvc3d {
+namespace internal {
 template <typename T> struct IndexedPoint3D;
 
 template <typename T> struct ExtremaData;
@@ -125,7 +130,8 @@ template <typename T> struct ExtremaData;
 template <typename T, class Map>
 [[nodiscard]] auto contributions(const std::vector<IndexedPoint3D<T>>& points,
                                  const T refX, const T refY, const T refZ,
-                                 const ExtremaData<T> extremaData);
+                                 const ExtremaData<T> extremaData)
+    -> xt::xtensor<T, 1U>;
 
 template <typename T> struct Box3D {
     Box3D(T lX, T lY, T lZ, T uX, T uY, T uZ)
@@ -168,40 +174,36 @@ template <typename T> struct ExtremaData {
     std::size_t extC_i;
     bool preferExtrema;
 };
-} // namespace __hvc3d
+} // namespace internal
 
 /* Implementation of public interface. */
-namespace hvc3d {
 template <typename T, class Map>
 [[nodiscard]] auto
-contributions(const py::array_t<T>& _points,
-              const std::optional<py::array_t<T>>& _reference,
-              bool preferExtrema) {
+contributions(const xt::xtensor<T, 2U>& inputPoints,
+              const std::optional<xt::xtensor<T, 1U>>& inputReference,
+              bool preferExtrema) -> xt::xtensor<T, 1U> {
     static_assert(std::is_floating_point<T>::value,
                   "HVC3D is not meant to be instantiated with a non floating "
                   "point type.");
 
-    const auto pointsR = _points.template unchecked<2>();
-    assert(pointsR.shape(0) >= 0);
-    const auto n = static_cast<std::size_t>(pointsR.shape(0));
+    const std::size_t n = inputPoints.shape(0U);
     if (n == 0U) {
-        return py::array_t<T>(0U);
+        return xt::zeros<T>({0U});
     }
 
     constexpr auto lowest = std::numeric_limits<T>::lowest();
     T refX = lowest;
     T refY = lowest;
     T refZ = lowest;
-    const bool refGiven = _reference.has_value();
+    const bool refGiven = inputReference.has_value();
 
     if (refGiven) {
-        const auto referenceR = _reference->template unchecked<1>();
-        refX = referenceR(0);
-        refY = referenceR(1);
-        refZ = referenceR(2);
+        refX = (*inputReference)[0U];
+        refY = (*inputReference)[1U];
+        refZ = (*inputReference)[2U];
     }
 
-    std::vector<__hvc3d::IndexedPoint3D<T>> points;
+    std::vector<internal::IndexedPoint3D<T>> points;
     points.reserve(n);
 
     // To determine the extremum points we need to keep track
@@ -221,9 +223,9 @@ contributions(const py::array_t<T>& _points,
     std::size_t extC_i = n;
 
     for (std::size_t i = 0U; i < n; ++i) {
-        const auto pX = pointsR(i, 0);
-        const auto pY = pointsR(i, 1);
-        const auto pZ = pointsR(i, 2);
+        const auto pX = inputPoints(i, 0U);
+        const auto pY = inputPoints(i, 1U);
+        const auto pZ = inputPoints(i, 2U);
         points.emplace_back(pX, pY, pZ, i);
         if (preferExtrema) {
             if (pX < extA_x && pY < extA_y) {
@@ -249,7 +251,7 @@ contributions(const py::array_t<T>& _points,
         }
     }
 
-    __hvc3d::ExtremaData<T> extremaData;
+    internal::ExtremaData<T> extremaData;
     extremaData.extA_i = extA_i;
     extremaData.extB_i = extB_i;
     extremaData.extC_i = extC_i;
@@ -258,17 +260,16 @@ contributions(const py::array_t<T>& _points,
     std::sort(points.begin(), points.end(),
               [](auto const& l, auto const& r) { return l.pZ < r.pZ; });
 
-    return __hvc3d::contributions<T, Map>(points, refX, refY, refZ,
-                                          extremaData);
+    return internal::contributions<T, Map>(points, refX, refY, refZ,
+                                           extremaData);
 }
-} // namespace hvc3d
 
 /* Internal implementations. */
-namespace __hvc3d {
+namespace internal {
 template <typename T, class Map>
 auto contributions(const std::vector<IndexedPoint3D<T>>& points, const T refX,
-                   const T refY, const T refZ,
-                   const ExtremaData<T> extremaData) {
+                   const T refY, const T refZ, const ExtremaData<T> extremaData)
+    -> xt::xtensor<T, 1U> {
     // Note: assumes the points are received sorted in ascending order by
     // z-component.
 
@@ -284,19 +285,8 @@ auto contributions(const std::vector<IndexedPoint3D<T>>& points, const T refX,
     // Here we allocate memory for the contributions, initialized to zero,
     // plus an additional element for both sentinel nodes.
     const std::size_t n = points.size();
-    auto contribution = new T[n + 1U]{0.0};
+    xt::xtensor<T, 1U> contribution = xt::zeros<T>({n + 1U});
     contribution[n] = NaN;
-
-    py::capsule freeContributionsMemory(contribution, [](void* ptr) {
-        std::unique_ptr<T[]>(static_cast<decltype(contribution)>(ptr));
-    });
-
-    // We work on a vector but will return a Numpy array.
-    // It uses the vector's memory, which will be freed once the array
-    // goes out of scope (handled by the py::capsule).
-    const auto output = py::array_t<T>({n},         // shape
-                                       {sizeof(T)}, // stride
-                                       contribution, freeContributionsMemory);
 
 // Create the sweeping structure.
 #ifdef __cpp_lib_memory_resource
@@ -470,8 +460,9 @@ auto contributions(const std::vector<IndexedPoint3D<T>>& points, const T refX,
         contribution[extremaData.extC_i] = inf;
     }
 
-    return output;
+    return xt::view(contribution, xt::range(0, n));
 }
-} // namespace __hvc3d
+} // namespace internal
+} // namespace hvc3d
 
 #endif // ANGUILLA_HYPERVOLUME_HVC3D_HPP

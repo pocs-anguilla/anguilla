@@ -14,9 +14,6 @@
 // Xtensor
 #include <xtensor/xtensor.hpp>
 
-// Anguilla
-#include <anguilla/common/common.hpp>
-
 /* REFERENCES
 
 [2008:shark]
@@ -55,6 +52,16 @@ calculate(const xt::xtensor<T, 2U>& inputPoints,
 
 /* Internal interface */
 namespace internal {
+template <typename T> struct Point2D {
+    Point2D(T x = std::numeric_limits<T>::signaling_NaN(),
+            T y = std::numeric_limits<T>::signaling_NaN())
+        : x(x), y(y) {}
+    Point2D<T>& operator=(const Point2D<T>& other) = default;
+
+    T x;
+    T y;
+};
+
 template <typename T>
 [[nodiscard]] T calculate(std::vector<Point2D<T>>& points, const T refX,
                           const T refY);
@@ -84,11 +91,11 @@ T calculate(const xt::xtensor<T, 2U>& inputPoints,
         refY = (*inputReference)[1U];
     }
 
-    std::vector<Point2D<T>> points;
+    std::vector<internal::Point2D<T>> points;
     points.reserve(n);
     for (auto i = 0U; i < n; ++i) {
-        const auto pX = inputPoints(i, 0);
-        const auto pY = inputPoints(i, 1);
+        const auto pX = inputPoints(i, 0U);
+        const auto pY = inputPoints(i, 1U);
 
         if (refGiven && ignoreDominated) {
             if (pX < refX && pY < refY) {

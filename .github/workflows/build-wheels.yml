@@ -13,7 +13,7 @@ on:
 jobs:
   build_sdist:
     name: Build source distribution
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-20.04, windows-2019, macos-10.15]
 
     steps:
       - uses: actions/checkout@v2
@@ -50,12 +50,13 @@ jobs:
           # Skip: unsupported Python versions, PyPy and 32-bit versions
           CIBW_SKIP: "cp27-* cp35-* cp36-* pp* *-win32 *-manylinux_i686"
           MACOSX_DEPLOYMENT_TARGET: "10.15"
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
           CIBW_DEPENDENCY_VERSIONS: "latest"
           CIBW_TEST_REQUIRES: pytest coverage[toml] pytest-cov
           CIBW_TEST_COMMAND_LINUX: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla --cov-report=xml && mkdir -p /output && mv coverage.xml /output"
           CIBW_TEST_COMMAND_WINDOWS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
           CIBW_TEST_COMMAND_MACOS: "pytest {project}/tests --import-mode=append --color=yes --cov=anguilla"
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} {wheel}"
           # Skip testing in Windows + Python 3.8+ due to DLL loading issues.
           CIBW_TEST_SKIP: "cp3{8,9}-win_amd64"
 
@@ -65,14 +66,14 @@ jobs:
           path: ./wheelhouse/*.whl
 
       - uses: actions/upload-artifact@v2
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-20.04'
         with:
           name: coverage_file
           path: ./wheelhouse/coverage.xml
 
   update_coverage:
     needs: [build_wheels]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
@@ -89,7 +90,7 @@ jobs:
 
   upload_pypi:
     needs: [build_sdist, build_wheels]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
       - uses: actions/download-artifact@v2

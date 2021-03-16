@@ -51,14 +51,14 @@ template <typename T>
 [[nodiscard]] auto
 nonDominatedSort(const xt::xtensor<T, 2U>& points,
                  const std::optional<std::size_t>& maxRank = std::nullopt)
-    -> std::tuple<xt::xtensor<T, 1U>, std::size_t> {
+    -> std::tuple<xt::xtensor<std::size_t, 1U>, std::size_t> {
     static_assert(std::is_floating_point<T>::value,
-                  "fast_non_dominated_sort is not meant to be instantiated "
+                  "nonDominatedSort is not meant to be instantiated "
                   "with a non floating point type.");
 
     const auto nPoints = points.shape(0U);
     const auto nDimensions = points.shape(1U);
-    xt::xtensor<T, 1U> ranks = xt::zeros<T>({nPoints});
+    xt::xtensor<std::size_t, 1U> ranks = xt::zeros<std::size_t>({nPoints});
     if (nPoints == 0U) {
         return std::make_tuple(ranks, 0U);
     }
@@ -80,7 +80,6 @@ nonDominatedSort(const xt::xtensor<T, 2U>& points,
         s.reserve(nPoints - 1U);
         for (std::size_t j = 0U; j != nPoints; j++) {
             if (i != j) {
-                // p_all = true;
                 pAny = false;
                 qAny = false;
                 for (std::size_t k = 0U; k != nDimensions; k++) {

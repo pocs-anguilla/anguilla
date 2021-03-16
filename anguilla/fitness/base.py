@@ -216,8 +216,7 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
             return self._constraints_handler.random_points(
                 self._rng, m, region_bounds
             )
-        n = self._n_dimensions
-        shape = (m, n) if m > 1 else (n,)
+        shape = (m, self._n_dimensions)
 
         if region_bounds is not None:
             lower, upper = region_bounds
@@ -243,79 +242,68 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         return x
 
     @abc.abstractmethod
-    def evaluate_single(self, x: np.ndarray) -> Union[float, np.ndarray]:
-        """Evaluate the function at the given search point.
-
-        Parameters
-        ----------
-        x
-            The search point.
-
-        Returns
-        -------
-        Union[float, np.ndarray]
-            The value of the function at the search point.
-
-        Raises
-        ------
-        ValueError
-            Point has invalid shape.
-
-        Notes
-        -----
-        The implementation should be specialized to evaluate a single point
-        efficiently.
-        """
-        raise NotImplementedError()
-
-    def evaluate_multiple(self, xs: np.ndarray) -> Union[float, np.ndarray]:
-        """Evaluate the function at the given search point(s).
+    def evaluate(
+        self,
+        xs: np.ndarray,
+        count: bool = True,
+    ) -> np.ndarray:
+        """Compute the fitness values.
 
         Parameters
         ----------
         xs
-            The search point(s).
+            The search points.
+        count: optional
+            Update the evaluation count.
 
-        Returns
-        -------
-        Union[float, np.ndarray]
-            The value of the function at the search points.
-
-        Raises
+        Return
         ------
-        ValueError
-            Points have invalid shape.
-
-        Notes
-        -----
-        The implementation should be specialized to evaluate multiple points
-        efficiently. A default non-specialized implementation is provided \
-        as default. Implementations should override this method.
+        np.ndarray
+            The fitness values.
         """
-        xs = self._pre_evaluate_multiple(xs, False)
-        values = np.array([self.evaluate_single(x) for x in xs])
-        return values if len(values) > 1 else values[0]
+        raise NotImplementedError()
+
+    def _pre_evaluate(self, xs: np.ndarray, count: bool = True) -> None:
+        if xs.ndim != 2:
+            msg = "Points array must have 2 dimensions. Got {}.".format(
+                xs.ndim
+            )
+            raise ValueError(msg)
+        if xs.shape[1] != self._n_dimensions:
+            msg = "Search point must have {} dimensions. Got {}.".format(
+                self._n_dimensions, xs.shape[1]
+            )
+            raise ValueError(msg)
+        if count:
+            self._evaluation_count += xs.shape[0]
 
     def evaluate_with_constraints(
-        self, xs: np.ndarray
-    ) -> Union[float, np.ndarray]:
+        self,
+        xs: np.ndarray,
+        count: bool = True,
+    ) -> np.ndarray:
         """Compute the fitness projecting points to their closest feasible.
 
         Parameters
         ----------
         xs
-            The search point(s).
+            The search points.
+        count: optional
+            Update the evaluation count.
 
         Return
         ------
-        Union[float, np.ndarray]
-            The fitness value(s).
+        np.ndarray
+            The fitness values.
         """
-        return self.__call__(self.closest_feasible(xs))
+        return self.evaluate(self.closest_feasible(xs), count=count)
 
     def evaluate_with_penalty(
-        self, xs: np.ndarray, penalty: float = 1e-6
-    ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
+        self,
+        xs: np.ndarray,
+        count: bool = True,
+        penalty: float = 1e-6,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Compute the fitness projecting points to their closest feasible \
         and apply a penalty.
 
@@ -323,41 +311,28 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         ----------
         xs
             The search point(s).
+        count: optional
+            Update evaluation counter.
+        penalty: optional
+            The penalty factor.
 
         Return
         ------
-        Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]
-            The unpenalized and penalized fitness value(s), respectively.
+        Tuple[np.ndarray, np.ndarray]
+            The unpenalized and penalized fitness values, respectively.
 
         Notes
         -----
         Implements penalized evaluation as described in \
         p. 12 of :cite:`2007:mo-cma-es`.
         """
-        if len(xs.shape) == 1:
-            xs = xs.reshape((1, len(xs)))
-
         feasible_xs = self.closest_feasible(xs)
+        feasible_ys = self.evaluate(feasible_xs, count)
         tmp = xs - feasible_xs
-
-        ys = self.__call__(feasible_xs)
-
-        if self._n_objectives > 1 and len(ys.shape) == 1:
-            ys = ys.reshape((1, len(ys)))
-        elif isinstance(ys, float):
-            ys = np.array([ys])
-
-        if len(tmp) != len(ys):
-            msg = "Shapes mismatch: {} and {}".format(tmp.shape, ys.shape)
-            raise RuntimeError(msg)
-
-        penalized_ys = np.empty_like(ys)
-        for i in range(len(tmp)):
-            penalized_ys[i] = ys[i] + penalty * np.sum(tmp[i] * tmp[i])
-
-        if len(ys) > 1:
-            return ys, penalized_ys
-        return ys[0], penalized_ys[0]
+        penalized_ys = feasible_ys + np.expand_dims(
+            penalty * np.sum(tmp * tmp, axis=1), axis=1
+        )
+        return feasible_ys, penalized_ys
 
     def pareto_front(self, num: int = 50) -> np.ndarray:
         """Return the true Pareto front.
@@ -420,72 +395,32 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         """
         raise AttributeError("Number of objectives cannot be changed.")
 
-    def _pre_evaluate_single(self, x: np.ndarray, count: bool = True) -> None:
-        """Validate the shape of given search point and update evaluation \
-        counter.
-
-        Parameter
-        ---------
-        x
-            The search point.
-
-        Raises
-        ------
-        ValueError
-            Point has invalid shape
-        """
-        if len(x.shape) > 1 or len(x) != self._n_dimensions:
-            msg = "Point has invalid shape, got {}, expected {}".format(
-                len(x), self._n_dimensions
-            )
-            raise ValueError(msg)
-        if count:
-            self._evaluation_count += 1
-
-    def _pre_evaluate_multiple(
-        self, xs: np.ndarray, count: bool = True
-    ) -> np.ndarray:
-        """Validate the shape of given search point(s) and update evaluation \
-            counter.
+    def __call__(
+        self,
+        xs: np.ndarray,
+        count: bool = True,
+        penalty: Optional[float] = None,
+    ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+        """Syntactic sugar to call either :meth:`evaluate` or \
+            :meth:`evaluate_with_constraints`.
 
         Parameters
         ----------
         xs
             The search point(s).
+        count: optional
+            Update the evaluation count.
+        penalty: optional
+            Penalty factor.
 
         Returns
         -------
-        xs
-            A new view object if possible or a copy (``np.reshape`` behavior).
-
-        Raises
-        ------
-        ValueError
-            Point(s) have invalid shape
-
+        Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]
+            The fitness.
         """
-        if len(xs.shape) < 2:
-            xs = np.reshape(xs, (1, len(xs)))
-
-        if xs.shape[1] != self._n_dimensions:
-            raise ValueError("Point(s) have invalid shape")
-        if count:
-            self._evaluation_count += len(xs)
-
-        return xs
-
-    def __call__(self, x: np.ndarray) -> Union[float, np.ndarray]:
-        """Syntactic sugar to call either :meth:`evaluate` \
-        or :meth:`evaluate_multiple` depending on the shape of the array.
-
-        Parameters
-        ----------
-        x
-            The search point(s).
-        """
-        if len(x.shape) > 1:
-            return self.evaluate_multiple(x)
-        return self.evaluate_single(x)
+        if penalty is not None:
+            return self.evaluate_with_penalty(xs, count=count, penalty=penalty)
+        return self.evaluate(xs, count=count)
 
     def __repr__(self) -> str:
         """Return the name of the function."""

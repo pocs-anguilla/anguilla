@@ -23,7 +23,6 @@ def main():
             "anguilla",
             "anguilla.archive",
             "anguilla.dominance",
-            "anguilla.ds",
             "anguilla.fitness",
             "anguilla.fitness.benchmark",
             "anguilla.hypervolume",
@@ -37,8 +36,8 @@ def main():
             "-DCMAKE_CXX_STANDARD=17",
             "-DCMAKE_CXX_EXTENSIONS=OFF",
         ],
-        python_requires=">3.7",
-        install_requires=["numpy >= 1.20"],
+        python_requires=">=3.7",
+        install_requires=["numpy >= 1.19.5"],
         extras_require={
             ':python_version <= "3.7"': [
                 "typing_extensions",
@@ -58,10 +57,10 @@ def main():
             "Programming Language :: Python :: 3 :: Only",
             "Topic :: Scientific/Engineering",
             "Typing :: Typed",
-            "Operating System :: Microsoft :: Windows",
             "Operating System :: POSIX",
             "Operating System :: Unix",
             "Operating System :: MacOS",
+            "Operating System :: Microsoft :: Windows",
         ],
     )
 

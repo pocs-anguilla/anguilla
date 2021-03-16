@@ -16,32 +16,17 @@ include(FeatureSummary)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON FORCE)
 set(CMAKE_CXX_EXTENSIONS OFF FORCE)
-message(STATUS "Using C++ standard version: ${CMAKE_CXX_STANDARD}")
+message(STATUS "C++ standard version: ${CMAKE_CXX_STANDARD}")
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /W4")
-  # See: https://cibuildwheel.readthedocs.io/en/stable/faq/#importerror-dll-load-failed-the-specific-module-could-not-be-found-error-on-windows
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /d2FH4-")
-else()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpedantic -Wall")
-  if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1 -g -fdiagnostics-color -Wstrict-aliasing")
-    set(ASAN_FLAGS "-fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize-address-use-after-scope")
-    #set(UBSAN_FLAGS "-fsanitize=return -fsanitize=implicit-conversion -fsanitize=float-cast-overflow -fsanitize=float-divide-by-zero \
-    #-fsanitize=implicit-unsigned-integer-truncation -fsanitize=implicit-signed-integer-truncation -fsanitize=unsigned-integer-overflow")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${ASAN_FLAGS} ${UBSAN_FLAGS}")
-    #set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} ${ASAN_FLAGS} -shared-libasan -shared-libubsan")
-    set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} ${ASAN_FLAGS} -shared-libasan")
-    else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -fno-trapping-math -fno-math-errno")
-  endif()
-  if(MINGW)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
-  endif()
-endif()
+################
+# Define options
 
+option(PORTABLE_BUILD "Build the C extensions to be portable (e.g., for wheels)" ON)
+option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
+
+###############
 # Find Python 3
+
 if(DEFINED $ENV{CONDA_BUILD})
   set(Python3_EXECUTABLE $ENV{PYTHON})
 else()
@@ -77,55 +62,91 @@ execute_process(
 message(STATUS "Numpy configuration:")
 message(STATUS "${_numpy_config_info}")
 
+###############
 # Find Pybind11
+
 find_package(pybind11 CONFIG REQUIRED)
 
-# Define options
-option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
+########################
+# Find Asan (Debug only)
 
-# Add the different modules
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+  find_library(Asan_LIBRARY asan REQUIRED)
+endif()
 
-## Vendor
+###############################
+# Set general compilation flags
 
-### Boost
+if(NOT MSVC)
+  if (CMAKE_BUILD_TYPE MATCHES Debug)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1 -g -fdiagnostics-color -Wstrict-aliasing")
+    set(ASAN_FLAGS "-fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize-address-use-after-scope")
+    #set(UBSAN_FLAGS "-fsanitize=return -fsanitize=implicit-conversion -fsanitize=float-cast-overflow -fsanitize=float-divide-by-zero \
+    #-fsanitize=implicit-unsigned-integer-truncation -fsanitize=implicit-signed-integer-truncation -fsanitize=unsigned-integer-overflow")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${ASAN_FLAGS} ${UBSAN_FLAGS}")
+    #set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} ${ASAN_FLAGS} -shared-libasan -shared-libubsan")
+    set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} ${ASAN_FLAGS} -shared-libasan")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -fno-trapping-math -fno-math-errno")
+  endif()
+  if(MINGW)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
+  endif()
+  if(NOT PORTABLE_BUILD)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64")
+  endif()
+else()
+  # See: https://cibuildwheel.readthedocs.io/en/stable/faq/#importerror-dll-load-failed-the-specific-module-could-not-be-found-error-on-windows
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /d2FH4-")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /W4 /EHsc /MP /bigobj") # required by xtensor
+  set(CMAKE_EXE_LINKER_FLAGS /MANIFEST:NO)
+endif()
+
+####################
+# Add vendor modules
+
+## Boost
 list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/assert/include")
 list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/config/include")
 list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/move/include")
 list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/static_assert/include")
 list(APPEND BOOST_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/boost/intrusive/include")
 
-### BTree
+## BTree
 set(BTREE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/btree/include")
 
-### Spatial
+## Spatial
 set(SPATIAL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/spatial/include")
 
 ## Xtensor
 add_subdirectory(vendor/cxx/xtl)
 add_subdirectory(vendor/cxx/xtensor)
+
+### Xtensor BLAS
+if(NOT PORTABLE_BUILD)
+  find_package(BLAS REQUIRED)
+  if(BLAS_FOUND)
+    add_definitions(-DHAVE_CBLAS=1)
+    find_package(LAPACK REQUIRED)
+    message(STATUS "BLAS VENDOR:    " ${BLA_VENDOR})
+    message(STATUS "BLAS LIBRARIES: " ${BLAS_LIBRARIES})
+  endif()
+else()
+  message(STATUS "No BLAS found, will use FLENS + CXXBLAS.")
+  add_definitions(-DXTENSOR_USE_FLENS_BLAS=1)
+endif()
+add_subdirectory(vendor/cxx/xtensor-blas)
+
+### Xtensor Python bindings
 #add_subdirectory(vendor/cxx/xtensor-python)
 add_subdirectory(vendor/cxx/pyxtensor)
 
-## Xtensor BLAS
-
-### Find BLAS
-add_definitions(-DHAVE_CBLAS=1)
-find_package(BLAS)
-if(BLAS_FOUND)
-  find_package(LAPACK REQUIRED)
-  message(STATUS "BLAS VENDOR:    " ${BLA_VENDOR})
-  message(STATUS "BLAS LIBRARIES: " ${BLAS_LIBRARIES})
-else()
-  message(STATUS "No BLAS found, will use fall-back provided by xtensor.")
-  add_definitions(-DXTENSOR_USE_FLENS_BLAS=1)
-endif()
-
-add_subdirectory(vendor/cxx/xtensor-blas)
-
-## {fmt}
+### {fmt}
 add_subdirectory(vendor/cxx/fmt)
 
-## Anguilla CXX
+### Anguilla CXX
 add_subdirectory(anguilla/cxx)
 
 feature_summary(WHAT ALL)

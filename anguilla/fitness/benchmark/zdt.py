@@ -29,21 +29,13 @@ class ZDT1(ObjectiveFunction):
     def name(self) -> str:
         return "ZDT1"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        value = np.empty(self._n_objectives)
-        value[0] = x[0]
-        g = 1.0 + 9.0 * np.average(x[1:])
-        value[1] = g * (1.0 - math.sqrt(x[0] / g))
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count)
         values = np.empty((len(xs), self._n_objectives))
         values[:, 0] = xs[:, 0]
         g = 1.0 + 9.0 * np.average(xs[:, 1:], axis=1)
         values[:, 1] = g * (1.0 - np.sqrt(xs[:, 0] / g))
-        return values if len(xs) > 1 else values[0]
+        return values
 
     def pareto_front(self, num=50) -> np.ndarray:
         y1 = np.linspace(0.0, 1.0, num, True)
@@ -76,23 +68,14 @@ class ZDT2(ObjectiveFunction):
     def name(self) -> str:
         return "ZDT2"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        value = np.empty(self._n_objectives)
-        value[0] = x[0]
-        g = 1.0 + 9.0 * np.average(x[1:])
-        tmp = x[0] / g
-        value[1] = g * (1.0 - tmp * tmp)
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         values = np.empty((len(xs), self._n_objectives))
         values[:, 0] = xs[:, 0]
         g = 1.0 + 9.0 * np.average(xs[:, 1:], axis=1)
         tmp = xs[:, 0] / g
         values[:, 1] = g * (1.0 - tmp * tmp)
-        return values if len(xs) > 1 else values[0]
+        return values
 
     def pareto_front(self, num=50) -> np.ndarray:
         y1 = np.linspace(0.0, 1.0, num, True)
@@ -126,19 +109,8 @@ class ZDT3(ObjectiveFunction):
     def name(self) -> str:
         return "ZDT3"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        value = np.empty(self._n_objectives)
-        value[0] = x[0]
-        g = 1.0 + 9.0 * np.average(x[1:])
-        tmp = x[0] / g
-        value[1] = g * (
-            1.0 - math.sqrt(tmp) - tmp * math.sin(10.0 * math.pi * x[0])
-        )
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         values = np.empty((len(xs), self._n_objectives))
         values[:, 0] = xs[:, 0]
         g = 1.0 + 9.0 * np.average(xs[:, 1:], axis=1)
@@ -146,7 +118,7 @@ class ZDT3(ObjectiveFunction):
         values[:, 1] = g * (
             1.0 - np.sqrt(tmp) - tmp * np.sin(10.0 * np.pi * xs[:, 0])
         )
-        return values if len(xs) > 1 else values[0]
+        return values
 
     def pareto_front(self, num=50) -> np.ndarray:
         size = num // 5
@@ -193,20 +165,8 @@ class ZDT4(ObjectiveFunction):
     def name(self) -> str:
         return "ZDT4"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        value = np.empty(self._n_objectives)
-        value[0] = x[0]
-        g = (
-            1.0
-            + 10.0 * (self._n_dimensions - 1)
-            + np.sum(x[1:] * x[1:] - 10.0 * np.cos(4.0 * np.pi * x[1:]))
-        )
-        value[1] = g * (1.0 - math.sqrt(x[0] / g))
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         values = np.empty((len(xs), self._n_objectives))
         values[:, 0] = xs[:, 0]
         g = (
@@ -218,7 +178,7 @@ class ZDT4(ObjectiveFunction):
             )
         )
         values[:, 1] = g * (1.0 - np.sqrt(xs[:, 0] / g))
-        return values if len(xs) > 1 else values[0]
+        return values
 
     def pareto_front(self, num=50) -> np.ndarray:
         y1 = np.linspace(0.0, 1.0, num, True)
@@ -271,25 +231,9 @@ class ZDT4P(ObjectiveFunction):
             n - 1, self._rng
         )
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        # First objective
-        value = np.array([x[0], 0.0])
-        # Second objective
-        y = self._rotation_matrix @ x
-
-        value[1] = (
-            1.0
-            + (10.0 * float(self._n_dimensions - 1))
-            + np.sum(y[1:] * y[1:] - 10.0 * np.cos(4.0 * np.pi * y[1:]))
-        )
-
-        value[1] *= 1.0 - np.sqrt(x[0] / value[1])
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
         # Setup
-        xs = self._pre_evaluate_multiple(xs)
+        self._pre_evaluate(xs, count=count)
         n_points = len(xs)
         shape = (n_points, self._n_objectives)
         values = np.zeros(shape)
@@ -300,7 +244,6 @@ class ZDT4P(ObjectiveFunction):
         y = np.zeros_like(xs)
         for i in range(n_points):
             y[i] = self._rotation_matrix @ xs[i]
-
         values[:, 1] = (
             1.0
             + (10.0 * float(n - 1))
@@ -309,9 +252,8 @@ class ZDT4P(ObjectiveFunction):
                 axis=1,
             )
         )
-
         values[:, 1] *= 1.0 - np.sqrt(values[:, 0] / values[:, 1])
-        return values if len(xs.shape) > 1 else values[0]
+        return values
 
 
 class ZDT6(ObjectiveFunction):
@@ -334,19 +276,8 @@ class ZDT6(ObjectiveFunction):
     def name(self) -> str:
         return "ZDT6"
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        value = np.empty(self._n_objectives)
-        value[0] = 1.0 - math.exp(-4.0 * x[0]) * math.pow(
-            math.sin(6.0 * math.pi * x[0]), 6.0
-        )
-        g = 1.0 + 9.0 * math.pow(np.average(x[1:]), 0.25)
-        tmp = value[0] / g
-        value[1] = g * (1.0 - tmp * tmp)
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         values = np.empty((len(xs), self._n_objectives))
         values[:, 0] = 1.0 - np.exp(-4.0 * xs[:, 0]) * np.power(
             np.sin(6.0 * np.pi * xs[:, 0]), 6.0
@@ -354,7 +285,7 @@ class ZDT6(ObjectiveFunction):
         g = 1.0 + 9.0 * np.power(np.average(xs[:, 1:], axis=1), 0.25)
         tmp = values[:, 0] / g
         values[:, 1] = g * (1.0 - tmp * tmp)
-        return values if len(xs) > 1 else values[0]
+        return values
 
     def _post_update_n_dimensions(self) -> None:
         self._constraints_handler = BoxConstraintsHandler(

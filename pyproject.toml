@@ -9,7 +9,8 @@ requires = [
     "cmake>=3.18",
     "ninja",
     "scikit-build",
-    "numpy>=1.20",
+    "numpy>=1.9.5",
+    "delvewheel",
 ]
 
 build-backend = "setuptools.build_meta"
@@ -27,7 +28,7 @@ pylint = true
 pyupgrade = true
 
 [tool.nbqa.addopts]
-pyupgrade = ["--py36-plus"]
+pyupgrade = ["--py37-plus"]
 
 [tool.nbqa.config]
 mypy = "../mypy.ini"

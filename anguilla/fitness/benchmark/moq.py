@@ -86,19 +86,8 @@ class MOQ(ObjectiveFunction):
     def qualified_name(self) -> str:
         return "{}(k={:.2E})".format(self._name, self._k)
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        value = np.zeros(self._n_objectives)
-        for i in range(self._n_objectives):
-            d = self._A[i].T @ (x - self._x[i])
-            value[i] = (
-                self._a[i] * 0.5 * np.power(np.inner(d, d), self._shape)
-                + self._b[i]
-            )
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         values = np.zeros((len(xs), self._n_objectives))
         for j in range(len(xs)):
             for i in range(self._n_objectives):
@@ -107,7 +96,7 @@ class MOQ(ObjectiveFunction):
                     self._a[i] * 0.5 * np.power(np.inner(d, d), self._shape)
                     + self._b[i]
                 )
-        return values if len(xs) > 1 else values[0]
+        return values
 
     def pareto_front(self, num: int = 50) -> np.ndarray:
         # [2019:mo-quadratic-benchmark] p.4
@@ -117,7 +106,9 @@ class MOQ(ObjectiveFunction):
         y2 = np.zeros(num)
         for i in range(num):
             x = self._x[0] * (1.0 - ts[i]) + self._x[1] * ts[i]
-            y1[i], y2[i] = self.evaluate_single(x)
+            y = self.evaluate(np.array([x]))
+            y1[i] = y[0, 0]
+            y2[i] = y[0, 1]
         return np.stack((y1, y2))
 
     def random_points(
@@ -125,8 +116,7 @@ class MOQ(ObjectiveFunction):
         m: int = 1,
         region_bounds: Optional[BoundsTuple] = None,
     ) -> np.ndarray:
-        shape = (m, self._n_dimensions) if m > 1 else (self._n_dimensions)
-        return np.zeros(shape)
+        return np.zeros((m, self._n_dimensions))
 
     def _post_update_n_dimensions(self) -> None:
         n_dimensions = self._n_dimensions

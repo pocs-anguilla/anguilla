@@ -30,21 +30,8 @@ class ELLI(ObjectiveFunction):
     def qualified_name(self) -> str:
         return "{}(a={:.2E})".format(self.name, self._a)
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        y = self._rotation_matrix_y @ x
-        y *= y
-        z = self._rotation_matrix_z @ x - 2.0
-        z *= z
-        value = np.zeros(self._n_objectives)
-        for i in range(self._n_dimensions):
-            value[0] += self._coefficients[i] * y[i]
-            value[1] += self._coefficients[i] * z[i]
-        value /= self._scaler_inv
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         n_points = len(xs)
         ys = np.empty_like(xs)
         zs = np.empty_like(xs)
@@ -57,7 +44,7 @@ class ELLI(ObjectiveFunction):
         values[:, 0] = np.sum(self._coefficients * ys, axis=1)
         values[:, 1] = np.sum(self._coefficients * zs, axis=1)
         values /= self._scaler_inv
-        return values if n_points > 1 else values[0]
+        return values
 
 
 class ELLI1(ELLI):
@@ -152,17 +139,8 @@ class GELLI(ObjectiveFunction):
     def qualified_name(self) -> str:
         return "{}(a={:.2E}, d={:.2f})".format(self.name, self._a, self._d)
 
-    def evaluate_single(self, x: np.ndarray) -> np.ndarray:
-        self._pre_evaluate_single(x)
-        value = np.zeros(self._n_objectives)
-        v = self._rotation_matrix @ x
-        for m in range(self._n_objectives):
-            tmp = v - self._centers_matrix[m, :]
-            value[m] = np.sum(tmp * tmp)
-        return value
-
-    def evaluate_multiple(self, xs: np.ndarray) -> np.ndarray:
-        xs = self._pre_evaluate_multiple(xs)
+    def evaluate(self, xs: np.ndarray, count: bool = True) -> np.ndarray:
+        self._pre_evaluate(xs, count=count)
         values = np.zeros((len(xs), self._n_objectives))
         n_points = len(xs)
         for i in range(n_points):
@@ -170,7 +148,7 @@ class GELLI(ObjectiveFunction):
             for m in range(self._n_objectives):
                 tmp = v - self._centers_matrix[m, :]
                 values[i, m] = np.sum(tmp * tmp)
-        return values if n_points > 1 else values[0]
+        return values
 
     def _pre_update_n_dimensions(self, n_dimensions: int) -> None:
         # Test that m <= n

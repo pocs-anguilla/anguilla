@@ -4,7 +4,7 @@
 # For development, prefer the C++20 toolchain, as it has template support for the nodiscard attribute.
 TOOLCHAIN_FILE=cmake/toolchains/clang-cxx20-libstdcxx.cmake
 
-COMMON_CMAKE_OPTS=-DWITH_SHARK_BINDINGS=ON -DCMAKE_TOOLCHAIN_FILE=$(TOOLCHAIN_FILE)
+COMMON_CMAKE_OPTS=-DPORTABLE_BUILD=OFF -DCMAKE_TOOLCHAIN_FILE=$(TOOLCHAIN_FILE)
 
 cxx_extension: CMakeLists.txt
 	mkdir -p _cxx_build
@@ -12,7 +12,6 @@ cxx_extension: CMakeLists.txt
 	set -x; cmake $(COMMON_CMAKE_OPTS) -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_BUILD_TYPE=Release ..
 	CCACHE_DIR=$(PWD)/_ccache CCACHE_COMPILERCHECK=content make -C _cxx_build -j $(shell nproc)
 	cp _cxx_build/anguilla/cxx/_hypervolume.cpython-38-x86_64-linux-gnu.so anguilla/hypervolume/
-	cp _cxx_build/anguilla/cxx/_shark_hypervolume.cpython-38-x86_64-linux-gnu.so anguilla/hypervolume/
 	cp _cxx_build/anguilla/cxx/_dominance.cpython-38-x86_64-linux-gnu.so anguilla/dominance/
 	cp _cxx_build/anguilla/cxx/_archive.cpython-38-x86_64-linux-gnu.so anguilla/archive/
 	cp _cxx_build/anguilla/cxx/_optimizers.cpython-38-x86_64-linux-gnu.so anguilla/optimizers/
@@ -24,7 +23,6 @@ cxx_extension_debug: CMakeLists.txt
 	set -x; cmake $(COMMON_CMAKE_OPTS) -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_BUILD_TYPE=Debug ..
 	make -C _cxx_build -j $(shell nproc)
 	cp _cxx_build/anguilla/cxx/_hypervolume.cpython-38-x86_64-linux-gnu.so anguilla/hypervolume/
-	cp _cxx_build/anguilla/cxx/_shark_hypervolume.cpython-38-x86_64-linux-gnu.so anguilla/hypervolume/
 	cp _cxx_build/anguilla/cxx/_dominance.cpython-38-x86_64-linux-gnu.so anguilla/dominance/
 	cp _cxx_build/anguilla/cxx/_archive.cpython-38-x86_64-linux-gnu.so anguilla/archive/
 	cp _cxx_build/anguilla/cxx/_optimizers.cpython-38-x86_64-linux-gnu.so anguilla/optimizers/
