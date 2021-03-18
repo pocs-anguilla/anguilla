@@ -23,7 +23,7 @@ message(STATUS "C++ standard version: ${CMAKE_CXX_STANDARD}")
 # Define options
 
 option(PORTABLE_BUILD "Build the C extensions to be portable (e.g., for wheels)" ON)
-option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
+cmake_dependent_option(WITH_XSIMD "Build using SIMD instructions" ON "NOT PORTABLE_BUILD" OFF)
 
 ###############
 # Find Python 3
@@ -96,7 +96,7 @@ if(NOT MSVC)
   if(MINGW)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
   endif()
-  if(NOT PORTABLE_BUILD)
+  if(WITH_XSIMD)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64")
@@ -106,6 +106,9 @@ else()
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /d2FH4-")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /W4 /EHsc /MP /bigobj") # required by xtensor
   set(CMAKE_EXE_LINKER_FLAGS /MANIFEST:NO)
+  if(WITH_XSIMD)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX")
+  endif()
 endif()
 
 ####################
@@ -127,6 +130,11 @@ set(SPATIAL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/spatial/include
 ## Xtensor
 add_subdirectory(vendor/cxx/xtl EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/cxx/xtensor EXCLUDE_FROM_ALL)
+
+### Xtensor SIMD
+if(WITH_XSIMD)
+  add_subdirectory(vendor/cxx/xsimd EXCLUDE_FROM_ALL)
+endif()
 
 ### Xtensor BLAS
 if(NOT PORTABLE_BUILD)
