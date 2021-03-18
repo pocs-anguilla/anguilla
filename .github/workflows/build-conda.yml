@@ -38,6 +38,10 @@ jobs:
         with:
           auto-activate-base: true
           python-version: ${{ matrix.python-version }}
+          mamba-version: "*"
+          channels: conda-forge
+          auto-activate-base: true
+          activate-environment: ""
 
       - name: Install build packages
         run: conda install conda-build conda-verify anaconda-client
