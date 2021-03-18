@@ -1,4 +1,5 @@
 # Based on: https://github.com/pybind/scikit_build_example/blob/master/.github/workflows/conda.yml
+# See also: https://github.com/marketplace/actions/setup-miniconda
 name: Conda
 
 on:
@@ -17,6 +18,8 @@ jobs:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.7", "3.8"]
+        miniforge-variant: Mambaforge
+        channels: conda-forge
 
     runs-on: ${{ matrix.platform }}
 
@@ -38,7 +41,9 @@ jobs:
           auto-activate-base: true
           python-version: ${{ matrix.python-version }}
 
-      # See: https://git.io/Jtg1y
+      - name: Install build packages
+        run: conda install conda-build conda-verify anaconda-client
+
       - name: Set up build directory
         run: mkdir -p ${CONDA_BUILD_PATH}
 
