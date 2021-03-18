@@ -70,7 +70,7 @@ jobs:
           #  {wheel}
           # Skip testing in Windows + Python 3.8+ due to DLL loading issues.
           # FIXME: DLL loading issues affecting Windows and macOS builds
-          CIBW_TEST_SKIP: "cp3{7,8,9}-{win_amd64,macosx_amd64}"
+          CIBW_TEST_SKIP: "cp3{7,8,9}-{win_amd64,macosx_x86_64}"
 
       - uses: actions/upload-artifact@v2
         with:
