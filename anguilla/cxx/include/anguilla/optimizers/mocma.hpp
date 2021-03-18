@@ -511,8 +511,8 @@ class MOCMA {
         m_population.rank = std::get<0U>(
             dominance::nonDominatedSort<T>(m_population.penalizedFitness));
         // Compute indicator-based selection
-        auto selected = hvi::selection(m_population.penalizedFitness,
-                                       m_population.rank, m_nParents);
+        const auto selected = hvi::selection(m_population.penalizedFitness,
+                                             m_population.rank, m_nParents);
         // Perform adaptation
         for (auto i = 0U; i != m_nOffspring; i++) {
             auto oidx = m_nParents + i;
