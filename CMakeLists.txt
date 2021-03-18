@@ -12,12 +12,16 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
-include(CMakeToolsHelpers OPTIONAL)
-include(FeatureSummary)
-
 set(CMAKE_CXX_STANDARD_REQUIRED ON FORCE)
 set(CMAKE_CXX_EXTENSIONS OFF FORCE)
 message(STATUS "C++ standard version: ${CMAKE_CXX_STANDARD}")
+
+##########
+# Includes
+
+include(CMakeToolsHelpers OPTIONAL)
+include(CMakeDependentOption)
+include(FeatureSummary)
 
 ################
 # Define options
