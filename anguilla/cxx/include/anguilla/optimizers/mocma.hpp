@@ -427,7 +427,7 @@ class MOCMA {
         // Update ask-and-tell state machine.
         m_askCalled = true;
         if (m_nParents == m_nOffspring) {
-            // Each parent produces an offspring
+            // Each parent produces an offspring.
             // Algorithm 1, line 4b [2010:mo-cma-es].
             m_population.parentIdx = xt::arange<std::size_t>(0U, m_nOffspring);
         } else {
@@ -441,10 +441,11 @@ class MOCMA {
             m_population.parentIdx = xt::random::choice(
                 eligibleParents, m_nOffspring, true, m_randomEngine);
         }
-        // We use Algorithm 4.1 from [2015:efficient-rank1-update]
+        // We use Algorithm 4.1 from [2015:efficient-rank1-update].
         // adapted for Algorithm 1 from [2010:mo-cma-es].
-        auto parentIdx = m_population.parentIdx;
-        auto offspringIdx = xt::arange<std::size_t>(m_nParents, m_nIndividuals);
+        const auto parentIdx = m_population.parentIdx;
+        const auto offspringIdx =
+            xt::arange<std::size_t>(m_nParents, m_nIndividuals);
         // Perform mutation of the parents chosen to reproduce.
         // See also: [2008:shark] https://git.io/JqhW7
         m_population.lastZ = xt::random::randn<T>(m_population.lastZ.shape(),
