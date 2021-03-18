@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+
+    <title>MO-CMA-ES - Implementations Comparison</title>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="h1">MO-CMA-ES</h1>
+        <h3 class="h3">Implementations Comparison</h3>
+        <hr />
+        <div class="row">
+        {% for function in functions %}
+            <div class="col-4 mb-2">
+                <div class="card">
+                    <div class="card-body mx-auto">
+                        <a href="#{{function.name}}">{{ function.name }}</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+    <div class="container">
+        {% for function in functions %}
+        <div class="row">
+            <div class="col-4">
+                <a name="{{function.name}}"></a>
+                <h3 class="h3">{{ function.name }}</h3>
+            </div>
+            {% if loop.index != 0 %}
+            <div class="col-8" style="text-align:right;">
+                <a href="#top"><span class="align-middle">Back to top</span></a>
+            </div>
+            {% endif %}
+        </div>
+        <hr />
+        <h4 class="h4">HVI</h4>
+        <div class="row align-items-start">
+            <div class="col">
+                <figure class="figure">
+                  <img src="./plots/hypervolume/anguilla-v020/{{function.name}}.png" class="figure-img img-fluid" />
+                </figure>
+            </div>
+            <div class="col">
+                <figure class="figure">
+                  <img src="./plots/hypervolume/shark-patched-v1/{{function.name}}.png" class="figure-img img-fluid" />
+                </figure>
+            </div>
+        </div>
+        <h4 class="h4">Population plots</h4>
+        {% for optimizer in optimizers %}
+        <h5 class="h5">{{optimizer}}</h5>
+        <div class="row align-items-start">
+            <div class="col">
+                <figure class="figure">
+                    <img src="./plots/fronts/anguilla-v020/{{function.name}}-{{optimizer}}.png" class="figure-img img-fluid" style="width: 424px;" />
+                </figure>
+            </div>
+            <div class="col">
+                <figure class="figure">
+                    <img src="./plots/fronts/shark-patched-v1/{{function.name}}-{{optimizer}}.png" class="figure-img img-fluid" style="width: 424px;" />
+                </figure>
+            </div>
+        </div>
+        {% endfor %}
+        {% endfor %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
