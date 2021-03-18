@@ -153,7 +153,7 @@ class TestMOCMA(unittest.TestCase):
         expected = optimizer.population.point[
             0
         ] + optimizer.population.step_size[0] * (
-            optimizer.population.cov[0] @ optimizer.population.z[0]
+            optimizer.population.cov[0] @ optimizer.population.last_z[0]
         )
         self.assertTrue(
             np.allclose(

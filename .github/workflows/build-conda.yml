@@ -1,4 +1,6 @@
 # Based on: https://github.com/pybind/scikit_build_example/blob/master/.github/workflows/conda.yml
+# See also: https://github.com/marketplace/actions/setup-miniconda
+# Detailed info. on options here: https://github.com/conda-incubator/setup-miniconda/blob/master/action.yml
 name: Conda
 
 on:
@@ -15,8 +17,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-20.04, windows-2019, macos-10.15]
-        python-version: ["3.7", "3.8"]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        # Conda builds take too long so here we only use 3.9.
+        python-version: ["3.9"]
+
     runs-on: ${{ matrix.platform }}
 
     defaults:
@@ -31,19 +35,18 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Get conda
-        # See: https://github.com/conda-incubator/setup-miniconda
+      - name: Setup Conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          auto-activate-base: true
           python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
+          mamba-version: "*"
+          use-mamba: true
           channels: conda-forge
+          auto-activate-base: true
 
-      - name: Prepare
+      - name: Install build packages
         run: conda install conda-build conda-verify anaconda-client
 
-      # See: https://git.io/Jtg1y
       - name: Set up build directory
         run: mkdir -p ${CONDA_BUILD_PATH}
 

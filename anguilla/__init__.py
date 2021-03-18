@@ -1,6 +1,5 @@
 """
 Anguilla.
-
 References
 ----------
 .. bibliography:: references.bib

@@ -1,5 +1,7 @@
 # PEP-518 (https://www.python.org/dev/peps/pep-0518/)
 # See also: https://snarky.ca/what-the-heck-is-pyproject-toml/
+[project]
+requires-python = ">=3.7"
 
 [build-system]
 requires = [
@@ -10,9 +12,7 @@ requires = [
     "ninja",
     "scikit-build",
     "numpy>=1.9.5",
-    "delvewheel",
 ]
-
 build-backend = "setuptools.build_meta"
 
 # See: https://coverage.readthedocs.io/en/latest/config.html

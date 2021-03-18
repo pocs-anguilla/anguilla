@@ -13,11 +13,7 @@ from anguilla.hypervolume import (
     contributions_naive,
     hvkd_f8,
 )
-from anguilla.hypervolume.exact import hv2d as hv2d_prototype
-from anguilla.hypervolume.exact import hv3d as hv3d_prototype
-from anguilla.hypervolume.exact import hvkd as hvkd_prototype
-from anguilla.hypervolume.exact import hvc2d as hvc2d_prototype
-from anguilla.hypervolume.exact import hvc3d as hvc3d_prototype
+
 from anguilla.util import (
     random_2d_3d_front,
     random_cliff_3d,
@@ -25,7 +21,6 @@ from anguilla.util import (
     random_concave_front,
     random_linear_front,
 )
-from anguilla.indicators import HypervolumeIndicator
 
 
 class HVBaseTestFunction:
@@ -133,28 +128,6 @@ class TestHVKD(unittest.TestCase):
 
 class TestOther(unittest.TestCase):
     """Other HV unit tests."""
-
-    def test_2d_prototype(self) -> None:
-        """Test using the 2-D prototype implementation in Python."""
-        _, _, front, nadir = random_2d_3d_front(25, dominated=False)
-        nadir = np.max(front, axis=0)
-        vol_a = hv2d_prototype(front, nadir)
-        vol_b = calculate(front, nadir)
-        self.assertTrue(math.isclose(vol_a, vol_b))
-        contribs_a = hvc2d_prototype(front, nadir)
-        contribs_b = contributions(front, nadir)
-        self.assertTrue(np.allclose(contribs_a, contribs_b))
-
-    def test_3d_prototype(self) -> None:
-        """Test using the 3-D prototype implementation in Python."""
-        front = random_cliff_3d(25)
-        nadir = np.max(front, axis=0)
-        vol_a = hv3d_prototype(front, nadir)
-        vol_b = calculate(front, nadir)
-        self.assertTrue(math.isclose(vol_a, vol_b))
-        contribs_a = hvc3d_prototype(front, nadir)
-        contribs_b = contributions(front, nadir)
-        self.assertTrue(np.allclose(contribs_a, contribs_b))
 
     def test_2d_naive(self) -> None:
         """Test the 2-D implementation using the naive implementation."""

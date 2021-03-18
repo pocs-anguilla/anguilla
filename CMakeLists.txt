@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.18...3.19)
+
 message(STATUS "Using CMake version ${CMAKE_VERSION}")
 
 project(anguilla_cxx VERSION "0.0.19" LANGUAGES CXX)
@@ -11,36 +12,43 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
-include(CMakeToolsHelpers OPTIONAL)
-include(FeatureSummary)
-
 set(CMAKE_CXX_STANDARD_REQUIRED ON FORCE)
 set(CMAKE_CXX_EXTENSIONS OFF FORCE)
 message(STATUS "C++ standard version: ${CMAKE_CXX_STANDARD}")
+
+##########
+# Includes
+
+include(CMakeToolsHelpers OPTIONAL)
+include(CMakeDependentOption)
+include(FeatureSummary)
 
 ################
 # Define options
 
 option(PORTABLE_BUILD "Build the C extensions to be portable (e.g., for wheels)" ON)
-option(WITH_SHARK_BINDINGS "Build bindings for Shark's HV implementation" OFF)
+cmake_dependent_option(WITH_XSIMD "Build using SIMD instructions" ON "NOT PORTABLE_BUILD" OFF)
 
 ###############
 # Find Python 3
 
-if(DEFINED $ENV{CONDA_BUILD})
-  set(Python3_EXECUTABLE $ENV{PYTHON})
-else()
-  if(SKBUILD)
-    set(Python3_EXECUTABLE "${PYTHON_EXECUTABLE}")
-    set(Python3_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
-    set(Python3_LIBRARY "${PYTHON_LIBRARY}")
-    set(_DUMMY "${PYTHON_VERSION_STRING}")  # silence warning
-  endif()
-endif()
+set(Python3_FIND_IMPLEMENTATIONS CPython)
 
-set(Python3_FIND_IMPLEMENTATIONS CPython PyPy)
-find_package(Python3 COMPONENTS Interpreter REQUIRED)
-message(STATUS "Found Python: ${Python3_INTERPRETER_ID}")
+if(SKBUILD)
+  if(DEFINED $ENV{CONDA_BUILD})
+    set(Python3_EXECUTABLE $ENV{PYTHON})
+  endif()
+
+  find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+
+  # Using skbuild's as CMake's FindPython3 isn't working consistently
+  # across different platforms on CI builds.
+  find_package(NumPy REQUIRED)
+  set(Python3_NumPy_INCLUDE_DIRS ${NumPy_INCLUDE_DIRS})
+  message("Found NumPy: ${Python3_NumPy_INCLUDE_DIRS}")
+else()
+  find_package(Python3 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
+endif()
 
 # Add site-packages to the search path
 execute_process(
@@ -51,7 +59,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
 list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
 
-find_package(Python3 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
+message(STATUS "Found Python: ${Python3_INTERPRETER_ID}")
 
 execute_process(
   COMMAND
@@ -92,16 +100,19 @@ if(NOT MSVC)
   if(MINGW)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_hypot=hypot")
   endif()
-  if(NOT PORTABLE_BUILD)
+  if(WITH_XSIMD)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64")
   endif()
 else()
   # See: https://cibuildwheel.readthedocs.io/en/stable/faq/#importerror-dll-load-failed-the-specific-module-could-not-be-found-error-on-windows
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /d2FH4-")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /d2FH4-")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /W4 /EHsc /MP /bigobj") # required by xtensor
   set(CMAKE_EXE_LINKER_FLAGS /MANIFEST:NO)
+  if(WITH_XSIMD)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX")
+  endif()
 endif()
 
 ####################
@@ -121,8 +132,14 @@ set(BTREE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/btree/include")
 set(SPATIAL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/cxx/spatial/include")
 
 ## Xtensor
-add_subdirectory(vendor/cxx/xtl)
-add_subdirectory(vendor/cxx/xtensor)
+add_subdirectory(vendor/cxx/xtl EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/cxx/xtensor EXCLUDE_FROM_ALL)
+
+### Xtensor SIMD
+if(WITH_XSIMD)
+  add_definitions(-DXTENSOR_USE_XSIMD=1)
+  add_subdirectory(vendor/cxx/xsimd EXCLUDE_FROM_ALL)
+endif()
 
 ### Xtensor BLAS
 if(NOT PORTABLE_BUILD)
@@ -137,14 +154,14 @@ else()
   message(STATUS "No BLAS found, will use FLENS + CXXBLAS.")
   add_definitions(-DXTENSOR_USE_FLENS_BLAS=1)
 endif()
-add_subdirectory(vendor/cxx/xtensor-blas)
+add_subdirectory(vendor/cxx/xtensor-blas EXCLUDE_FROM_ALL)
 
 ### Xtensor Python bindings
 #add_subdirectory(vendor/cxx/xtensor-python)
-add_subdirectory(vendor/cxx/pyxtensor)
+add_subdirectory(vendor/cxx/pyxtensor EXCLUDE_FROM_ALL)
 
 ### {fmt}
-add_subdirectory(vendor/cxx/fmt)
+add_subdirectory(vendor/cxx/fmt EXCLUDE_FROM_ALL)
 
 ### Anguilla CXX
 add_subdirectory(anguilla/cxx)

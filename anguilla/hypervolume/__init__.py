@@ -1,8 +1,5 @@
 """Hypervolume algorithms."""
 
-import os
-import platform
-
 import numpy as np
 from typing import Optional
 
@@ -14,8 +11,6 @@ from ._hypervolume import (
     hvc3d_f8,
 )
 
-from .exact import hvkd as prototype_hvkd
-
 __all__ = [
     "calculate",
     "contributions",
@@ -26,20 +21,6 @@ __all__ = [
     "hvc2d_f8",
     "hvc3d_f8",
 ]
-
-# Optional
-try:
-    from ._shark_hypervolume import hvkd_f8 as shark_calculate
-
-    __all__.append("shark_calculate")
-
-    from ._shark_hypervolume import hvckd_f8 as shark_contributions
-
-    __all__.append("shark_contributions")
-
-    SHARK_BINDINGS_AVAILABLE = True
-except ImportError:
-    SHARK_BINDINGS_AVAILABLE = False
 
 
 def calculate(
@@ -131,10 +112,7 @@ def contributions(
     elif d == 3:
         return hvc3d_f8(points, reference, use_btree, prefer_extrema)
     elif d > 3:
-        if SHARK_BINDINGS_AVAILABLE:
-            return shark_contributions(points, reference)
-        else:
-            return NotImplementedError()
+        return NotImplementedError()
     else:
         raise ValueError("Input dimensionality can't be one.")
 

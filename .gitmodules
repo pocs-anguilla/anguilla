@@ -31,3 +31,6 @@
 [submodule "vendor/cxx/pyxtensor"]
 	path = vendor/cxx/pyxtensor
 	url = https://github.com/tdegeus/pyxtensor.git
+[submodule "vendor/cxx/xsimd"]
+	path = vendor/cxx/xsimd
+	url = https://github.com/xtensor-stack/xsimd.git
