@@ -28,6 +28,18 @@ include(FeatureSummary)
 
 option(PORTABLE_BUILD "Build the C extensions to be portable (e.g., for wheels)" ON)
 cmake_dependent_option(WITH_XSIMD "Build using SIMD instructions" ON "NOT PORTABLE_BUILD" OFF)
+option(WITH_OPENMP "Build with Xtensor using OpenMP" OFF)
+
+#############
+# Find OpenMP
+
+if(WITH_OPENMP)
+  find_package(OpenMP REQUIRED)
+  if(NOT OpenMP_CXX_FOUND)
+    error("OpenMP for C++ not found!")
+  endif()
+  add_definitions(-DXTENSOR_USE_OPENMP=1)
+endif()
 
 ###############
 # Find Python 3
