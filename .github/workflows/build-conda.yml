@@ -36,7 +36,6 @@ jobs:
       - name: Setup Conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          auto-activate-base: true
           python-version: ${{ matrix.python-version }}
           mamba-version: "*"
           channels: conda-forge
