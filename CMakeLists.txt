@@ -133,6 +133,7 @@ add_subdirectory(vendor/cxx/xtensor EXCLUDE_FROM_ALL)
 
 ### Xtensor SIMD
 if(WITH_XSIMD)
+  add_definitions(-DXTENSOR_USE_XSIMD=1)
   add_subdirectory(vendor/cxx/xsimd EXCLUDE_FROM_ALL)
 endif()
 
