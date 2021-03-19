@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdexcept>
 #ifndef ANGUILLA_OPTIMIZERS_SELECTION_HPP_
 #define ANGUILLA_OPTIMIZERS_SELECTION_HPP_
 
