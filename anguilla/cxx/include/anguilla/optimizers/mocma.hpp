@@ -531,8 +531,8 @@ class MOCMA {
         m_population.rank = std::get<0U>(
             dominance::nonDominatedSort<T>(m_population.penalizedFitness));
         // Compute indicator-based selection
-        const auto selected = hvi::selection(m_population.penalizedFitness,
-                                             m_population.rank, m_nParents);
+        const auto selected = hypervolume::selection(
+            m_population.penalizedFitness, m_population.rank, m_nParents);
         // Perform adaptation
         for (auto i = 0U; i != m_nOffspring; i++) {
             auto oidx = m_nParents + i;
@@ -541,9 +541,9 @@ class MOCMA {
             // successful (see [2008:shark], URL: https://git.io/Jty6G).
             T offspringIsSuccessful = 0.0;
             // Offspring adaptation
-            if (m_successNotion == SuccessNotion::IndividualBased &&
+            if ((m_successNotion == SuccessNotion::IndividualBased) &&
                 selected(oidx) &&
-                m_population.rank(oidx) <= m_population.rank(pidx)) {
+                (m_population.rank(oidx) <= m_population.rank(pidx))) {
                 // [2010:mo-cma-es] Section 3.1, p. 489
                 offspringIsSuccessful = 1.0;
                 updateStepSize(oidx, offspringIsSuccessful);

@@ -32,6 +32,7 @@ L. While, L. Bradstreet, & L. Barone (2012). A Fast Way of Calculating Exact
 Hypervolumes. IEEE Transactions on Evolutionary Computation, 16(1), 86–95.
 */
 
+namespace anguilla {
 namespace hvkd {
 /* Public interface */
 static constexpr const char* docstring = R"_(
@@ -151,5 +152,6 @@ template <typename T>
 }
 } // namespace internal
 } // namespace hvkd
+} // namespace anguilla
 
 #endif // ANGUILLA_HYPERVOLUME_HVKD_HPP_

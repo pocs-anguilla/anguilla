@@ -56,6 +56,7 @@ A. P. Guerreiro, C. M. Fonseca, & L. Paquete. (2020).
 The Hypervolume Indicator: Problems and Algorithms.
 */
 
+namespace anguilla {
 namespace hvc3d {
 /* Public interface */
 static constexpr const char* docstring = R"_(
@@ -101,8 +102,9 @@ template <typename T> struct MapValue {
     std::size_t index;
 };
 
-#ifdef __cpp_lib_memory_resource
 template <typename T> using MapPair = std::pair<const T, MapValue<T>>;
+
+#ifdef __cpp_lib_memory_resource
 
 template <typename T>
 using MapAllocator = std::pmr::polymorphic_allocator<MapPair<T>>;
@@ -118,7 +120,11 @@ using BTreeMap =
 
 template <typename T> using RBTreeMap = std::map<T, MapValue<T>>;
 
-template <typename T> using BTreeMap = btree::map<T, MapValue<T>>;
+template <typename T> using MapAllocator = std::allocator<MapPair<T>>;
+
+template <typename T>
+using BTreeMap =
+    btree::map<T, MapValue<T>, std::less<T>, MapAllocator<T>, 1024>;
 #endif
 
 /* Internal interface */
@@ -464,5 +470,6 @@ auto contributions(const std::vector<IndexedPoint3D<T>>& points, const T refX,
 }
 } // namespace internal
 } // namespace hvc3d
+} // namespace anguilla
 
 #endif // ANGUILLA_HYPERVOLUME_HVC3D_HPP

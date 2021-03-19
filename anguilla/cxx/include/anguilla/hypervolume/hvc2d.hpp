@@ -37,6 +37,7 @@ A. P. Guerreiro, C. M. Fonseca, & L. Paquete. (2020).
 The Hypervolume Indicator: Problems and Algorithms.
 */
 
+namespace anguilla {
 namespace hvc2d {
 /* Public interface */
 static constexpr const char* docstring = R"_(
@@ -190,5 +191,6 @@ auto contributionsNonDominated(const std::vector<IndexedPoint2D<T>>& points,
 
 } // namespace internal
 } // namespace hvc2d
+} // namespace anguilla
 
 #endif // ANGUILLA_HYPERVOLUME_HVC2D_HPP

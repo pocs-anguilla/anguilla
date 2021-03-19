@@ -17,10 +17,11 @@
 
 // Anguilla
 #include <anguilla/common/common.hpp>
-#include <anguilla/hypervolume/hvc2d.hpp>
+#include <anguilla/hypervolume/hypervolume.hpp>
+namespace ag = anguilla;
 
 namespace anguilla {
-namespace hvi {
+namespace hypervolume {
 template <typename T>
 auto leastContributors(const xt::xtensor<T, 2U>& points, std::size_t k)
     -> std::vector<std::size_t> {
@@ -31,7 +32,7 @@ auto leastContributors(const xt::xtensor<T, 2U>& points, std::size_t k)
     for (auto i = 0U; i < k; ++i) {
         const auto activePoints =
             xt::view(points, xt::keep(activeIndices), xt::all());
-        const auto contribs = hvc2d::contributions<T>(activePoints);
+        const auto contribs = contributions<T>(activePoints);
         std::size_t index = xt::argsort(contribs)[0];
         indices.push_back(activeIndices[index]);
         activeIndices.erase(std::next(activeIndices.begin(), index));
@@ -77,7 +78,7 @@ auto selection(const xt::xtensor<T, 2U>& points,
     }
     return selected;
 };
-} // namespace hvi
+} // namespace hypervolume
 } // namespace anguilla
 
 #endif // ANGUILLA_OPTIMIZERS_SELECTION_HPP_
