@@ -450,10 +450,30 @@ class MOCMA {
         // See also: [2008:shark] https://git.io/JqhW7
         m_population.lastZ = xt::random::randn<T>(m_population.lastZ.shape(),
                                                   0.0, 1.0, m_randomEngine);
-        for (auto i = 0U; i != m_nOffspring; i++) {
+        /*for (auto i = 0U; i != m_nOffspring; i++) {
+            const std::size_t pidx = parentIdx(i);
+            const std::size_t oidx = m_nParents + i;
+            // Compute the mutative step
             xt::row(m_population.lastStep, i) = xt::linalg::dot(
-                xt::view(m_population.cov, parentIdx(i), xt::all(), xt::all()),
+                xt::view(m_population.cov, pidx, xt::all(), xt::all()),
                 xt::row(m_population.lastZ, i));
+            // Mutate parent point and assign it to its offspring point
+            xt::row(m_population.point, oidx) =
+                xt::row(m_population.point, pidx) +
+                m_population.stepSize(pidx, 0) *
+                    xt::row(m_population.lastStep, i);
+            // Copy parent data
+            m_population.stepSize(oidx, 0) = m_population.stepSize(pidx, 0);
+            m_population.pSucc(oidx, 0) = m_population.stepSize(pidx, 0);
+            xt::row(m_population.pC, oidx) = xt::row(m_population.pC, pidx);
+            xt::view(m_population.cov, oidx, xt::all(), xt::all()) =
+                xt::view(m_population.cov, pidx, xt::all(), xt::all());
+        }*/
+        for (auto i = 0U; i != m_nOffspring; i++) {
+            // Compute the mutative step
+            xt::view(m_population.lastStep, i, xt::all()) = xt::linalg::dot(
+                xt::view(m_population.cov, parentIdx(i), xt::all(), xt::all()),
+                xt::view(m_population.lastZ, i, xt::all()));
         }
         xt::view(m_population.point, xt::keep(offspringIdx), xt::all()) =
             xt::view(m_population.point, xt::keep(parentIdx), xt::all()) +
@@ -469,7 +489,7 @@ class MOCMA {
         // Evolution path.
         xt::view(m_population.pC, xt::keep(offspringIdx), xt::all()) =
             xt::view(m_population.pC, xt::keep(parentIdx), xt::all());
-        // Covariance Cholesky factor.
+        // Covariance matrix Cholesky factor.
         xt::view(m_population.cov, xt::keep(offspringIdx), xt::all(),
                  xt::all()) = xt::view(m_population.cov, xt::keep(parentIdx),
                                        xt::all(), xt::all());
@@ -511,8 +531,8 @@ class MOCMA {
         m_population.rank = std::get<0U>(
             dominance::nonDominatedSort<T>(m_population.penalizedFitness));
         // Compute indicator-based selection
-        const auto selected = hvi::selection(m_population.penalizedFitness,
-                                             m_population.rank, m_nParents);
+        const auto selected = hypervolume::selection(
+            m_population.penalizedFitness, m_population.rank, m_nParents);
         // Perform adaptation
         for (auto i = 0U; i != m_nOffspring; i++) {
             auto oidx = m_nParents + i;
@@ -521,9 +541,9 @@ class MOCMA {
             // successful (see [2008:shark], URL: https://git.io/Jty6G).
             T offspringIsSuccessful = 0.0;
             // Offspring adaptation
-            if (m_successNotion == SuccessNotion::IndividualBased &&
+            if ((m_successNotion == SuccessNotion::IndividualBased) &&
                 selected(oidx) &&
-                m_population.rank(oidx) <= m_population.rank(pidx)) {
+                (m_population.rank(oidx) <= m_population.rank(pidx))) {
                 // [2010:mo-cma-es] Section 3.1, p. 489
                 offspringIsSuccessful = 1.0;
                 updateStepSize(oidx, offspringIsSuccessful);
@@ -590,6 +610,8 @@ class MOCMA {
     }
 
     void updateCov(std::size_t idx, const xt::xtensor<T, 1U>& lastStep) {
+        T alpha = 1.0 - m_parameters.cCov;
+        const T beta = m_parameters.cCov;
         const T pCUpdateWeight = m_parameters.cC * (2.0 - m_parameters.cC);
         // Update the evolution path
         xt::row(m_population.pC, idx) *= 1.0 - m_parameters.cC;
@@ -603,18 +625,17 @@ class MOCMA {
             xt::view(m_population.cov, idx, xt::all(), xt::all()) =
                 choleskyUpdate<T>(
                     xt::view(m_population.cov, idx, xt::all(), xt::all()),
-                    1.0 - m_parameters.cCov, m_parameters.cCov,
-                    xt::row(m_population.pC, idx));
+                    alpha, beta, xt::row(m_population.pC, idx));
         } else {
             // Algorithm 4.1, line 15, p.5. [2015:efficient-rank1-update]
             // This is the roundUpdate from [2008:Shark] See:
             // https://git.io/JqpA7
             // Update the Cholesky factor of the covariance matrix
+            alpha += pCUpdateWeight;
             xt::view(m_population.cov, idx, xt::all(), xt::all()) =
                 choleskyUpdate<T>(
                     xt::view(m_population.cov, idx, xt::all(), xt::all()),
-                    1.0 - m_parameters.cCov + pCUpdateWeight, m_parameters.cCov,
-                    xt::row(m_population.pC, idx));
+                    alpha, beta, xt::row(m_population.pC, idx));
         }
     }
 

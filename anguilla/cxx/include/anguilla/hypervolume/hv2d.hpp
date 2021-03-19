@@ -22,6 +22,7 @@ SharkJournal of Machine Learning Research, 9, 993–996.
 URL: https://git.io/Jtm0V
 */
 
+namespace anguilla {
 namespace hv2d {
 /* Public interface */
 static constexpr const char* docstring = R"_(
@@ -140,5 +141,6 @@ T calculate(std::vector<Point2D<T>>& points, const T refX, const T refY) {
 }
 } // namespace internal
 } // namespace hv2d
+} // namespace anguilla
 
 #endif // ANGUILLA_HYPERVOLUME_HV2D_HPP

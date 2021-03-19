@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from anguilla.fitness.base import ObjectiveFunction
-#from anguilla.optimizers.mocma import MOCMA
+from anguilla.optimizers.mocma import MOCMA as MOCMAPython
 from anguilla.optimizers import MOCMA
 
 class StopWatch:
@@ -85,8 +85,9 @@ class TrialParameters:
         The initial step size.
     success_notion: optional
         The notion of success (`population` or `individual`).
+    implementation
+        The optimizer implementation.
     """
-
     fn_cls: ObjectiveFunction
     fn_args: Optional[Iterable] = None
     fn_kwargs: Optional[dict] = None
@@ -100,6 +101,7 @@ class TrialParameters:
     max_generations: Optional[int] = None
     max_evaluations: Optional[int] = None
     target_indicator_value: Optional[float] = None
+    implementation: str = "cxx"
     # Override with dataclasses.replace
     key: Optional[int] = None
     seed: Optional[int] = None
@@ -148,16 +150,28 @@ def run_trial(parameters: TrialParameters):
         parameters.n_parents, region_bounds=parameters.region_bounds
     )
     parent_fitness = fn(parent_points)
-    optimizer = MOCMA(
-        parent_points,
-        parent_fitness,
-        n_offspring=parameters.n_offspring,
-        #success_notion=parameters.success_notion,
-        #max_generations=parameters.max_generations,
-        max_evaluations=parameters.max_evaluations,
-        #target_indicator_value=parameters.target_indicator_value,
-        seed=rng.integers(0, 100000),
-    )
+    if parameters.implementation == "cxx":
+        optimizer = MOCMA(
+            parent_points,
+            parent_fitness,
+            n_offspring=parameters.n_offspring,
+            #success_notion=parameters.success_notion,
+            #max_generations=parameters.max_generations,
+            max_evaluations=parameters.max_evaluations,
+            #target_indicator_value=parameters.target_indicator_value,
+            seed=rng.integers(0, 100000),
+        )
+    else:
+        optimizer = MOCMAPython(
+            parent_points,
+            parent_fitness,
+            n_offspring=parameters.n_offspring,
+            #success_notion=parameters.success_notion,
+            #max_generations=parameters.max_generations,
+            max_evaluations=parameters.max_evaluations,
+            #target_indicator_value=parameters.target_indicator_value,
+            rng=rng,
+        )    
     #if parameters.reference is not None:
     #    optimizer.indicator.reference = parameters.reference
     initial_fitness = optimizer.best.fitness

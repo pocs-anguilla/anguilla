@@ -22,10 +22,10 @@ PYBIND11_MODULE(_optimizers, m) {
     m.doc() = "This module contains implementations of algorithms for "
               "multi-objective optimization.";
 
-    m.def("least_contributors", &ag::hvi::leastContributors<f8>,
+    m.def("least_contributors", &ag::hypervolume::leastContributors<f8>,
           py::arg("points"), py::arg("k"));
 
-    m.def("selection", &ag::hvi::selection<f8>, py::arg("points"),
+    m.def("selection", &ag::hypervolume::selection<f8>, py::arg("points"),
           py::arg("ranks"), py::arg("targetSize"));
 
     m.def("cholesky_update", &ag::optimizers::choleskyUpdate<f8>, py::arg("L"),
