@@ -610,6 +610,8 @@ class MOCMA {
     }
 
     void updateCov(std::size_t idx, const xt::xtensor<T, 1U>& lastStep) {
+        T alpha = 1.0 - m_parameters.cCov;
+        const T beta = m_parameters.cCov;
         const T pCUpdateWeight = m_parameters.cC * (2.0 - m_parameters.cC);
         // Update the evolution path
         xt::row(m_population.pC, idx) *= 1.0 - m_parameters.cC;
@@ -623,18 +625,17 @@ class MOCMA {
             xt::view(m_population.cov, idx, xt::all(), xt::all()) =
                 choleskyUpdate<T>(
                     xt::view(m_population.cov, idx, xt::all(), xt::all()),
-                    1.0 - m_parameters.cCov, m_parameters.cCov,
-                    xt::row(m_population.pC, idx));
+                    alpha, beta, xt::row(m_population.pC, idx));
         } else {
             // Algorithm 4.1, line 15, p.5. [2015:efficient-rank1-update]
             // This is the roundUpdate from [2008:Shark] See:
             // https://git.io/JqpA7
             // Update the Cholesky factor of the covariance matrix
+            alpha += pCUpdateWeight;
             xt::view(m_population.cov, idx, xt::all(), xt::all()) =
                 choleskyUpdate<T>(
                     xt::view(m_population.cov, idx, xt::all(), xt::all()),
-                    1.0 - m_parameters.cCov + pCUpdateWeight, m_parameters.cCov,
-                    xt::row(m_population.pC, idx));
+                    alpha, beta, xt::row(m_population.pC, idx));
         }
     }
 
