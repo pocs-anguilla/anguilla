@@ -62,7 +62,7 @@ jobs:
           pytest tests --import-mode=append --color=yes
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ${{ env.CONDA_BUILD_PATH }}/**/*.tar.bz2
 
