@@ -27,7 +27,7 @@ jobs:
       - name: Build tarball
         run: python -m build --sdist
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: tarball
           path: dist/*
@@ -72,12 +72,12 @@ jobs:
           # FIXME: DLL loading issues affecting Windows and macOS builds
           CIBW_TEST_SKIP: "cp3{7,8,9}-{win_amd64,macosx_x86_64}"
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: ./wheelhouse/*.whl
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: matrix.os == 'ubuntu-latest'
         with:
           name: coverage_file
