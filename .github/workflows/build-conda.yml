@@ -36,7 +36,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Conda
-        uses: conda-incubator/setup-miniconda@v2.1.1
+        uses: conda-incubator/setup-miniconda@v2.2.0
         with:
           python-version: ${{ matrix.python-version }}
           mamba-version: "*"
