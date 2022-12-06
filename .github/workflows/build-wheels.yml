@@ -49,7 +49,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         #uses: microsoft/setup-msbuild@v1.0.2
 
-      - uses: joerick/cibuildwheel@v2.1.2
+      - uses: joerick/cibuildwheel@v2.11.3
         env:
           # Skip: unsupported Python versions, PyPy and 32-bit versions
           CIBW_SKIP: "cp27-* cp35-* cp36-* pp* *-win32 *-manylinux_i686"
