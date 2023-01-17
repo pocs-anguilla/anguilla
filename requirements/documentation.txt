@@ -1,5 +1,5 @@
 sphinx==4.2.0
-sphinx-autoapi==1.8.4
+sphinx-autoapi==2.0.1
 sphinxcontrib-apidoc==0.3.0
 sphinxcontrib-napoleon==0.7
 sphinxcontrib-bibtex==2.4.1
